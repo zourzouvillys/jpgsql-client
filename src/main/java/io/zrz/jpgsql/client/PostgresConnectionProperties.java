@@ -1,0 +1,77 @@
+package io.zrz.jpgsql.client;
+
+import java.time.Duration;
+import java.util.Optional;
+
+import lombok.Builder;
+import lombok.Value;
+
+@Value
+@Builder
+public class PostgresConnectionProperties {
+
+  /**
+   * The hostname. Localhost by default.
+   */
+
+  private String hostname;
+
+  /**
+   * The port to connect to. 5432 by default.
+   */
+
+  private int port;
+
+  /**
+   * The database name to connect to.
+   */
+
+  private String dbname;
+
+  /**
+   * The username to use for connecting.
+   */
+
+  private String username;
+
+  /**
+   * The password to use for connecting.
+   */
+
+  private String password;
+
+  /**
+   * The minimum number of idle connections.
+   */
+
+  private int minIdle = 0;
+
+  /**
+   * how long a connection is idle before it is closed and removed from the
+   * pool.
+   */
+
+  private Optional<Duration> idleTimeout = Optional.empty();
+
+  /**
+   * maximum number of connections.
+   *
+   * be aware that if the {@link org.postgresql} version of the PostgresClient
+   * is used and configured to use a thread for async emulation, then this will
+   * be equal to the number of threads created (urgh).
+   *
+   */
+
+  private int maxPoolSize = 10;
+
+  /**
+   * The number of queries that can be queued for execution.
+   *
+   * If set to zero, this will not allow more than the {@link #getMaxPoolSize()}
+   * number of pending/executing queries.
+   *
+   */
+
+  private int queueDepth;
+
+}

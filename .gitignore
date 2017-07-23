@@ -1,0 +1,11 @@
+.apt_generated
+.factorypath
+.classpath
+.gradle/
+.project
+.settings/
+bin/
+build/
+gradle/
+gradlew
+gradlew.bat
