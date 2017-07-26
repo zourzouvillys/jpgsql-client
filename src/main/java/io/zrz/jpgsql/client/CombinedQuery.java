@@ -2,11 +2,14 @@ package io.zrz.jpgsql.client;
 
 import java.util.List;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * multiple queries to be sent for processing together.
  */
 
-class CombinedQuery implements Query {
+@EqualsAndHashCode
+public class CombinedQuery implements Query {
 
   private final List<SimpleQuery> queries;
   private final int params;

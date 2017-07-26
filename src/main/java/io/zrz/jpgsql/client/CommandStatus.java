@@ -1,5 +1,6 @@
 package io.zrz.jpgsql.client;
 
+import io.zrz.visitors.annotations.Visitable;
 import lombok.Value;
 
 /**
@@ -8,8 +9,20 @@ import lombok.Value;
  */
 
 @Value
+@Visitable.Type
 public class CommandStatus implements QueryResult {
+
+  private int statementId;
+
   private String status;
+
   private int updateCount;
+
   private long insertOID;
+
+  @Override
+  public int statementId() {
+    return this.statementId;
+  }
+
 }

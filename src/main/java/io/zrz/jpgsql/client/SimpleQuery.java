@@ -3,14 +3,21 @@ package io.zrz.jpgsql.client;
 import java.util.Arrays;
 import java.util.List;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * A single SQL statement.
  */
 
+@EqualsAndHashCode
 public class SimpleQuery implements Query {
 
   private final int paramcount;
   private final String sql;
+
+  public SimpleQuery(String sql) {
+    this(sql, 0);
+  }
 
   public SimpleQuery(String sql, int paramcount) {
     this.sql = sql;

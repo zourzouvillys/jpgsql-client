@@ -1,6 +1,5 @@
 package io.zrz.jpgsql.client.opj;
 
-import java.time.Duration;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
@@ -24,7 +23,7 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
     super(
         config.getMinIdle(),
         config.getMaxPoolSize(),
-        config.getIdleTimeout().map(Duration::toMillis).orElse(0L),
+        config.getIdleTimeout().toMillis(),
         TimeUnit.MILLISECONDS,
         new LinkedBlockingQueue<Runnable>(config.getMaxPoolSize() + config.getQueueDepth()));
 

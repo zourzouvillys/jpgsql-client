@@ -3,11 +3,12 @@ package io.zrz.jpgsql.client.opj;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.reactivestreams.Publisher;
+import com.google.common.base.Preconditions;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -29,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Slf4j
-class PgSessionRunner implements TransactionalSession, Runnable {
+class PgTransactionalSession implements TransactionalSession, Runnable {
 
   @Value
   private static class Work {
@@ -44,7 +45,12 @@ class PgSessionRunner implements TransactionalSession, Runnable {
   private final SingleSubject<SessionTxnState> txnstate = SingleSubject.create();
   private final LinkedTransferQueue<Work> workqueue = new LinkedTransferQueue<>();
 
-  PgSessionRunner() {
+  // if we are accepting work still
+  private boolean accepting = true;
+  private final PgThreadPooledClient pool;
+
+  PgTransactionalSession(PgThreadPooledClient pool) {
+    this.pool = pool;
   }
 
   /*
@@ -73,13 +79,22 @@ class PgSessionRunner implements TransactionalSession, Runnable {
    */
 
   @Override
-  public Publisher<QueryResult> submit(Query query, QueryParameters params) {
+  public Flowable<QueryResult> submit(Query query, QueryParameters params) {
+
+    if (!this.accepting) {
+      throw new IllegalStateException(String.format("This session is no longer active"));
+    }
+
     final Flowable<QueryResult> flowable = Flowable.create(emitter -> {
+
       log.debug("added work item");
+
       this.workqueue.add(new Work(query, params, emitter));
+
     }, BackpressureStrategy.BUFFER);
-    flowable.publish().connect();
-    return flowable;
+
+    return flowable.publish().autoConnect();
+
   }
 
   /*
@@ -100,8 +115,17 @@ class PgSessionRunner implements TransactionalSession, Runnable {
 
       if (work != null) {
 
-        startidle = null;
-        conn.execute(work.getQuery(), work.getParams(), work.getEmitter());
+        if (work.getEmitter() == null) {
+
+          conn.rollback();
+
+        } else {
+
+          log.info("processing work item");
+          startidle = null;
+          conn.execute(work.getQuery(), work.getParams(), work.getEmitter());
+
+        }
         startidle = Instant.now();
 
       } else {
@@ -110,6 +134,7 @@ class PgSessionRunner implements TransactionalSession, Runnable {
 
         if (idle.compareTo(MAX_IDLE) > 0) {
           log.warn("aborting transaction due to {} idle", idle);
+          this.accepting = false;
           conn.rollback();
           this.txnstate.onError(new TransactionalSessionDeadlineExceededException());
           return;
@@ -123,12 +148,26 @@ class PgSessionRunner implements TransactionalSession, Runnable {
 
       switch (conn.transactionState()) {
         case IDLE:
+          this.accepting = false;
           this.txnstate.onSuccess(SessionTxnState.Closed);
+          if (!this.workqueue.isEmpty()) {
+            log.warn("work queue is not empty after session completed");
+            this.workqueue.forEach(e -> e.emitter.onError(new IllegalStateException("Session has already completed")));
+          }
           return;
         case FAILED:
+          this.accepting = false;
           this.txnstate.onSuccess(SessionTxnState.Error);
+          if (!this.workqueue.isEmpty()) {
+            log.warn("work queue is not empty after session completed");
+            this.workqueue.forEach(e -> e.emitter.onError(new IllegalStateException("Session has already completed")));
+          }
           return;
         case OPEN:
+          if (!this.accepting && this.workqueue.isEmpty()) {
+            // rollback - which will terminate us.
+            conn.rollback();
+          }
           // still going ..
           break;
       }
@@ -148,17 +187,44 @@ class PgSessionRunner implements TransactionalSession, Runnable {
       this.run(PgConnectionThread.connection());
     } catch (final SQLException ex) {
       // Any propagated SQLException results in the connection being closed.
+      this.accepting = false;
       PgConnectionThread.close();
       this.txnstate.onError(new PostgresqlUnavailableException(ex));
     } catch (final Exception ex) {
+      this.accepting = false;
       // TODO: release the transaction, but don't close the connection.
       this.txnstate.onError(ex);
     }
   }
 
-  public void failed(Exception ex) {
-    // TODO Auto-generated method stub
+  /*
+   * rollback the transaction if there is one.
+   */
 
+  @Override
+  public void close() {
+    Preconditions.checkState(this.accepting, "session is no longer active");
+    this.accepting = false;
+    this.workqueue.add(new Work(this.pool.createQuery("ROLLBACK"), null, null));
+  }
+
+  /*
+   * called from the consumer thread. jusr raise the failure, nothing else.
+   */
+
+  public void failed(Exception ex) {
+    this.accepting = false;
+    this.txnstate.onError(ex);
+  }
+
+  @Override
+  public Query createQuery(String sql, int paramcount) {
+    return this.pool.createQuery(sql, paramcount);
+  }
+
+  @Override
+  public Query createQuery(List<Query> combine) {
+    return this.pool.createQuery(combine);
   }
 
 }

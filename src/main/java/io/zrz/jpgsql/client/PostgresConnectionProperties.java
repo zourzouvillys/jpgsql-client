@@ -1,9 +1,9 @@
 package io.zrz.jpgsql.client;
 
 import java.time.Duration;
-import java.util.Optional;
 
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Value;
 
 @Value
@@ -44,14 +44,15 @@ public class PostgresConnectionProperties {
    * The minimum number of idle connections.
    */
 
-  private int minIdle = 0;
+  private int minIdle;
 
   /**
    * how long a connection is idle before it is closed and removed from the
    * pool.
    */
 
-  private Optional<Duration> idleTimeout = Optional.empty();
+  @Default
+  private Duration idleTimeout = Duration.ofSeconds(60);
 
   /**
    * maximum number of connections.
@@ -62,6 +63,7 @@ public class PostgresConnectionProperties {
    *
    */
 
+  @Default
   private int maxPoolSize = 10;
 
   /**

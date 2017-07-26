@@ -2,10 +2,12 @@ package io.zrz.jpgsql.client.opj;
 
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.postgresql.PGNotification;
 import org.postgresql.core.NativeQuery;
 import org.postgresql.core.Oid;
 import org.postgresql.core.ParameterList;
@@ -17,11 +19,16 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
+import io.zrz.jpgsql.client.CombinedQuery;
+import io.zrz.jpgsql.client.NotifyMessage;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
-import io.zrz.jpgsql.client.WarningResult;
+import io.zrz.jpgsql.client.SimpleQuery;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -32,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 class PgLocalConnection {
 
   private final PgConnection conn;
+  private final QueryExecutor exec;
 
   /**
    *
@@ -40,9 +48,8 @@ class PgLocalConnection {
    */
 
   PgLocalConnection(PgConnection conn) {
-
     this.conn = conn;
-
+    this.exec = this.conn.getQueryExecutor();
     try {
 
       conn.setAutoCommit(false);
@@ -52,7 +59,6 @@ class PgLocalConnection {
       // either way, we abosrb and handle later.
       log.error("exception setting auto commit mode", e);
     }
-
   }
 
   /**
@@ -70,8 +76,14 @@ class PgLocalConnection {
     }
   }
 
+  /**
+   * cache of queries, so that they remain prepared on the JDBC client side.
+   */
+
   private final LoadingCache<Query, org.postgresql.core.Query> cache = CacheBuilder.newBuilder()
       .maximumSize(1000)
+      .weakKeys()
+      .weakValues()
       .expireAfterWrite(5, TimeUnit.MINUTES)
       .build(
           new CacheLoader<Query, org.postgresql.core.Query>() {
@@ -85,9 +97,7 @@ class PgLocalConnection {
           });
 
   /**
-   * note: this weirdness is because we have no way to call multiple prepared
-   * statements in a single batch, so we resort to calling EXECUTE ourselves.
-   * woo.
+   * execute the query.
    *
    * @param named
    * @throws SQLException
@@ -102,54 +112,67 @@ class PgLocalConnection {
     if (params != null) {
 
       pl = pgquery.createParameterList();
-      for (int i = 0; i < params.count(); ++i) {
 
+      for (int i = 1; i <= params.count(); ++i) {
         final int oid = params.getOid(i);
+
+        final Object val = params.getValue(i);
+
+        if (val == null) {
+          pl.setNull(i, oid);
+          continue;
+        }
+
         switch (oid) {
-          case Oid.UNSPECIFIED:
-            break;
           case Oid.INT4:
             pl.setIntParameter(i, (int) params.getValue(i));
             break;
+          case Oid.TEXT:
           case Oid.VARCHAR:
             pl.setStringParameter(i, (String) params.getValue(i), oid);
             break;
           default:
-            break;
+            throw new AssertionError(String.format("Don't know how to map param with OID %d", oid));
         }
       }
 
     } else {
+
       pl = null;
+
     }
 
-    // pl.setIntParameter(1, 1000);
-    // pl.setStringParameter(1, "[ 1, 2, 3 ]", Oid.JSON);
-    // pl.setStringParameter(1, "[ 1, 2, 3 ]", Oid.TEXT);
     final int flags = 0;
-
-    final QueryExecutor exec = this.conn.getQueryExecutor();
 
     // flags |= QueryExecutor.QUERY_ONESHOT;
     // flags |= QueryExecutor.QUERY_SUPPRESS_BEGIN;
     // flags |= QueryExecutor.QUERY_EXECUTE_AS_SIMPLE;
     // flags |= QueryExecutor.QUERY_BOTH_ROWS_AND_STATUS;
-    // flags |= QueryExecutor.QUERY_NO_RESULTS |
-    // QueryExecutor.QUERY_NO_METADATA;
+    // flags |= QueryExecutor.QUERY_NO_RESULTS;
+    // flags |= QueryExecutor.QUERY_NO_METADATA;
+    // final long start = System.nanoTime();
 
-    log.info("-------");
-    final long start = System.nanoTime();
-    exec.execute(pgquery, pl, new PgObservableResultHandler(query, emitter), 10000, 10000, flags);
-    final long stop = System.nanoTime();
-    log.info("-------");
+    // query.getSubqueries().forEach(q -> log.info("Q: {}", q.sql().substring(0,
+    // 16)));
 
-    log.info(String.format("done in %.02f ms", (stop - start) / 1000 / 1000.0));
+    //
+    try {
+      this.exec.execute(pgquery, pl, new PgObservableResultHandler(query, emitter), 0, 0, flags);
+    } finally {
+      // any cleanup?
+    }
+
+    // final long stop = System.nanoTime();
+    // log.info(String.format("done in %.02f ms", (stop - start) / 1000 /
+    // 1000.0));
 
     final SQLWarning warnings = this.conn.getWarnings();
 
+    // we should never get any warnings on the connection, as we handle them
+    // ourselves.
+
     if (warnings != null) {
-      log.warn("SQL warning: {}", warnings);
-      emitter.onNext(new WarningResult(warnings));
+      log.warn("SQL connection warning: {}", warnings);
     }
 
   }
@@ -164,10 +187,50 @@ class PgLocalConnection {
    * @throws SQLException
    */
 
-  public void rollback() throws SQLException {
-
+  void rollback() throws SQLException {
+    log.debug("rolling back connection state");
     this.conn.rollback();
+  }
 
+  public void notifications(Collection<String> channels, FlowableEmitter<NotifyMessage> emitter) {
+
+    try {
+
+      final CombinedQuery send = new CombinedQuery(
+          channels.stream()
+              .map(channel -> new SimpleQuery(String.format("LISTEN %s", this.escapeIdentifier(channel))))
+              .collect(Collectors.toList()));
+
+      Flowable.<QueryResult>create(subscribe -> this.execute(send, null, subscribe), BackpressureStrategy.BUFFER).blockingSubscribe();
+
+      emitter.setCancellable(() -> {
+        log.debug("cancelling notification");
+        this.conn.cancelQuery();
+      });
+
+      while (!emitter.isCancelled()) {
+
+        final PGNotification[] notifications = this.conn.getNotifications(1000);
+
+        if (notifications != null) {
+          emitter.onNext(new NotifyMessage(notifications));
+        }
+
+      }
+
+    } catch (final SQLException e) {
+
+      if (!emitter.tryOnError(e)) {
+        log.warn("undeliverable error from notifications", e);
+      }
+
+    }
+
+  }
+
+  @SneakyThrows
+  private String escapeIdentifier(String channel) {
+    return this.conn.escapeString(channel);
   }
 
 }

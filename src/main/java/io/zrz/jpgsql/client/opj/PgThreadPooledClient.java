@@ -1,6 +1,7 @@
 package io.zrz.jpgsql.client.opj;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Optional;
 
 import org.postgresql.ds.PGSimpleDataSource;
@@ -10,17 +11,17 @@ import org.postgresql.jdbc.PreferQueryMode;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.zrz.jpgsql.client.AbstractPostgresClient;
+import io.zrz.jpgsql.client.NotifyMessage;
 import io.zrz.jpgsql.client.PostgresClient;
 import io.zrz.jpgsql.client.PostgresConnectionProperties;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
-import io.zrz.jpgsql.client.TransactionalSession;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * the primary run threads never block on DB io. Instead, we expose a
+ * the primary run thread never block on DB io. Instead, we expose a
  * Connection-like API that only deals with prepared statements.
  *
  * the connections are run on background threads. we leverage the caching thread
@@ -39,13 +40,16 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   // we use the basic datasource.
   private final PGSimpleDataSource ds;
 
-  PgThreadPooledClient(PostgresConnectionProperties config, int size) {
-
+  PgThreadPooledClient(PostgresConnectionProperties config) {
     this.pool = new PgConnectionThreadPoolExecutor(this, config);
-
     this.config = config;
     this.ds = new PGSimpleDataSource();
     this.ds.setReWriteBatchedInserts(false);
+    this.ds.setAssumeMinServerVersion("9.5");
+    this.ds.setPreparedStatementCacheQueries(10000);
+    this.ds.setPreparedStatementCacheSizeMiB(10);
+    this.ds.setPrepareThreshold(1);
+    this.ds.setSendBufferSize(1028 * 32);
     this.ds.setLogUnclosedConnections(true);
     this.ds.setDisableColumnSanitiser(true);
     this.ds.setConnectTimeout(1000);
@@ -78,8 +82,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   @Override
-  public TransactionalSession open() {
-    final PgSessionRunner runner = new PgSessionRunner();
+  public PgTransactionalSession open() {
+    final PgTransactionalSession runner = new PgTransactionalSession(this);
     try {
       this.pool.execute(runner);
     } catch (final Exception ex) {
@@ -89,7 +93,50 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     return runner;
   }
 
-  public static PgThreadPooledClient create(PostgresConnectionProperties props, int size) {
-    return new PgThreadPooledClient(props, size);
+  public static PgThreadPooledClient create(PostgresConnectionProperties config) {
+    return new PgThreadPooledClient(config);
   }
+
+  public static PgThreadPooledClient create(String hostname, String dbname) {
+    return create(hostname, dbname, 10);
+  }
+
+  public static PgThreadPooledClient create(String hostname, String dbname, int maxPoolSize) {
+    return create(PostgresConnectionProperties.builder()
+        .hostname(hostname)
+        .dbname(dbname)
+        .maxPoolSize(maxPoolSize)
+        .build());
+  }
+
+  /**
+   * Opens a connection which monitors for NOTIFY messages.
+   *
+   * @param channels
+   */
+
+  @Override
+  public Flowable<NotifyMessage> notifications(Collection<String> channels) {
+    return Flowable.create(emitter -> {
+      final PgConnectionThread thd = new PgConnectionThread(this, () -> {
+        try {
+          final PgLocalConnection conn = PgConnectionThread.connection();
+          try {
+            conn.notifications(channels, emitter);
+          } finally {
+            conn.close();
+          }
+        } catch (final Throwable th) {
+          emitter.onError(th);
+        }
+      });
+      thd.start();
+      log.info("started notify thread");
+    }, BackpressureStrategy.BUFFER);
+  }
+
+  public void shutdown() {
+    this.pool.shutdownNow();
+  }
+
 }

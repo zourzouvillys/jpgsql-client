@@ -16,6 +16,7 @@ public class PgConnectionThread extends Thread {
 
   public PgConnectionThread(PgThreadPooledClient pool, Runnable run) {
     super();
+    this.setDaemon(true);
     this.run = run;
     this.pool = pool;
   }

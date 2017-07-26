@@ -15,4 +15,11 @@ public interface TransactionalSession extends PostgresQueryProcessor {
 
   CompletableFuture<SessionTxnState> txnstate();
 
+  /**
+   * closes this session. if it has not been committed and the transaction has
+   * not failed, then a rollback will be performed.
+   */
+
+  void close();
+
 }
