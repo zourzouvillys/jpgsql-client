@@ -54,6 +54,14 @@ public class DefaultParametersList implements QueryParameters {
   }
 
   @Override
+  public QueryParameters setBytes(int pnum, byte[] bytes, int oid) {
+    this.checkIndex(pnum);
+    this.values[pnum - 1] = bytes;
+    this.oids[pnum - 1] = oid;
+    return this;
+  }
+
+  @Override
   public Object getValue(int pnum) {
     this.checkIndex(pnum);
     return this.values[pnum - 1];
@@ -88,7 +96,7 @@ public class DefaultParametersList implements QueryParameters {
   public QueryParameters setFrom(Object... args) {
 
     if (args.length != this.count()) {
-      throw new IllegalArgumentException(String.format("statement expected %d arguments, but only %d provided", this.count(), args.length));
+      throw new IllegalArgumentException(String.format("statement expected %d arguments, but %d provided", this.count(), args.length));
     }
 
     for (int i = 0; i < args.length; ++i) {

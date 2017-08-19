@@ -38,6 +38,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class PgLocalConnection {
 
+  public static final int SuppressBegin = QueryExecutor.QUERY_SUPPRESS_BEGIN;
+
   private final PgConnection conn;
   private final QueryExecutor exec;
 
@@ -104,6 +106,10 @@ class PgLocalConnection {
    */
 
   void execute(Query query, QueryParameters params, FlowableEmitter<QueryResult> emitter) throws SQLException {
+    this.execute(query, params, emitter, 0);
+  }
+
+  void execute(Query query, QueryParameters params, FlowableEmitter<QueryResult> emitter, int flags) throws SQLException {
 
     final org.postgresql.core.Query pgquery = this.cache.getUnchecked(query);
 
@@ -127,6 +133,9 @@ class PgLocalConnection {
           case Oid.INT4:
             pl.setIntParameter(i, (int) params.getValue(i));
             break;
+          case Oid.UUID:
+            pl.setBinaryParameter(i, (byte[]) params.getValue(i), oid);
+            break;
           case Oid.TEXT:
           case Oid.VARCHAR:
             pl.setStringParameter(i, (String) params.getValue(i), oid);
@@ -142,7 +151,7 @@ class PgLocalConnection {
 
     }
 
-    final int flags = 0;
+    // int flags = 0;
 
     // flags |= QueryExecutor.QUERY_ONESHOT;
     // flags |= QueryExecutor.QUERY_SUPPRESS_BEGIN;
@@ -150,6 +159,7 @@ class PgLocalConnection {
     // flags |= QueryExecutor.QUERY_BOTH_ROWS_AND_STATUS;
     // flags |= QueryExecutor.QUERY_NO_RESULTS;
     // flags |= QueryExecutor.QUERY_NO_METADATA;
+
     // final long start = System.nanoTime();
 
     // query.getSubqueries().forEach(q -> log.info("Q: {}", q.sql().substring(0,
@@ -157,7 +167,9 @@ class PgLocalConnection {
 
     //
     try {
+
       this.exec.execute(pgquery, pl, new PgObservableResultHandler(query, emitter), 0, 0, flags);
+
     } finally {
       // any cleanup?
     }

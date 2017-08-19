@@ -82,6 +82,19 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   @Override
+  public Flowable<QueryResult> submit(String sql) {
+    return this.submit(this.createQuery(sql));
+  }
+
+  @Override
+  public Flowable<QueryResult> submit(String sql, Object... params) {
+    final Query query = this.createQuery(sql, params.length);
+    final QueryParameters qp = query.createParameters();
+    qp.setFrom(params);
+    return this.submit(query, qp);
+  }
+
+  @Override
   public PgTransactionalSession open() {
     final PgTransactionalSession runner = new PgTransactionalSession(this);
     try {

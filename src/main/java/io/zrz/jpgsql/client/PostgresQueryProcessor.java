@@ -16,15 +16,14 @@ public interface PostgresQueryProcessor {
    * Create a new query to be executed.
    *
    * @param sql
-   *          The SQL statement to execute, without all the JDBC parsing
-   *          bullshit. Uses PostgreSQL's native form for placeholders ($1, $2,
-   *          etc).
+   *          The SQL statement to execute, without all the JDBC parsing bullshit.
+   *          Uses PostgreSQL's native form for placeholders ($1, $2, etc).
    *
    * @param paramcount
    *          The number of parameters in this query. May be 0.
    *
-   * @return A reference for the query which can be used to submit for
-   *         processing by PostgreSQL.
+   * @return A reference for the query which can be used to submit for processing
+   *         by PostgreSQL.
    */
 
   Query createQuery(String sql, int paramcount);
@@ -45,8 +44,8 @@ public interface PostgresQueryProcessor {
    * @param combine
    *          The queries to batch together.
    *
-   * @return A reference for the query which can be used to submit for
-   *         processing by PostgreSQL.
+   * @return A reference for the query which can be used to submit for processing
+   *         by PostgreSQL.
    */
 
   Query createQuery(List<Query> combine);
@@ -60,19 +59,18 @@ public interface PostgresQueryProcessor {
   }
 
   /**
-   * submit a query (which may consist of multiple statements) to execute within
-   * a single transaction. they will either all fail or all complete.
+   * submit a query (which may consist of multiple statements) to execute within a
+   * single transaction. they will either all fail or all complete.
    *
-   * The query will be wrapped in a BEGIN and COMMIT/ROLLBACK, so these should
-   * not be included in the query.
+   * The query will be wrapped in a BEGIN and COMMIT/ROLLBACK, so these should not
+   * be included in the query.
    *
-   * flow control is used here, but consumers should be very careful not to
-   * cause a transaction to stay open longer than needed because it is not
-   * consuming results.
+   * flow control is used here, but consumers should be very careful not to cause
+   * a transaction to stay open longer than needed because it is not consuming
+   * results.
    *
-   * if the work queue is full (or times out), then the returned
-   * {@link Publisher} will fail with
-   * {@link PostgresqlCapacityExceededException}.
+   * if the work queue is full (or times out), then the returned {@link Publisher}
+   * will fail with {@link PostgresqlCapacityExceededException}.
    *
    * The returned {@link Publisher} can be cancelled.
    *
@@ -96,6 +94,13 @@ public interface PostgresQueryProcessor {
 
   default QueryExecutionBuilder executionBuilder() {
     return QueryExecutionBuilder.with(this);
+  }
+
+  default Publisher<QueryResult> submit(String sql, Object... params) {
+    final Query query = this.createQuery(sql);
+    final QueryParameters qp = query.createParameters();
+    qp.setFrom(params);
+    return this.submit(query, qp);
   }
 
 }

@@ -11,7 +11,7 @@ public class PostgresQueryBuilder extends AbstractPostgresQueryBuilder<PostgresQ
     return this;
   }
 
-  public static AbstractPostgresQueryBuilder<PostgresQueryBuilder> with(PostgresQueryProcessor ds) {
+  public static PostgresQueryBuilder with(PostgresQueryProcessor ds) {
     return new PostgresQueryBuilder(ds);
   }
 

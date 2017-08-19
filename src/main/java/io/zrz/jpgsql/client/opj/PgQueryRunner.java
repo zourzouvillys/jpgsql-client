@@ -34,7 +34,7 @@ class PgQueryRunner implements Runnable {
    */
 
   private void run(PgLocalConnection conn) throws SQLException {
-    conn.execute(this.query, this.params, this.emitter);
+    conn.execute(this.query, this.params, this.emitter, PgLocalConnection.SuppressBegin);
   }
 
   @Override

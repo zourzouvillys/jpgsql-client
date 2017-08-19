@@ -48,7 +48,8 @@ public class PgObservableResultHandler extends ResultHandlerBase {
       log.error("don't support cursor queries - leak probable!");
     }
 
-    log.debug("received {} rows in statement {}", tuples.size(), this.statementId);
+    // log.debug("received {} rows in statement {}", tuples.size(),
+    // this.statementId);
 
     final PgResultMeta ifields = new PgResultMeta(fields);
 
@@ -90,7 +91,8 @@ public class PgObservableResultHandler extends ResultHandlerBase {
 
   @Override
   public void handleCompletion() throws SQLException {
-    log.debug("finished Query ({} rows over {} statements). errors: {}", this.totalRows, this.statementId, this.getException());
+    // log.debug("finished Query ({} rows over {} statements). errors: {}",
+    // this.totalRows, this.statementId, this.getException());
     if (this.getException() != null) {
       this.emitter.onError(this.getException());
     } else {
@@ -113,7 +115,8 @@ public class PgObservableResultHandler extends ResultHandlerBase {
   @Override
   public void handleWarning(SQLWarning warning) {
     log.warn("SQL warning ({}): {}", warning.getClass(), warning);
-    final PSQLWarning warn = (PSQLWarning) warning;;
+    final PSQLWarning warn = (PSQLWarning) warning;
+    ;
     this.emitter.onNext(new WarningResult(this.statementId, warn.getServerErrorMessage()));
   }
 

@@ -1,5 +1,10 @@
 package io.zrz.jpgsql.client;
 
+import java.util.UUID;
+
+import org.postgresql.core.Oid;
+import org.postgresql.util.ByteConverter;
+
 /**
  * Parameters passed to execute a query.
  */
@@ -12,6 +17,8 @@ public interface QueryParameters {
 
   QueryParameters setNull(int pnum, int oid);
 
+  QueryParameters setBytes(int pnum, byte[] bytes, int oid);
+
   Object getValue(int pnum);
 
   int getOid(int pnum);
@@ -20,8 +27,8 @@ public interface QueryParameters {
 
   /**
    * sets by guessing from the passed arguments. the number of parameters must
-   * match the number provided, otherwise an {@link IllegalArgumentException}
-   * will be thrown.
+   * match the number provided, otherwise an {@link IllegalArgumentException} will
+   * be thrown.
    */
 
   QueryParameters setFrom(Object... args);
@@ -43,5 +50,12 @@ public interface QueryParameters {
    */
 
   QueryParameters validate();
+
+  default QueryParameters setUUID(int i, UUID uuid) {
+    final byte[] val = new byte[16];
+    ByteConverter.int8(val, 0, uuid.getMostSignificantBits());
+    ByteConverter.int8(val, 8, uuid.getLeastSignificantBits());
+    return setBytes(i, val, Oid.UUID);
+  }
 
 }
