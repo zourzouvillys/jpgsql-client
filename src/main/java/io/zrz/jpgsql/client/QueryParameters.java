@@ -1,5 +1,6 @@
 package io.zrz.jpgsql.client;
 
+import java.util.Collection;
 import java.util.UUID;
 
 import org.postgresql.core.Oid;
@@ -13,7 +14,17 @@ public interface QueryParameters {
 
   QueryParameters setInteger(int pnum, int val);
 
+  DefaultParametersList setLong(int pnum, long val);
+
   QueryParameters setString(int pnum, String value, int oid);
+
+  /**
+   * set a the parameter to an array of strings
+   */
+
+  QueryParameters setStringArray(int pnum, Collection<String> value);
+
+  QueryParameters setIntArray(int pnum, int[] array);
 
   QueryParameters setNull(int pnum, int oid);
 

@@ -7,8 +7,8 @@ public interface RowBuffer extends QueryResult {
 
   /**
    * the statement number in this query that this result is for. For each
-   * statement provided, the statement number increments by one, regardless of
-   * it being a SELECT or command.
+   * statement provided, the statement number increments by one, regardless of it
+   * being a SELECT or command.
    */
 
   @Override
@@ -59,6 +59,24 @@ public interface RowBuffer extends QueryResult {
    */
 
   int intval(int row, int col, int defaultValue);
+
+  /**
+   * returns an unboxed integer value.
+   *
+   * if the requested value is null, it throws a {@link NullPointerException}.
+   *
+   */
+
+  long longval(int row, int col);
+
+  /**
+   * returns an unboxed integer value.
+   *
+   * if the field is null, returns the defaultValue instead.
+   *
+   */
+
+  long longval(int row, int col, long defaultValue);
 
   /**
    * the raw byte value for this field.

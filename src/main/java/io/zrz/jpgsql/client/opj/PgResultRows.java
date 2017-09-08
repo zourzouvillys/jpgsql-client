@@ -96,4 +96,22 @@ final class PgResultRows implements RowBuffer {
     return this.statementId;
   }
 
+  @Override
+  public long longval(int row, int col) {
+    final byte[] val = this.tuples.get(row)[col];
+    if (val == null) {
+      throw new NullPointerException();
+    }
+    return PgResultDecoder.toLong(this.fields.field(col).pgfield(), val);
+  }
+
+  @Override
+  public long longval(int row, int col, long defaultValue) {
+    final byte[] val = this.tuples.get(row)[col];
+    if (val == null) {
+      return defaultValue;
+    }
+    return PgResultDecoder.toLong(this.fields.field(col).pgfield(), val);
+  }
+
 }

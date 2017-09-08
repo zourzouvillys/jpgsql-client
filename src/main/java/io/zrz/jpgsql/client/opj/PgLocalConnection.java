@@ -2,6 +2,7 @@ package io.zrz.jpgsql.client.opj;
 
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -13,11 +14,13 @@ import org.postgresql.core.Oid;
 import org.postgresql.core.ParameterList;
 import org.postgresql.core.QueryExecutor;
 import org.postgresql.core.TransactionState;
+import org.postgresql.jdbc.PgArray;
 import org.postgresql.jdbc.PgConnection;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.primitives.Longs;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -133,6 +136,15 @@ class PgLocalConnection {
           case Oid.INT4:
             pl.setIntParameter(i, (int) params.getValue(i));
             break;
+          case Oid.INT4_ARRAY: {
+            final int[] vals = (int[]) params.getValue(i);
+            final String res = Arrays.stream(vals).mapToObj(x -> Integer.toString(x)).collect(Collectors.joining(","));
+            pl.setStringParameter(i, "{" + res + "}", oid);
+            break;
+          }
+          case Oid.INT8:
+            pl.setBinaryParameter(i, Longs.toByteArray((long) params.getValue(i)), Oid.INT8);
+            break;
           case Oid.UUID:
             pl.setBinaryParameter(i, (byte[]) params.getValue(i), oid);
             break;
@@ -140,6 +152,16 @@ class PgLocalConnection {
           case Oid.VARCHAR:
             pl.setStringParameter(i, (String) params.getValue(i), oid);
             break;
+          case Oid.VARCHAR_ARRAY: {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("{");
+            for (final String str : (String[]) params.getValue(i)) {
+              PgArray.escapeArrayElement(sb, str);
+            }
+            sb.append("}");
+            pl.setStringParameter(i, sb.toString(), oid);
+            break;
+          }
           default:
             throw new AssertionError(String.format("Don't know how to map param with OID %d", oid));
         }

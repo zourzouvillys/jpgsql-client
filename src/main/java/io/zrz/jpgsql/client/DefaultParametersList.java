@@ -1,5 +1,7 @@
 package io.zrz.jpgsql.client;
 
+import java.util.Collection;
+
 import org.postgresql.core.Oid;
 
 import com.google.common.base.Preconditions;
@@ -38,6 +40,14 @@ public class DefaultParametersList implements QueryParameters {
   }
 
   @Override
+  public DefaultParametersList setLong(int pnum, long val) {
+    this.checkIndex(pnum);
+    this.values[pnum - 1] = val;
+    this.oids[pnum - 1] = Oid.INT8;
+    return this;
+  }
+
+  @Override
   public DefaultParametersList setString(int pnum, String value, int oid) {
     this.checkIndex(pnum);
     this.values[pnum - 1] = value;
@@ -65,6 +75,22 @@ public class DefaultParametersList implements QueryParameters {
   public Object getValue(int pnum) {
     this.checkIndex(pnum);
     return this.values[pnum - 1];
+  }
+
+  @Override
+  public QueryParameters setStringArray(int pnum, Collection<String> value) {
+    this.checkIndex(pnum);
+    this.values[pnum - 1] = value.toArray(new String[0]);
+    this.oids[pnum - 1] = Oid.VARCHAR_ARRAY;
+    return this;
+  }
+
+  @Override
+  public QueryParameters setIntArray(int pnum, int[] value) {
+    this.checkIndex(pnum);
+    this.values[pnum - 1] = value;
+    this.oids[pnum - 1] = Oid.INT4_ARRAY;
+    return this;
   }
 
   @Override
@@ -120,6 +146,10 @@ public class DefaultParametersList implements QueryParameters {
       } else if (arg instanceof Integer) {
 
         this.setInteger(i + 1, (int) arg);
+
+      } else if (arg instanceof Long) {
+
+        this.setLong(i + 1, (long) arg);
 
       } else {
 
