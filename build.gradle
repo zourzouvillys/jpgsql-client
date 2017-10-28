@@ -1,26 +1,30 @@
 
 buildscript {
 
-    repositories {
-        mavenCentral()
-    	maven {
-    	  url "https://plugins.gradle.org/m2/"
-    	}
-    }
+  repositories {
+    mavenCentral()
+    maven { url "https://plugins.gradle.org/m2/" }
+  }
  
-    dependencies {
-    	classpath "net.ltgt.gradle:gradle-apt-plugin:0.10"
-        classpath "com.prezi.pride:gradle-pride-plugin:0.11"
-	}
+  dependencies {
+    classpath "net.ltgt.gradle:gradle-apt-plugin:0.10"
+    classpath "com.prezi.pride:gradle-pride-plugin:0.11"
+  }
 	
+}
+
+plugins {
+  id "com.jfrog.bintray" version "1.7.3"
 }
 
 apply plugin: 'pride'
 apply plugin: 'java-library'
 apply plugin: 'eclipse'
 apply plugin: 'net.ltgt.apt'
+apply plugin: 'maven-publish'
 
-version = '0.1-SNAPSHOT'
+version = '0.1'
+
 group = 'io.zrz.jpgsql'
 
 repositories {
@@ -29,7 +33,6 @@ repositories {
     url "http://dl.bintray.com/zourzouvillys/maven"
   }
 }
-
 
 dependencies {
 
@@ -55,6 +58,44 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.0'
+    gradleVersion = '4.2.1'
 }
+
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+
+publishing {
+  publications {
+    maven(MavenPublication) { 
+    		from components.java
+      	groupId 'io.zrz.jpgsql'
+      	artifactId 'jpgsql-client'
+      	version '0.1'
+    }
+  }
+}
+
+
+bintray {
+
+  user = System.getenv('BINTRAY_USER')
+  key = System.getenv('BINTRAY_KEY')
+    
+  publications = ['maven']
+    
+  pkg {
+    repo = 'maven'
+    name = 'jpgsql'
+    userOrg = user
+    licenses = ['Apache-2.0']
+    publicDownloadNumbers = false
+    vcsUrl = 'https://github.com/zourzouvillys/jpgsql-client.git'
+  }    
+    
+}
+
 
