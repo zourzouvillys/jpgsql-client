@@ -10,7 +10,7 @@ public final class WarningResult implements QueryResult {
   private final int statementId;
   private final ServerErrorMessage servermsg;
 
-  public WarningResult(int statementId, ServerErrorMessage servermsg) {
+  public WarningResult(final int statementId, final ServerErrorMessage servermsg) {
     this.statementId = statementId;
     this.servermsg = servermsg;
   }
@@ -22,6 +22,11 @@ public final class WarningResult implements QueryResult {
 
   public ServerErrorMessage serverErrorMessage() {
     return this.servermsg;
+  }
+
+  @Override
+  public QueryResultKind getKind() {
+    return QueryResultKind.WARNING;
   }
 
 }

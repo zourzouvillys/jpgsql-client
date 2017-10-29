@@ -23,7 +23,9 @@ apply plugin: 'eclipse'
 apply plugin: 'net.ltgt.apt'
 apply plugin: 'maven-publish'
 
-version = '0.1'
+version = '0.4'
+
+println JavaVersion.current()
 
 group = 'io.zrz.jpgsql'
 
@@ -74,7 +76,7 @@ publishing {
     		from components.java
       	groupId 'io.zrz.jpgsql'
       	artifactId 'jpgsql-client'
-      	version '0.1'
+      	version project.version
     }
   }
 }

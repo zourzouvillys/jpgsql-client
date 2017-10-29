@@ -8,6 +8,8 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.jdbc.PreferQueryMode;
 
+import com.google.common.primitives.Ints;
+
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.zrz.jpgsql.client.AbstractPostgresClient;
@@ -40,10 +42,24 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   // we use the basic datasource.
   private final PGSimpleDataSource ds;
 
-  PgThreadPooledClient(PostgresConnectionProperties config) {
+  PgThreadPooledClient(final PostgresConnectionProperties config) {
     this.pool = new PgConnectionThreadPoolExecutor(this, config);
     this.config = config;
+
     this.ds = new PGSimpleDataSource();
+
+    this.ds.setServerName(config.getHostname());
+
+    this.ds.setPortNumber(config.getPort());
+
+    this.ds.setUser(config.getUsername());
+
+    if (config.getPassword() != null) {
+      this.ds.setPassword(config.getPassword());
+    }
+
+    this.ds.setDatabaseName(Optional.ofNullable(config.getDbname()).orElseThrow(NullPointerException::new));
+
     this.ds.setReWriteBatchedInserts(false);
     this.ds.setAssumeMinServerVersion("9.5");
     this.ds.setPreparedStatementCacheQueries(10000);
@@ -52,10 +68,9 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     this.ds.setSendBufferSize(1028 * 32);
     this.ds.setLogUnclosedConnections(true);
     this.ds.setDisableColumnSanitiser(true);
-    this.ds.setConnectTimeout(1000);
+    this.ds.setConnectTimeout(Ints.checkedCast(config.getConnectTimeout().toMillis()));
     this.ds.setPreferQueryMode(PreferQueryMode.EXTENDED_CACHE_EVERYTHING);
     this.ds.setTcpKeepAlive(true);
-    this.ds.setDatabaseName(Optional.ofNullable(config.getDbname()).orElse("saasy"));
   }
 
   PgConnection createConnection() throws SQLException {
@@ -64,7 +79,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   @Override
-  public Flowable<QueryResult> submit(Query query, QueryParameters params) {
+  public Flowable<QueryResult> submit(final Query query, final QueryParameters params) {
     return Flowable.create(emitter -> {
       try {
         final PgQueryRunner runner = new PgQueryRunner(query, params, emitter);
@@ -77,17 +92,17 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   @Override
-  public Flowable<QueryResult> submit(Query query) {
+  public Flowable<QueryResult> submit(final Query query) {
     return this.submit(query, null);
   }
 
   @Override
-  public Flowable<QueryResult> submit(String sql) {
+  public Flowable<QueryResult> submit(final String sql) {
     return this.submit(this.createQuery(sql));
   }
 
   @Override
-  public Flowable<QueryResult> submit(String sql, Object... params) {
+  public Flowable<QueryResult> submit(final String sql, final Object... params) {
     final Query query = this.createQuery(sql, params.length);
     final QueryParameters qp = query.createParameters();
     qp.setFrom(params);
@@ -106,15 +121,15 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     return runner;
   }
 
-  public static PgThreadPooledClient create(PostgresConnectionProperties config) {
+  public static PgThreadPooledClient create(final PostgresConnectionProperties config) {
     return new PgThreadPooledClient(config);
   }
 
-  public static PgThreadPooledClient create(String hostname, String dbname) {
+  public static PgThreadPooledClient create(final String hostname, final String dbname) {
     return create(hostname, dbname, 10);
   }
 
-  public static PgThreadPooledClient create(String hostname, String dbname, int maxPoolSize) {
+  public static PgThreadPooledClient create(final String hostname, final String dbname, final int maxPoolSize) {
     return create(PostgresConnectionProperties.builder()
         .hostname(hostname)
         .dbname(dbname)
@@ -129,7 +144,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
    */
 
   @Override
-  public Flowable<NotifyMessage> notifications(Collection<String> channels) {
+  public Flowable<NotifyMessage> notifications(final Collection<String> channels) {
     return Flowable.create(emitter -> {
       final PgConnectionThread thd = new PgConnectionThread(this, () -> {
         try {

@@ -25,4 +25,9 @@ public class CommandStatus implements QueryResult {
     return this.statementId;
   }
 
+  @Override
+  public QueryResultKind getKind() {
+    return QueryResultKind.STATUS;
+  }
+
 }

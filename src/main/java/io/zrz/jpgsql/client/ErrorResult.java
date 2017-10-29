@@ -1,5 +1,6 @@
 package io.zrz.jpgsql.client;
 
+import org.postgresql.util.PSQLState;
 import org.postgresql.util.ServerErrorMessage;
 
 import io.zrz.visitors.annotations.Visitable;
@@ -8,7 +9,7 @@ import io.zrz.visitors.annotations.Visitable;
 public final class ErrorResult extends RuntimeException implements QueryResult {
 
   /**
-   *
+   * TODO:see {@link PSQLState}
    */
   private static final long serialVersionUID = 1L;
 
@@ -18,7 +19,8 @@ public final class ErrorResult extends RuntimeException implements QueryResult {
   private final Throwable cause;
   private final String state;
 
-  public ErrorResult(int statementId, String message, String state, ServerErrorMessage serverErrorMessage, Throwable cause) {
+  public ErrorResult(final int statementId, final String message, final String state, final ServerErrorMessage serverErrorMessage, final Throwable cause) {
+    super(message, cause);
     this.statementId = statementId;
     this.state = state;
     this.message = message;
@@ -45,6 +47,11 @@ public final class ErrorResult extends RuntimeException implements QueryResult {
 
   public Throwable cause() {
     return this.cause;
+  }
+
+  @Override
+  public QueryResultKind getKind() {
+    return QueryResultKind.ERROR;
   }
 
 }

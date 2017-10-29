@@ -7,8 +7,8 @@ public interface RowBuffer extends QueryResult {
 
   /**
    * the statement number in this query that this result is for. For each
-   * statement provided, the statement number increments by one, regardless of it
-   * being a SELECT or command.
+   * statement provided, the statement number increments by one, regardless of
+   * it being a SELECT or command.
    */
 
   @Override
@@ -104,6 +104,11 @@ public interface RowBuffer extends QueryResult {
 
   default boolean empty() {
     return count() == 0;
+  }
+
+  @Override
+  default QueryResultKind getKind() {
+    return QueryResultKind.RESULTS;
   }
 
 }

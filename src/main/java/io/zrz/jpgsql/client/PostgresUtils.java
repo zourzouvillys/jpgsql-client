@@ -11,7 +11,6 @@ public class PostgresUtils {
 
   public static Function<QueryResult, Single<CommandStatus>> statusMapper() {
     return (res) -> {
-      System.err.println(res);
       if (res instanceof CommandStatus) {
         return Single.just((CommandStatus) res);
       }
@@ -24,6 +23,7 @@ public class PostgresUtils {
     return (res) -> {
 
       if (res instanceof RowBuffer) {
+
         final RowBuffer rows = (RowBuffer) res;
 
         final List<PgResultRow> r = new ArrayList<>(rows.count());

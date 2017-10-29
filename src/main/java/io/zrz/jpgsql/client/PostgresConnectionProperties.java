@@ -55,6 +55,13 @@ public class PostgresConnectionProperties {
   private Duration idleTimeout = Duration.ofSeconds(60);
 
   /**
+   * how long a connection tries to establish before timing out.
+   */
+
+  @Default
+  private Duration connectTimeout = Duration.ofSeconds(10);
+
+  /**
    * maximum number of connections.
    *
    * be aware that if the {@link org.postgresql} version of the PostgresClient

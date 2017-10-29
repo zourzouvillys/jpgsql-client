@@ -19,6 +19,12 @@ import io.zrz.visitors.annotations.Visitable;
 public interface QueryResult {
 
   /**
+   * the kind of result
+   */
+
+  QueryResultKind getKind();
+
+  /**
    * the statement ID that is associated with this result.
    */
 
