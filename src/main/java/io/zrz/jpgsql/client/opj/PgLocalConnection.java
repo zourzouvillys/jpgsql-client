@@ -46,13 +46,17 @@ class PgLocalConnection {
   private final PgConnection conn;
   private final QueryExecutor exec;
 
+  private final PgThreadPooledClient pool;
+
   /**
    *
+   * @param pool
    * @param conn
    * @param pool
    */
 
-  PgLocalConnection(PgConnection conn) {
+  PgLocalConnection(final PgThreadPooledClient pool, final PgConnection conn) {
+    this.pool = pool;
     this.conn = conn;
     this.exec = this.conn.getQueryExecutor();
     try {
@@ -93,7 +97,7 @@ class PgLocalConnection {
       .build(
           new CacheLoader<Query, org.postgresql.core.Query>() {
             @Override
-            public org.postgresql.core.Query load(Query query) throws Exception {
+            public org.postgresql.core.Query load(final Query query) throws Exception {
               final List<NativeQuery> nqs = query.getSubqueries().stream()
                   .map(q -> PgLocalNativeQuery.create(q.sql(), q.parameterCount()))
                   .collect(Collectors.toList());
@@ -108,11 +112,11 @@ class PgLocalConnection {
    * @throws SQLException
    */
 
-  void execute(Query query, QueryParameters params, FlowableEmitter<QueryResult> emitter) throws SQLException {
+  void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter) throws SQLException {
     this.execute(query, params, emitter, 0);
   }
 
-  void execute(Query query, QueryParameters params, FlowableEmitter<QueryResult> emitter, int flags) throws SQLException {
+  void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, final int flags) throws SQLException {
 
     final org.postgresql.core.Query pgquery = this.cache.getUnchecked(query);
 
@@ -190,6 +194,10 @@ class PgLocalConnection {
     //
     try {
 
+      if (this.pool.getListener() != null) {
+        this.pool.getListener().executingQuery(this, query, params);
+      }
+
       this.exec.execute(pgquery, pl, new PgObservableResultHandler(query, emitter), 0, 0, flags);
 
     } finally {
@@ -206,7 +214,13 @@ class PgLocalConnection {
     // ourselves.
 
     if (warnings != null) {
+
       log.warn("SQL connection warning: {}", warnings);
+
+    }
+
+    if (this.pool.getListener() != null) {
+      this.pool.getListener().queryCompleted(this);
     }
 
   }
@@ -226,7 +240,7 @@ class PgLocalConnection {
     this.conn.rollback();
   }
 
-  public void notifications(Collection<String> channels, FlowableEmitter<NotifyMessage> emitter) {
+  public void notifications(final Collection<String> channels, final FlowableEmitter<NotifyMessage> emitter) {
 
     try {
 
@@ -263,7 +277,7 @@ class PgLocalConnection {
   }
 
   @SneakyThrows
-  private String escapeIdentifier(String channel) {
+  private String escapeIdentifier(final String channel) {
     return this.conn.escapeString(channel);
   }
 

@@ -83,4 +83,11 @@ public class PostgresConnectionProperties {
 
   private int queueDepth;
 
+  /**
+   * if this connection is read only?
+   */
+
+  @Default
+  private boolean readOnly = false;
+
 }

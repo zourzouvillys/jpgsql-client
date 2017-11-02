@@ -14,7 +14,7 @@ public class PgConnectionThread extends Thread {
   private PgLocalConnection conn;
   private final Runnable run;
 
-  public PgConnectionThread(PgThreadPooledClient pool, Runnable run) {
+  public PgConnectionThread(final PgThreadPooledClient pool, final Runnable run) {
     super();
     this.setDaemon(true);
     this.run = run;
@@ -31,16 +31,28 @@ public class PgConnectionThread extends Thread {
   }
 
   public static PgLocalConnection connection() throws SQLException {
+
     final PgConnectionThread thd = (PgConnectionThread) Thread.currentThread();
+
     if (thd.conn == null) {
-      thd.conn = new PgLocalConnection(thd.pool.createConnection());
+
+      thd.conn = new PgLocalConnection(thd.pool, thd.pool.createConnection());
+
+      if (thd.pool.getListener() != null) {
+        thd.pool.getListener().connectionCreated(thd.conn);
+      }
+
     }
     return thd.conn;
+
   }
 
   public static void close() {
     final PgConnectionThread thd = (PgConnectionThread) Thread.currentThread();
     if (thd.conn != null) {
+      if (thd.pool.getListener() != null) {
+        thd.pool.getListener().connectionClosed(thd.conn);
+      }
       thd.conn.close();
       thd.conn = null;
     }

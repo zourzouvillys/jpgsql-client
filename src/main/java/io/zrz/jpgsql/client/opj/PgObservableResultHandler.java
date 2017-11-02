@@ -36,13 +36,13 @@ public class PgObservableResultHandler extends ResultHandlerBase {
 
   private int totalRows;
 
-  PgObservableResultHandler(Query query, FlowableEmitter<QueryResult> emitter) {
+  PgObservableResultHandler(final Query query, final FlowableEmitter<QueryResult> emitter) {
     this.emitter = emitter;
     this.query = query;
   }
 
   @Override
-  public void handleResultRows(org.postgresql.core.Query fromQuery, Field[] fields, List<byte[][]> tuples, ResultCursor cursor) {
+  public void handleResultRows(final org.postgresql.core.Query fromQuery, final Field[] fields, final List<byte[][]> tuples, final ResultCursor cursor) {
 
     if (cursor != null) {
       log.error("don't support cursor queries - leak probable!");
@@ -82,7 +82,7 @@ public class PgObservableResultHandler extends ResultHandlerBase {
   }
 
   @Override
-  public void handleCommandStatus(String status, int updateCount, long insertOID) {
+  public void handleCommandStatus(final String status, final int updateCount, final long insertOID) {
     final CommandStatus msg = new CommandStatus(this.statementId, status, updateCount, insertOID);
     log.trace("[{}] {}", this.statementId, msg);
     this.statementId++;
@@ -113,16 +113,15 @@ public class PgObservableResultHandler extends ResultHandlerBase {
    */
 
   @Override
-  public void handleWarning(SQLWarning warning) {
+  public void handleWarning(final SQLWarning warning) {
     log.warn("SQL warning ({}): {}", warning.getClass(), warning);
     final PSQLWarning warn = (PSQLWarning) warning;
-    ;
     this.emitter.onNext(new WarningResult(this.statementId, warn.getServerErrorMessage()));
   }
 
   // should this perhaps cause onError, instead?
   @Override
-  public void handleError(SQLException error) {
+  public void handleError(final SQLException error) {
 
     log.warn("error ({}: {}", error.getClass(), error);
 
@@ -145,6 +144,7 @@ public class PgObservableResultHandler extends ResultHandlerBase {
     // log.info("ERR: {}", err.getServerErrorMessage().getWhere());
 
     this.emitter.onNext(new ErrorResult(this.statementId, error.getMessage(), err.getSQLState(), err.getServerErrorMessage(), error.getCause()));
+
   }
 
 }
