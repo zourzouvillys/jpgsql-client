@@ -54,13 +54,13 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
      * called from a thread when a new connection is established.
      */
 
-    void connectionCreated(PgLocalConnection conn);
+    void connectionCreated(PgRawConnection conn);
 
-    void connectionClosed(PgLocalConnection conn);
+    void connectionClosed(PgRawConnection conn);
 
-    void executingQuery(PgLocalConnection conn, Query query, QueryParameters params);
+    void executingQuery(PgRawConnection conn, Query query, QueryParameters params);
 
-    void queryCompleted(PgLocalConnection conn);
+    void queryCompleted(PgRawConnection conn);
 
   }
 

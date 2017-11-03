@@ -39,11 +39,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Slf4j
-class PgLocalConnection {
+class PgLocalConnection implements PgRawConnection {
 
   public static final int SuppressBegin = QueryExecutor.QUERY_SUPPRESS_BEGIN;
 
   private final PgConnection conn;
+
   private final QueryExecutor exec;
 
   private final PgThreadPooledClient pool;
@@ -68,6 +69,16 @@ class PgLocalConnection {
       // either way, we abosrb and handle later.
       log.error("exception setting auto commit mode", e);
     }
+  }
+
+  @Override
+  public PgConnection getConnection() {
+    return this.conn;
+  }
+
+  @Override
+  public PgThreadPooledClient getClient() {
+    return this.pool;
   }
 
   /**

@@ -26,7 +26,7 @@ public abstract class AbstractQueryExecutionBuilder<T> {
 
   protected abstract T result(int i, Tuple tuple);
 
-  protected AbstractQueryExecutionBuilder(PostgresQueryProcessor client) {
+  protected AbstractQueryExecutionBuilder(final PostgresQueryProcessor client) {
     this.client = client;
   }
 
@@ -42,23 +42,35 @@ public abstract class AbstractQueryExecutionBuilder<T> {
     return this.add("ROLLBACK");
   }
 
-  public T set(String key, long value) {
+  public T setLocal(final String key, final long value) {
+    final Tuple tuple = Tuple.of(this.client.createQuery(String.format("SET LOCAL %s = %d", key, value)), null);
+    this.queries.add(tuple);
+    return this.result(this.queries.size() - 1, tuple);
+  }
+
+  public T set(final String key, final long value) {
     final Tuple tuple = Tuple.of(this.client.createQuery(String.format("SET %s = %d", key, value)), null);
     this.queries.add(tuple);
     return this.result(this.queries.size() - 1, tuple);
   }
 
-  public T set(String key, String value) {
+  public T setLocal(final String key, final String value) {
+    final Tuple tuple = Tuple.of(this.client.createQuery(String.format("SET LOCAL %s = %s", key, value)), null);
+    this.queries.add(tuple);
+    return this.result(this.queries.size() - 1, tuple);
+  }
+
+  public T set(final String key, final String value) {
     final Tuple tuple = Tuple.of(this.client.createQuery(String.format("SET %s = %s", key, value)), null);
     this.queries.add(tuple);
     return this.result(this.queries.size() - 1, tuple);
   }
 
-  public T add(String sql) {
+  public T add(final String sql) {
     return this.add(this.client.createQuery(sql));
   }
 
-  public T add(Query sql, Object... params) {
+  public T add(final Query sql, final Object... params) {
     final Query query = this.client.createQuery(sql);
     final Tuple tuple = Tuple.of(query, query.createParameters().setFrom(params).validate());
     this.queries.add(tuple);

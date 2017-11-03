@@ -23,7 +23,7 @@ apply plugin: 'eclipse'
 apply plugin: 'net.ltgt.apt'
 apply plugin: 'maven-publish'
 
-version = '0.4'
+version = '0.5'
 
 println JavaVersion.current()
 

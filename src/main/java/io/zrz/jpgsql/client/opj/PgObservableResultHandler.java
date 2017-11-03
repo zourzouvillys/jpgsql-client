@@ -110,11 +110,17 @@ public class PgObservableResultHandler extends ResultHandlerBase {
 
   /**
    * the only caller of handleWarning gets this:
+   *
+   * this is from any connection messages, which are, for example, debugging
+   * information not directly related to the query (or explain output).
+   *
+   * we pass the warning on the same as others.
+   *
    */
 
   @Override
   public void handleWarning(final SQLWarning warning) {
-    log.warn("SQL warning ({}): {}", warning.getClass(), warning);
+    log.debug("SQL warning ({}): {}", warning.getClass(), warning);
     final PSQLWarning warn = (PSQLWarning) warning;
     this.emitter.onNext(new WarningResult(this.statementId, warn.getServerErrorMessage()));
   }
