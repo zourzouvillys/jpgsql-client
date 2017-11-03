@@ -23,9 +23,7 @@ apply plugin: 'eclipse'
 apply plugin: 'net.ltgt.apt'
 apply plugin: 'maven-publish'
 
-version = '0.5'
-
-println JavaVersion.current()
+version = '0.6-SNAPSHOT'
 
 group = 'io.zrz.jpgsql'
 
@@ -34,6 +32,13 @@ repositories {
   maven {
     url "http://dl.bintray.com/zourzouvillys/maven"
   }
+}
+
+
+compileJava {
+  // currently build using java 8
+  sourceCompatibility = '8'
+  targetCompatibility = '8'
 }
 
 dependencies {
