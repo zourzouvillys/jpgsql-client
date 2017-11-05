@@ -54,4 +54,8 @@ public final class ErrorResult extends RuntimeException implements QueryResult {
     return QueryResultKind.ERROR;
   }
 
+  public static ErrorResult internal(final Throwable ex) {
+    return new ErrorResult(-1, ex.getMessage(), "", null, ex);
+  }
+
 }

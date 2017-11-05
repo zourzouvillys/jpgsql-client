@@ -1,7 +1,7 @@
 package io.zrz.jpgsql.client.opj;
 
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -19,18 +19,29 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
 
   private final PgThreadPooledClient pool;
 
-  public PgConnectionThreadPoolExecutor(PgThreadPooledClient pool, PostgresConnectionProperties config) {
+  public PgConnectionThreadPoolExecutor(final PgThreadPooledClient pool, final PostgresConnectionProperties config) {
+
     super(
-        config.getMinIdle(),
+        0,
         config.getMaxPoolSize(),
         config.getIdleTimeout().toMillis(),
         TimeUnit.MILLISECONDS,
-        new LinkedBlockingQueue<Runnable>(config.getMaxPoolSize() + config.getQueueDepth()));
+        new SynchronousQueue<Runnable>());
+
+    // new LinkedBlockingQueue<Runnable>(config.getMaxPoolSize() +
+    // config.getQueueDepth() + 1));
 
     this.pool = pool;
 
     super.setRejectedExecutionHandler(this);
     super.setThreadFactory(this);
+
+    super.setCorePoolSize(1);
+    super.setMaximumPoolSize(16);
+
+    this.prestartAllCoreThreads();
+
+    log.info("prestarting : core={} max={} size={}", this.getCorePoolSize(), this.getMaximumPoolSize(), this.getPoolSize());
 
   }
 
@@ -39,13 +50,26 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
    */
 
   @Override
-  public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+  public void rejectedExecution(final Runnable r, final ThreadPoolExecutor e) {
+
     log.error("execution of {} rejected", r);
+
     throw new PostgresqlCapacityExceededException();
+
   }
 
   @Override
-  public Thread newThread(Runnable r) {
+  protected void beforeExecute(final Thread t, final Runnable r) {
+    super.beforeExecute(t, r);
+  }
+
+  @Override
+  protected void afterExecute(final Runnable r, final Throwable t) {
+    super.afterExecute(r, t);
+  }
+
+  @Override
+  public Thread newThread(final Runnable r) {
     return new PgConnectionThread(this.pool, r);
   }
 

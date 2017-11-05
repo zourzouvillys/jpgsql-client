@@ -7,6 +7,7 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.jdbc.PreferQueryMode;
 
+import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 
 import io.reactivex.BackpressureStrategy;
@@ -68,8 +69,6 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
     this.listener = listener;
 
-    this.pool = new PgConnectionThreadPoolExecutor(this, config);
-
     this.config = config;
 
     this.ds = new PGSimpleDataSource();
@@ -88,8 +87,9 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       this.ds.setDatabaseName(config.getDbname());
     }
 
+    this.ds.setApplicationName("jpgsql");
     this.ds.setReWriteBatchedInserts(false);
-    this.ds.setAssumeMinServerVersion("9.5");
+    this.ds.setAssumeMinServerVersion("9.6");
     this.ds.setPreparedStatementCacheQueries(10000);
     this.ds.setPreparedStatementCacheSizeMiB(10);
     this.ds.setPrepareThreshold(1);
@@ -98,13 +98,18 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     this.ds.setDisableColumnSanitiser(true);
 
     this.ds.setSocketTimeout(10);
-    this.ds.setConnectTimeout(Ints.checkedCast(config.getConnectTimeout().toMillis()));
+
+    this.ds.setConnectTimeout((Ints.checkedCast(config.getConnectTimeout().toMillis()) / 1000) + 1);
     this.ds.setPreferQueryMode(PreferQueryMode.EXTENDED_CACHE_EVERYTHING);
     this.ds.setTcpKeepAlive(true);
 
     if (this.config.isReadOnly()) {
       this.ds.setReadOnly(true);
     }
+
+    log.debug("connparm {}", this.ds);
+
+    this.pool = new PgConnectionThreadPoolExecutor(this, config);
 
   }
 
@@ -114,6 +119,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
   PgConnection createConnection() throws SQLException {
     // new connection
+    Preconditions.checkState(this.ds != null);
     final PgConnection conn = (PgConnection) this.ds.getConnection();
     return conn;
   }
@@ -124,8 +130,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       try {
         final PgQueryRunner runner = new PgQueryRunner(query, params, emitter);
         this.pool.execute(runner);
-      } catch (final Exception ex) {
-        log.warn("failed to dispatch work", ex);
+      } catch (final Throwable ex) {
+        log.warn("failed to dispatch work", ex.getMessage());
         emitter.onError(ex);
       }
     }, BackpressureStrategy.ERROR);
@@ -155,7 +161,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     try {
       this.pool.execute(runner);
     } catch (final Exception ex) {
-      log.warn("failed to dispatch work", ex);
+      log.warn("failed to open session", ex);
       runner.failed(ex);
     }
     return runner;
@@ -170,7 +176,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   public static PgThreadPooledClient create(final String hostname, final String dbname) {
-    return create(hostname, dbname, 10);
+    return create(hostname, dbname, 8);
   }
 
   public static PgThreadPooledClient create(final String hostname, final String dbname, final int maxPoolSize) {

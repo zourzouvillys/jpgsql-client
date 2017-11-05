@@ -21,7 +21,7 @@ class PgQueryRunner implements Runnable {
   private final Query query;
   private final QueryParameters params;
 
-  public PgQueryRunner(Query query, QueryParameters params, FlowableEmitter<QueryResult> emitter) {
+  public PgQueryRunner(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter) {
     this.emitter = emitter;
     this.query = query;
     this.params = params;
@@ -33,20 +33,26 @@ class PgQueryRunner implements Runnable {
    * @throws SQLException
    */
 
-  private void run(PgLocalConnection conn) throws SQLException {
+  private void run(final PgLocalConnection conn) throws SQLException {
     conn.execute(this.query, this.params, this.emitter, PgLocalConnection.SuppressBegin);
   }
 
   @Override
   public void run() {
-    log.trace("running query");
+
     try {
+
       this.run(PgConnectionThread.connection());
+
+      this.emitter.onComplete();
+
     } catch (final SQLException ex) {
       // Any propagated SQLException results in the connection being closed.
+      ex.printStackTrace();
       PgConnectionThread.close();
       this.emitter.onError(new PostgresqlUnavailableException(ex));
     } catch (final Throwable ex) {
+      ex.printStackTrace();
       this.emitter.onError(new PostgresqlUnavailableException(ex));
     }
   }
