@@ -2,8 +2,8 @@ jdk:
   - oraclejdk8
 
 before_install:
-  - ./gradlew clean
+  - ./gradlew -q clean
 
 install:
-  - ./gradlew assemble
+  - ./gradlew -q assemble
 
