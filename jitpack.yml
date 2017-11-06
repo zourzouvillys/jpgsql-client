@@ -5,5 +5,5 @@ before_install:
   - ./gradlew -q clean
 
 install:
-  - ./gradlew -q assemble
+  - ./gradlew -q install
 
