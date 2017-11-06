@@ -125,31 +125,20 @@ public class PgObservableResultHandler extends ResultHandlerBase {
     this.emitter.onNext(new WarningResult(this.statementId, warn.getServerErrorMessage()));
   }
 
-  // should this perhaps cause onError, instead?
+  /**
+   * this is called for each error, which there may be multiple.
+   *
+   * it only logs to trace, because we assume the client will handle.
+   *
+   * TODO: perhaps it should raise an onError, instead?
+   */
+
   @Override
   public void handleError(final SQLException error) {
-
-    log.warn("error ({}: {}", error.getClass(), error);
-
     final PSQLException err = (PSQLException) error;
-
-    // log.info("ERR: {}", err.getServerErrorMessage().getColumn());
-    // log.info("ERR: {}", err.getServerErrorMessage().getConstraint());
-    // log.info("ERR: {}", err.getServerErrorMessage().getDatatype());
-    // log.info("ERR: {}", err.getServerErrorMessage().getDetail());
-    // log.info("ERR: {}", err.getServerErrorMessage().getFile());
-    // log.info("ERR: {}", err.getServerErrorMessage().getHint());
-    // log.info("ERR: {}", err.getServerErrorMessage().getLine());
-    // log.info("ERR: {}", err.getServerErrorMessage().getMessage());
-    // log.info("ERR: {}", err.getServerErrorMessage().getPosition());
-    // log.info("ERR: {}", err.getServerErrorMessage().getRoutine());
-    // log.info("ERR: {}", err.getServerErrorMessage().getSchema());
-    // log.info("ERR: {}", err.getServerErrorMessage().getSeverity());
-    // log.info("ERR: {}", err.getServerErrorMessage().getSQLState());
-    // log.info("ERR: {}", err.getServerErrorMessage().getTable());
-    // log.info("ERR: {}", err.getServerErrorMessage().getWhere());
-
-    this.emitter.onNext(new ErrorResult(this.statementId, error.getMessage(), err.getSQLState(), err.getServerErrorMessage(), error.getCause()));
+    final ErrorResult res = new ErrorResult(this.statementId, error.getMessage(), err.getSQLState(), err.getServerErrorMessage(), error.getCause());
+    log.trace("SQL error received ({}: {}", error.getClass(), res);
+    this.emitter.onNext(res);
 
   }
 

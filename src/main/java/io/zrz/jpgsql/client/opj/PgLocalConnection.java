@@ -5,6 +5,7 @@ import java.sql.SQLWarning;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -41,7 +42,23 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class PgLocalConnection implements PgRawConnection {
 
+  /**
+   * automatic begin on 1st statement should not be done.
+   */
+
   public static final int SuppressBegin = QueryExecutor.QUERY_SUPPRESS_BEGIN;
+
+  /**
+   * this query is unlikely to be reused.
+   */
+
+  public static final int OneShot = QueryExecutor.QUERY_ONESHOT;
+
+  /**
+   * not expecting results
+   */
+
+  public static final int NoResults = QueryExecutor.QUERY_NO_RESULTS;
 
   private final PgConnection conn;
 
@@ -61,9 +78,8 @@ class PgLocalConnection implements PgRawConnection {
     this.conn = conn;
     this.exec = this.conn.getQueryExecutor();
     try {
-
+      log.debug("disabling auto-commit");
       conn.setAutoCommit(false);
-
     } catch (final SQLException e) {
       // should this ever fail?
       // either way, we abosrb and handle later.
@@ -290,6 +306,28 @@ class PgLocalConnection implements PgRawConnection {
   @SneakyThrows
   private String escapeIdentifier(final String channel) {
     return this.conn.escapeString(channel);
+  }
+
+  @Override
+  public void blockingSet(final Map<String, String> clientProperties) {
+
+    final CombinedQuery send = new CombinedQuery(
+        clientProperties.entrySet().stream()
+            .map(x -> String.format("SET %s TO %s", x.getKey(), x.getValue()))
+            .map(x -> new SimpleQuery(x))
+            .collect(Collectors.toList()));
+
+    Flowable.<QueryResult>create(subscribe -> this.execute(send, null, subscribe, SuppressBegin), BackpressureStrategy.BUFFER)
+        .blockingForEach(x -> log.debug("set completed: {}", x));
+
+  }
+
+  @Override
+  public void blockingExecute(final String string) {
+
+    Flowable.<QueryResult>create(subscribe -> this.execute(new SimpleQuery(string), null, subscribe, SuppressBegin), BackpressureStrategy.BUFFER)
+        .blockingForEach(x -> log.debug("executed: {}", x));
+
   }
 
 }

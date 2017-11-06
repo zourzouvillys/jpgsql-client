@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * dispatched in the {@link PgConnectionThreadPoolExecutor} to send and receive
- * the results of a query.
+ * the results of a *single* query, running atomically inside a txn block.
  */
 
 @Slf4j
@@ -34,7 +34,28 @@ class PgQueryRunner implements Runnable {
    */
 
   private void run(final PgLocalConnection conn) throws SQLException {
-    conn.execute(this.query, this.params, this.emitter, PgLocalConnection.SuppressBegin);
+
+    try {
+
+      conn.execute(this.query, this.params, this.emitter, PgLocalConnection.SuppressBegin);
+
+    } finally {
+
+      switch (conn.transactionState()) {
+        case OPEN:
+          log.warn("open transaction after one-shot command");
+          conn.rollback();
+          break;
+        case FAILED:
+          log.debug("txn failed, rolling back");
+          conn.rollback();
+          break;
+        case IDLE:
+        default:
+          break;
+      }
+    }
+
   }
 
   @Override
