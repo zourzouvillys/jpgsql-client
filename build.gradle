@@ -13,9 +13,13 @@ buildscript {
 	
 }
 
+
 plugins {
   id "com.jfrog.bintray" version "1.7.3"
 }
+
+version = '0.6-SNAPSHOT'
+group = 'io.zrz.jpgsql'
 
 apply plugin: 'pride'
 apply plugin: 'java-library'
@@ -23,9 +27,6 @@ apply plugin: 'eclipse'
 apply plugin: 'net.ltgt.apt'
 apply plugin: 'maven-publish'
 
-version = '0.6-SNAPSHOT'
-
-group = 'io.zrz.jpgsql'
 
 repositories {
   jcenter()
@@ -66,6 +67,7 @@ dependencies {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '4.2.1'
+    scriptFile = './gradle/gradlew'
 }
 
 
