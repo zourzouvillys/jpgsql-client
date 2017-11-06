@@ -18,8 +18,8 @@ plugins {
   id "com.jfrog.bintray" version "1.7.3"
 }
 
-version = '0.6-SNAPSHOT'
-group = 'io.zrz.jpgsql'
+version = 'master-SNAPSHOT'
+group = 'io.zrz'
 
 apply plugin: 'pride'
 apply plugin: 'java-library'
@@ -30,14 +30,11 @@ apply plugin: 'maven-publish'
 
 repositories {
   jcenter()
-  maven {
-    url "http://dl.bintray.com/zourzouvillys/maven"
-  }
+  maven { url "http://dl.bintray.com/zourzouvillys/maven" }
 }
 
 
 compileJava {
-  // currently build using java 8
   sourceCompatibility = '8'
   targetCompatibility = '8'
 }
@@ -67,7 +64,10 @@ dependencies {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '4.2.1'
-    scriptFile = './gradlew'
+    scriptFile = './.gradle/gradlew'
+    jarFile = './.gradle/wrapper/wrapper.jar'
+    // distributionBase = ''
+    // archiveBase = './.gradle/wrapper/'
 }
 
 
