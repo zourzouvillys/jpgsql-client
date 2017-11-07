@@ -98,7 +98,10 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     this.ds.setDisableColumnSanitiser(true);
 
     this.ds.setSsl(this.config.isSsl());
-    this.ds.setSslMode(this.config.getSslMode());
+
+    if (this.config.isSsl()) {
+      this.ds.setSslMode(this.config.getSslMode());
+    }
 
     this.ds.setSocketTimeout(10);
 
@@ -143,6 +146,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   @Override
   public Flowable<QueryResult> submit(final Query query) {
     return this.submit(query, null);
+
   }
 
   @Override
