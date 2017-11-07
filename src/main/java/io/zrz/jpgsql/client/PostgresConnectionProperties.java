@@ -90,4 +90,10 @@ public class PostgresConnectionProperties {
   @Default
   private boolean readOnly = false;
 
+  @Default
+  private boolean ssl = false;
+
+  @Default
+  private String sslMode = null;
+
 }

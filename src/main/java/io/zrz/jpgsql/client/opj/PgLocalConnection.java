@@ -27,10 +27,12 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.zrz.jpgsql.client.CombinedQuery;
+import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.NotifyMessage;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
+import io.zrz.jpgsql.client.QueryResultKind;
 import io.zrz.jpgsql.client.SimpleQuery;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -241,9 +243,7 @@ class PgLocalConnection implements PgRawConnection {
     // ourselves.
 
     if (warnings != null) {
-
-      log.warn("SQL connection warning: {}", warnings);
-
+      log.debug("SQL connection warning: {}", warnings);
     }
 
     if (this.pool.getListener() != null) {
@@ -326,7 +326,15 @@ class PgLocalConnection implements PgRawConnection {
   public void blockingExecute(final String string) {
 
     Flowable.<QueryResult>create(subscribe -> this.execute(new SimpleQuery(string), null, subscribe, SuppressBegin), BackpressureStrategy.BUFFER)
-        .blockingForEach(x -> log.debug("executed: {}", x));
+        .map(x -> {
+          if (x.getKind() == QueryResultKind.ERROR) {
+            throw (ErrorResult) x;
+          }
+          return x;
+        })
+        .blockingForEach(x -> {
+          log.debug("executed: {}", x);
+        });
 
   }
 
