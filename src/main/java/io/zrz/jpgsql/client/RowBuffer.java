@@ -1,5 +1,8 @@
 package io.zrz.jpgsql.client;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+
 import io.zrz.visitors.annotations.Visitable;
 
 @Visitable.Type
@@ -102,6 +105,12 @@ public interface RowBuffer extends QueryResult {
 
   String strval(int row, int col);
 
+  /**
+   * a numeric type with precision, e.g float4. float8, etc.
+   */
+
+  BigDecimal decimal(int row, int col);
+
   default boolean empty() {
     return count() == 0;
   }
@@ -110,5 +119,7 @@ public interface RowBuffer extends QueryResult {
   default QueryResultKind getKind() {
     return QueryResultKind.RESULTS;
   }
+
+  Instant instant(int row, int col);
 
 }
