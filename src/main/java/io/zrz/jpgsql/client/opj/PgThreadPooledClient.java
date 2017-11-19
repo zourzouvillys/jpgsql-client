@@ -2,10 +2,12 @@ package io.zrz.jpgsql.client.opj;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Properties;
 
 import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.jdbc.PreferQueryMode;
+import org.postgresql.util.HostSpec;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
@@ -23,12 +25,9 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * the primary run thread never block on DB io. Instead, we expose a
- * Connection-like API that only deals with prepared statements.
- *
- * the connections are run on background threads. we leverage the caching thread
- * pools to avoid doing much ourselves.
- *
+ * the primary run thread never block on DB io. Instead, we expose a Connection-like API that only deals with prepared
+ * statements. the connections are run on background threads. we leverage the caching thread pools to avoid doing much
+ * ourselves.
  */
 
 @Slf4j
@@ -124,10 +123,17 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   PgConnection createConnection() throws SQLException {
+
     // new connection
     Preconditions.checkState(this.ds != null);
-    final PgConnection conn = (PgConnection) this.ds.getConnection();
-    return conn;
+
+    HostSpec spec = new HostSpec(config.getHostname(), config.getPort());
+    Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
+
+    info.setProperty("password", config.getPassword());
+
+    return new PgConnection(new HostSpec[] { spec }, this.getUsername(), this.config.getDbname(), info, ds.getUrl());
+
   }
 
   @Override
@@ -136,7 +142,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       try {
         final PgQueryRunner runner = new PgQueryRunner(query, params, emitter);
         this.pool.execute(runner);
-      } catch (final Throwable ex) {
+      }
+      catch (final Throwable ex) {
         log.warn("failed to dispatch work", ex.getMessage());
         emitter.onError(ex);
       }
@@ -167,7 +174,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     final PgTransactionalSession runner = new PgTransactionalSession(this);
     try {
       this.pool.execute(runner);
-    } catch (final Exception ex) {
+    }
+    catch (final Exception ex) {
       log.warn("failed to open session", ex);
       runner.failed(ex);
     }
@@ -208,10 +216,12 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
           final PgLocalConnection conn = PgConnectionThread.connection();
           try {
             conn.notifications(channels, emitter);
-          } finally {
+          }
+          finally {
             conn.close();
           }
-        } catch (final Throwable th) {
+        }
+        catch (final Throwable th) {
           emitter.onError(th);
         }
       });

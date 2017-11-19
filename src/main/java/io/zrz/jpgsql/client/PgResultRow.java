@@ -2,45 +2,53 @@ package io.zrz.jpgsql.client;
 
 import java.util.Optional;
 
-public class PgResultRow {
+public class PgResultRow implements ResultRow {
 
   private final RowBuffer buffer;
   private final int row;
 
-  public PgResultRow(RowBuffer buffer, int row) {
+  public PgResultRow(final RowBuffer buffer, final int row) {
     this.buffer = buffer;
     this.row = row;
   }
 
+  @Override
   public int statementId() {
     return this.buffer.statementId();
   }
 
-  public ResultField field(int index) {
+  @Override
+  public ResultField field(final int index) {
     return this.buffer.field(index);
   }
 
+  @Override
   public int fields() {
     return this.buffer.fields();
   }
 
-  public int intval(int field) {
+  @Override
+  public int intval(final int field) {
     return this.buffer.intval(this.row, field);
   }
 
-  public int intval(int field, int defaultValue) {
+  @Override
+  public int intval(final int field, final int defaultValue) {
     return this.buffer.intval(this.row, field, defaultValue);
   }
 
-  public String strval(int field) {
+  @Override
+  public String strval(final int field) {
     return this.buffer.strval(this.row, field);
   }
 
-  public Optional<byte[]> bytes(int field) {
+  @Override
+  public Optional<byte[]> bytes(final int field) {
     return Optional.ofNullable(this.buffer.bytes(this.row, field));
   }
 
-  public long longval(int field) {
+  @Override
+  public long longval(final int field) {
     return this.buffer.longval(this.row, field);
   }
 

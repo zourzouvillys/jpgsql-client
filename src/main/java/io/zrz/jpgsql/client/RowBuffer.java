@@ -2,11 +2,17 @@ package io.zrz.jpgsql.client;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+
+import io.reactivex.Flowable;
 import io.zrz.visitors.annotations.Visitable;
 
 @Visitable.Type
-public interface RowBuffer extends QueryResult {
+public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
 
   /**
    * the statement number in this query that this result is for. For each
@@ -121,5 +127,13 @@ public interface RowBuffer extends QueryResult {
   }
 
   Instant instant(int row, int col);
+
+  @Override
+  default void subscribe(final Subscriber<? super ResultRow> s) {
+    Flowable.fromIterable(IntStream.range(0, count())
+        .mapToObj(x -> (ResultRow) new PgResultRow(this, x))
+        .collect(Collectors.toList()))
+        .subscribe(s);
+  }
 
 }

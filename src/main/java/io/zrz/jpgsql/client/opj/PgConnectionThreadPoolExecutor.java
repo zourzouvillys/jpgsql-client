@@ -1,10 +1,13 @@
 package io.zrz.jpgsql.client.opj;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import io.zrz.jpgsql.client.PostgresConnectionProperties;
 import io.zrz.jpgsql.client.PostgresqlCapacityExceededException;
@@ -15,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Slf4j
-public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implements ThreadFactory, RejectedExecutionHandler {
+public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implements ThreadFactory, RejectedExecutionHandler, UncaughtExceptionHandler {
 
   private final PgThreadPooledClient pool;
 
@@ -31,17 +34,24 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
     // new LinkedBlockingQueue<Runnable>(config.getMaxPoolSize() +
     // config.getQueueDepth() + 1));
 
+    // super.setThreadFactory(this);
+
+    this.setThreadFactory(new ThreadFactoryBuilder()
+        .setThreadFactory(this)
+        .setUncaughtExceptionHandler(this)
+        .setNameFormat("psql-%d")
+        .build());
+
     this.pool = pool;
 
     super.setRejectedExecutionHandler(this);
-    super.setThreadFactory(this);
 
     super.setCorePoolSize(1);
     super.setMaximumPoolSize(16);
 
     this.prestartAllCoreThreads();
 
-    log.info("prestarting : core={} max={} size={}", this.getCorePoolSize(), this.getMaximumPoolSize(), this.getPoolSize());
+    log.debug("prestarting : core={} max={} size={}", this.getCorePoolSize(), this.getMaximumPoolSize(), this.getPoolSize());
 
   }
 
@@ -71,6 +81,11 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
   @Override
   public Thread newThread(final Runnable r) {
     return new PgConnectionThread(this.pool, r);
+  }
+
+  @Override
+  public void uncaughtException(Thread t, Throwable e) {
+    log.error("error in group " + t.getThreadGroup().getName() + " failed with an uncaught exception", e);
   }
 
 }
