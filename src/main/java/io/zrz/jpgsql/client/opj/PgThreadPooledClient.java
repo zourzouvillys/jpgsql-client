@@ -134,6 +134,10 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     HostSpec spec = new HostSpec(config.getHostname(), config.getPort());
     Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
 
+    if (info == null) {
+      info = new Properties();
+    }
+
     if (config != null) {
       info.setProperty("password", config.getPassword());
     }
