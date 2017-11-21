@@ -151,10 +151,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
   @Override
   public Flowable<QueryResult> submit(final Query query, final QueryParameters params) {
+    final AmbientContext ctx = AmbientContext.capture();
     return Flowable.create(emitter -> {
       try {
-        final PgQueryRunner runner = new PgQueryRunner(query, params, emitter);
-        this.pool.execute(runner);
+        final PgQueryRunner runner = new PgQueryRunner(query, params, emitter, ctx);
+        this.pool.execute(ctx.wrap(runner));
       }
       catch (final Throwable ex) {
         log.warn("failed to dispatch work", ex.getMessage());

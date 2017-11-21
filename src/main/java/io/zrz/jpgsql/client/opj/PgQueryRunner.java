@@ -10,8 +10,8 @@ import io.zrz.jpgsql.client.QueryResult;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * dispatched in the {@link PgConnectionThreadPoolExecutor} to send and receive
- * the results of a *single* query, running atomically inside a txn block.
+ * dispatched in the {@link PgConnectionThreadPoolExecutor} to send and receive the results of a *single* query, running
+ * atomically inside a txn block.
  */
 
 @Slf4j
@@ -21,7 +21,7 @@ class PgQueryRunner implements Runnable {
   private final Query query;
   private final QueryParameters params;
 
-  public PgQueryRunner(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter) {
+  public PgQueryRunner(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, AmbientContext ctx) {
     this.emitter = emitter;
     this.query = query;
     this.params = params;
@@ -39,7 +39,8 @@ class PgQueryRunner implements Runnable {
 
       conn.execute(this.query, this.params, this.emitter, PgLocalConnection.SuppressBegin);
 
-    } finally {
+    }
+    finally {
 
       switch (conn.transactionState()) {
         case OPEN:
@@ -67,12 +68,14 @@ class PgQueryRunner implements Runnable {
 
       this.emitter.onComplete();
 
-    } catch (final SQLException ex) {
+    }
+    catch (final SQLException ex) {
       // Any propagated SQLException results in the connection being closed.
       ex.printStackTrace();
       PgConnectionThread.close();
       this.emitter.onError(new PostgresqlUnavailableException(ex));
-    } catch (final Throwable ex) {
+    }
+    catch (final Throwable ex) {
       ex.printStackTrace();
       this.emitter.onError(new PostgresqlUnavailableException(ex));
     }
