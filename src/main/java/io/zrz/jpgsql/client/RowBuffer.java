@@ -2,6 +2,7 @@ package io.zrz.jpgsql.client;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -15,9 +16,8 @@ import io.zrz.visitors.annotations.Visitable;
 public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
 
   /**
-   * the statement number in this query that this result is for. For each
-   * statement provided, the statement number increments by one, regardless of
-   * it being a SELECT or command.
+   * the statement number in this query that this result is for. For each statement provided, the statement number
+   * increments by one, regardless of it being a SELECT or command.
    */
 
   @Override
@@ -32,8 +32,8 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
   /**
    * if there might be more {@link RowBuffer} instances to follow.
    *
-   * there is guarantee that there are more. listen for the end using the
-   * CommandStatus message, or the stream being marked as completed.
+   * there is guarantee that there are more. listen for the end using the CommandStatus message, or the stream being
+   * marked as completed.
    *
    */
 
@@ -92,8 +92,8 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
    *
    * may be null.
    *
-   * also, note that a field may be returned in text or binary form, and
-   * performign the same query multiple times ay result in different format.
+   * also, note that a field may be returned in text or binary form, and performign the same query multiple times ay
+   * result in different format.
    *
    */
 
@@ -134,6 +134,12 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
         .mapToObj(x -> (ResultRow) new PgResultRow(this, x))
         .collect(Collectors.toList()))
         .subscribe(s);
+  }
+
+  default void forEach(Consumer<? super ResultRow> fe) {
+    IntStream.range(0, count())
+        .mapToObj(x -> new PgResultRow(this, x))
+        .forEach(fe);
   }
 
 }
