@@ -78,7 +78,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
     this.ds.setServerName(config.getHostname());
 
-    this.ds.setPortNumber(config.getPort());
+    if (config.getPort() != 0)
+      this.ds.setPortNumber(config.getPort());
 
     this.ds.setUser(this.getUsername());
 
@@ -131,7 +132,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     // new connection
     Preconditions.checkState(this.ds != null);
 
-    HostSpec spec = new HostSpec(config.getHostname(), config.getPort());
+    HostSpec spec = new HostSpec(config.getHostname(), config.getPort() == 0 ? 5432 : config.getPort());
     Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
 
     if (info == null) {
