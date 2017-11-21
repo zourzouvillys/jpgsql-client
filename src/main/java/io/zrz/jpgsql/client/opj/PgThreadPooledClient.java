@@ -138,7 +138,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       info = new Properties();
     }
 
-    if (config != null) {
+    if (config.getPassword() != null) {
       info.setProperty("password", config.getPassword());
     }
 
