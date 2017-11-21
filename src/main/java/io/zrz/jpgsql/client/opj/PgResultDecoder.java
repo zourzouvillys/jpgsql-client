@@ -2,6 +2,9 @@ package io.zrz.jpgsql.client.opj;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 
 import org.postgresql.core.Field;
 import org.postgresql.core.Oid;
@@ -58,6 +61,17 @@ public class PgResultDecoder {
     return new String(bs);
   }
 
+  private static DateTimeFormatter TIMEZONETZ_FORMATTER = new DateTimeFormatterBuilder()
+      .appendPattern("yyyy-MM-dd HH:mm:ss")
+      .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
+      .appendOffset("+HH", "")
+      .toFormatter();
+
+  private static DateTimeFormatter TIMEZONE_FORMATTER = new DateTimeFormatterBuilder()
+      .appendPattern("yyyy-MM-dd HH:mm:ss")
+      .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
+      .toFormatter();
+
   /**
    *
    * @param field
@@ -70,10 +84,16 @@ public class PgResultDecoder {
     final int oid = field.getOID();
 
     switch (oid) {
-      case Oid.TIMESTAMP:
+      case Oid.TIMESTAMP: {
+        if (field.getFormat() == Field.TEXT_FORMAT) {
+          return TIMEZONE_FORMATTER.parse(new String(bytes), Instant::from);
+        }
+        final long time = ByteConverter.int8(bytes, 0);
+        return Instant.ofEpochMilli(time / 1000);
+      }
       case Oid.TIMESTAMPTZ: {
         if (field.getFormat() == Field.TEXT_FORMAT) {
-          return Instant.parse(new String(bytes));
+          return TIMEZONETZ_FORMATTER.parse(new String(bytes), Instant::from);
         }
         final long time = ByteConverter.int8(bytes, 0);
         return Instant.ofEpochMilli(time / 1000);

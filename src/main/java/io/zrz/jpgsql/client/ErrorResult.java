@@ -59,71 +59,105 @@ public final class ErrorResult extends RuntimeException implements QueryResult {
   }
 
   public String getDetail() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getDetail();
   }
 
   public String getWhere() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getWhere();
   }
 
   public String getSchema() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getSchema();
   }
 
   public String getTable() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getTable();
   }
 
   public String getColumn() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getColumn();
   }
 
   public String getDatatype() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getDatatype();
   }
 
   public String getConstraint() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getConstraint();
   }
 
   public int getLine() {
+    if (this.serverErrorMessage() == null)
+      return 0;
     return this.serverErrorMessage().getLine();
   }
 
   public String getInternalQuery() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getInternalQuery();
   }
 
   public int getInternalPosition() {
+    if (this.serverErrorMessage() == null)
+      return 0;
     return this.serverErrorMessage().getInternalPosition();
   }
 
   public String getFile() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getFile();
   }
 
   public String getHint() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getHint();
   }
 
   @Override
   public String getMessage() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getMessage();
   }
 
   public int getPosition() {
+    if (this.serverErrorMessage() == null)
+      return 0;
     return this.serverErrorMessage().getPosition();
   }
 
   public String getRoutine() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getRoutine();
   }
 
   public String getSeverity() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getSeverity();
   }
 
   public String getSQLState() {
+    if (this.serverErrorMessage() == null)
+      return null;
     return this.serverErrorMessage().getSQLState();
   }
 

@@ -47,8 +47,7 @@ public class PostgresConnectionProperties {
   private int minIdle;
 
   /**
-   * how long a connection is idle before it is closed and removed from the
-   * pool.
+   * how long a connection is idle before it is closed and removed from the pool.
    */
 
   @Default
@@ -64,9 +63,8 @@ public class PostgresConnectionProperties {
   /**
    * maximum number of connections.
    *
-   * be aware that if the {@link org.postgresql} version of the PostgresClient
-   * is used and configured to use a thread for async emulation, then this will
-   * be equal to the number of threads created (urgh).
+   * be aware that if the {@link org.postgresql} version of the PostgresClient is used and configured to use a thread
+   * for async emulation, then this will be equal to the number of threads created (urgh).
    *
    */
 
@@ -76,8 +74,7 @@ public class PostgresConnectionProperties {
   /**
    * The number of queries that can be queued for execution.
    *
-   * If set to zero, this will not allow more than the {@link #getMaxPoolSize()}
-   * number of pending/executing queries.
+   * If set to zero, this will not allow more than the {@link #getMaxPoolSize()} number of pending/executing queries.
    *
    */
 
@@ -95,5 +92,8 @@ public class PostgresConnectionProperties {
 
   @Default
   private String sslMode = null;
+
+  @Default
+  private Duration socketTimeout = null;
 
 }

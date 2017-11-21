@@ -107,7 +107,9 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       this.ds.setSslMode(this.config.getSslMode());
     }
 
-    this.ds.setSocketTimeout(10);
+    if (this.config.getSocketTimeout() != null) {
+      this.ds.setSocketTimeout((int) Math.ceil(config.getSocketTimeout().toMillis() / 1000.0));
+    }
 
     this.ds.setConnectTimeout((Ints.checkedCast(config.getConnectTimeout().toMillis()) / 1000) + 1);
     this.ds.setPreferQueryMode(PreferQueryMode.EXTENDED_CACHE_EVERYTHING);
