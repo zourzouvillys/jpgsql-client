@@ -64,7 +64,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
   }
 
-  PgThreadPooledClient(final PostgresConnectionProperties config, final Listener listener) {
+  PgThreadPooledClient(PostgresConnectionProperties config, final Listener listener) {
+
+    if (config == null) {
+      config = PostgresConnectionProperties.builder().build();
+    }
 
     this.listener = listener;
 
@@ -130,7 +134,9 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     HostSpec spec = new HostSpec(config.getHostname(), config.getPort());
     Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
 
-    info.setProperty("password", config.getPassword());
+    if (config != null) {
+      info.setProperty("password", config.getPassword());
+    }
 
     return new PgConnection(new HostSpec[] { spec }, this.getUsername(), this.config.getDbname(), info, ds.getUrl());
 
