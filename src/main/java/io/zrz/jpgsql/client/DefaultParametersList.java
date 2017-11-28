@@ -7,8 +7,7 @@ import org.postgresql.core.Oid;
 import com.google.common.base.Preconditions;
 
 /**
- * Default implementation of {@link QueryParameters}. Nothing to write home
- * about.
+ * Default implementation of {@link QueryParameters}. Nothing to write home about.
  */
 
 public class DefaultParametersList implements QueryParameters {
@@ -135,23 +134,28 @@ public class DefaultParametersList implements QueryParameters {
         this.oids[i] = Oid.UNSPECIFIED;
         this.values[i] = null;
 
-      } else if (arg.getClass().isArray()) {
+      }
+      else if (arg.getClass().isArray()) {
 
         throw new IllegalArgumentException("array types not yet supported");
 
-      } else if (arg instanceof String) {
+      }
+      else if (arg instanceof String) {
 
         this.setString(i + 1, (String) arg, Oid.VARCHAR);
 
-      } else if (arg instanceof Integer) {
+      }
+      else if (arg instanceof Integer) {
 
         this.setInteger(i + 1, (int) arg);
 
-      } else if (arg instanceof Long) {
+      }
+      else if (arg instanceof Long) {
 
         this.setLong(i + 1, (long) arg);
 
-      } else {
+      }
+      else {
 
         throw new IllegalArgumentException("don't support mapping of " + arg.getClass());
 

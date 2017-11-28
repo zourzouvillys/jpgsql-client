@@ -4,6 +4,7 @@ import org.postgresql.util.PSQLState;
 import org.postgresql.util.ServerErrorMessage;
 
 import io.zrz.visitors.annotations.Visitable;
+import lombok.Getter;
 
 @Visitable.Type
 public final class ErrorResult extends RuntimeException implements QueryResult {
@@ -19,8 +20,13 @@ public final class ErrorResult extends RuntimeException implements QueryResult {
   private final Throwable cause;
   private final String state;
 
-  public ErrorResult(final int statementId, final String message, final String state, final ServerErrorMessage serverErrorMessage, final Throwable cause) {
+  @Getter
+  private Query statement;
+
+  public ErrorResult(Query statement, final int statementId, final String message, final String state, final ServerErrorMessage serverErrorMessage,
+      final Throwable cause) {
     super(message, cause);
+    this.statement = statement;
     this.statementId = statementId;
     this.state = state;
     this.message = message;
@@ -55,7 +61,7 @@ public final class ErrorResult extends RuntimeException implements QueryResult {
   }
 
   public static ErrorResult internal(final Throwable ex) {
-    return new ErrorResult(-1, ex.getMessage(), "", null, ex);
+    return new ErrorResult(null, -1, ex.getMessage(), "", null, ex);
   }
 
   public String getDetail() {

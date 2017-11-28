@@ -3,11 +3,10 @@ package io.zrz.jpgsql.client;
 import java.util.List;
 
 /**
- * represents a query that can be executed. may be a simple single statement, or
- * multiple to be executed together as a batch.
+ * represents a query that can be executed. may be a simple single statement, or multiple to be executed together as a
+ * batch.
  *
- * a {@link Query} is passed to
- * {@link PostgresClient#submit(Query, QueryParameters)} to be executed.
+ * a {@link Query} is passed to {@link PostgresClient#submit(Query, QueryParameters)} to be executed.
  *
  */
 
@@ -30,5 +29,7 @@ public interface Query {
    */
 
   List<SimpleQuery> getSubqueries();
+
+  SimpleQuery statement(int statementId);
 
 }

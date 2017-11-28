@@ -4,10 +4,13 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
+import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Ints;
 
+import io.zrz.jpgsql.client.PgResultRow;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.ResultField;
+import io.zrz.jpgsql.client.ResultRow;
 import io.zrz.jpgsql.client.RowBuffer;
 
 final class PgResultRows implements RowBuffer {
@@ -58,11 +61,16 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public int intval(final int row, final int col) {
-    final byte[] val = this.tuples.get(row)[col];
-    if (val == null) {
-      throw new NullPointerException();
+    try {
+      final byte[] val = this.tuples.get(row)[col];
+      if (val == null) {
+        throw new NullPointerException();
+      }
+      return Ints.saturatedCast(PgResultDecoder.toLong(this.fields.field(col).pgfield(), val));
     }
-    return Ints.saturatedCast(PgResultDecoder.toLong(this.fields.field(col).pgfield(), val));
+    catch (Exception ex) {
+      throw new RuntimeException(String.format("intval(%s): %s", fields.field(col), BaseEncoding.base16().encode(tuples.get(row)[col])), ex);
+    }
   }
 
   @Override
@@ -132,6 +140,11 @@ final class PgResultRows implements RowBuffer {
       return null;
     }
     return PgResultDecoder.toInstant(this.fields.field(col).pgfield(), val);
+  }
+
+  @Override
+  public ResultRow row(int offset) {
+    return new PgResultRow(this, offset);
   }
 
 }

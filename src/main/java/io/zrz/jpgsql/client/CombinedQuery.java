@@ -34,4 +34,9 @@ public class CombinedQuery implements Query {
     return this.params;
   }
 
+  @Override
+  public SimpleQuery statement(int statementId) {
+    return queries.get(statementId);
+  }
+
 }

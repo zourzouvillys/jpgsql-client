@@ -56,10 +56,10 @@ public class PgResultField implements ResultField {
     sb.append("[").append(this.col).append(":").append(this.position()).append("]");
     sb.append(" = { ");
     sb.append("oid:").append(this.oid()).append(" ");
-    sb.append("t:").append(this.tableoid()).append(" ");
-    sb.append("l:").append(this.length()).append(" ");
-    sb.append("f:").append(this.format()).append(" ");
-    sb.append("m:").append(this.modifier()).append(" ");
+    sb.append("tbl:").append(this.tableoid()).append(" ");
+    sb.append("len:").append(this.length()).append(" ");
+    sb.append("fmt:").append(this.format()).append(" ");
+    sb.append("mod:").append(this.modifier()).append(" ");
     sb.append("}");
     return sb.toString();
   }

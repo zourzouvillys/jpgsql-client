@@ -82,7 +82,8 @@ class PgLocalConnection implements PgRawConnection {
     try {
       log.debug("disabling auto-commit");
       conn.setAutoCommit(false);
-    } catch (final SQLException e) {
+    }
+    catch (final SQLException e) {
       // should this ever fail?
       // either way, we abosrb and handle later.
       log.error("exception setting auto commit mode", e);
@@ -108,7 +109,8 @@ class PgLocalConnection implements PgRawConnection {
       if (!this.conn.isClosed()) {
         this.conn.close();
       }
-    } catch (final Exception ex) {
+    }
+    catch (final Exception ex) {
       // nothing to do about this ...
       log.warn("got exception closing connection", ex);
     }
@@ -200,7 +202,8 @@ class PgLocalConnection implements PgRawConnection {
         }
       }
 
-    } else {
+    }
+    else {
 
       pl = null;
 
@@ -229,7 +232,8 @@ class PgLocalConnection implements PgRawConnection {
 
       this.exec.execute(pgquery, pl, new PgObservableResultHandler(query, emitter), 0, 0, flags);
 
-    } finally {
+    }
+    finally {
       // any cleanup?
     }
 
@@ -293,7 +297,8 @@ class PgLocalConnection implements PgRawConnection {
 
       }
 
-    } catch (final SQLException e) {
+    }
+    catch (final SQLException e) {
 
       if (!emitter.tryOnError(e)) {
         log.warn("undeliverable error from notifications", e);

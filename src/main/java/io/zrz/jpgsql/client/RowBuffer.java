@@ -131,15 +131,17 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
   @Override
   default void subscribe(final Subscriber<? super ResultRow> s) {
     Flowable.fromIterable(IntStream.range(0, count())
-        .mapToObj(x -> (ResultRow) new PgResultRow(this, x))
+        .mapToObj(this::row)
         .collect(Collectors.toList()))
         .subscribe(s);
   }
 
   default void forEach(Consumer<? super ResultRow> fe) {
     IntStream.range(0, count())
-        .mapToObj(x -> new PgResultRow(this, x))
+        .mapToObj(this::row)
         .forEach(fe);
   }
+
+  ResultRow row(int offset);
 
 }

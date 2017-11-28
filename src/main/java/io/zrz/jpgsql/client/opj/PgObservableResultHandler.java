@@ -58,7 +58,8 @@ public class PgObservableResultHandler extends ResultHandlerBase {
       // there were no results
       this.emitter.onNext(new PgResultRows(this.query, this.statementId, ifields, Collections.emptyList(), true));
 
-    } else {
+    }
+    else {
 
       int offset = 0;
       int remain = tuples.size();
@@ -95,7 +96,8 @@ public class PgObservableResultHandler extends ResultHandlerBase {
     // this.totalRows, this.statementId, this.getException());
     if (this.getException() != null) {
       this.emitter.onError(this.getException());
-    } else {
+    }
+    else {
       this.emitter.onComplete();
     }
   }
@@ -111,8 +113,8 @@ public class PgObservableResultHandler extends ResultHandlerBase {
   /**
    * the only caller of handleWarning gets this:
    *
-   * this is from any connection messages, which are, for example, debugging
-   * information not directly related to the query (or explain output).
+   * this is from any connection messages, which are, for example, debugging information not directly related to the
+   * query (or explain output).
    *
    * we pass the warning on the same as others.
    *
@@ -136,7 +138,13 @@ public class PgObservableResultHandler extends ResultHandlerBase {
   @Override
   public void handleError(final SQLException error) {
     final PSQLException err = (PSQLException) error;
-    final ErrorResult res = new ErrorResult(this.statementId, error.getMessage(), err.getSQLState(), err.getServerErrorMessage(), error.getCause());
+    final ErrorResult res = new ErrorResult(
+        query.statement(this.statementId),
+        this.statementId,
+        error.getMessage(),
+        err.getSQLState(),
+        err.getServerErrorMessage(),
+        error.getCause());
     log.trace("SQL error received ({}: {}", error.getClass(), res);
     this.emitter.onNext(res);
 

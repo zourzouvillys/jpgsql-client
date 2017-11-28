@@ -2,6 +2,8 @@ package io.zrz.jpgsql.client.opj;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
@@ -69,7 +71,7 @@ public class PgResultDecoder {
 
   private static DateTimeFormatter TIMEZONE_FORMATTER = new DateTimeFormatterBuilder()
       .appendPattern("yyyy-MM-dd HH:mm:ss")
-      .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
+      .appendFraction(ChronoField.MILLI_OF_SECOND, 0, 3, true)
       .toFormatter();
 
   /**
@@ -86,10 +88,14 @@ public class PgResultDecoder {
     switch (oid) {
       case Oid.TIMESTAMP: {
         if (field.getFormat() == Field.TEXT_FORMAT) {
-          return TIMEZONE_FORMATTER.parse(new String(bytes), Instant::from);
+
+          // values.put(field.label(), TIMEZONE_FORMATTER.parse(rows.strval(idx, i),
+          // LocalDateTime::from).atOffset(ZoneOffset.UTC).toInstant());
+
+          return TIMEZONE_FORMATTER.parse(new String(bytes), LocalDateTime::from).atOffset(ZoneOffset.UTC).toInstant();
         }
         final long time = ByteConverter.int8(bytes, 0);
-        return Instant.ofEpochMilli(time / 1000);
+        return LocalDateTime.of(2000, 1, 1, 0, 0).toInstant(ZoneOffset.UTC).plusMillis(time / 1000);
       }
       case Oid.TIMESTAMPTZ: {
         if (field.getFormat() == Field.TEXT_FORMAT) {

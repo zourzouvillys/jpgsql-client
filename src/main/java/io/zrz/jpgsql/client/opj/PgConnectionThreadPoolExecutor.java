@@ -1,6 +1,7 @@
 package io.zrz.jpgsql.client.opj;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
@@ -29,10 +30,12 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
         config.getMaxPoolSize(),
         config.getIdleTimeout().toMillis(),
         TimeUnit.MILLISECONDS,
-        new SynchronousQueue<Runnable>());
+        (config.getQueueDepth() == 0)
+            ? new SynchronousQueue<Runnable>()
+            : new LinkedBlockingQueue<Runnable>(config.getMaxPoolSize() + config.getQueueDepth() + 1))
 
-    // new LinkedBlockingQueue<Runnable>(config.getMaxPoolSize() +
-    // config.getQueueDepth() + 1));
+    ;
+    // ;
 
     // super.setThreadFactory(this);
 
@@ -47,7 +50,7 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
     super.setRejectedExecutionHandler(this);
 
     super.setCorePoolSize(1);
-    super.setMaximumPoolSize(16);
+    super.setMaximumPoolSize(8);
 
     this.prestartAllCoreThreads();
 
@@ -61,11 +64,8 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
 
   @Override
   public void rejectedExecution(final Runnable r, final ThreadPoolExecutor e) {
-
-    log.error("execution of {} rejected", r);
-
+    log.error("execution of {} rejected terminated={}, shutdown={}", r, this.isTerminating(), this.isShutdown());
     throw new PostgresqlCapacityExceededException();
-
   }
 
   @Override

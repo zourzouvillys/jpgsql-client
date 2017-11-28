@@ -47,4 +47,17 @@ public class SimpleQuery implements Query {
     return this.sql;
   }
 
+  /**
+   * 
+   */
+
+  @Override
+  public SimpleQuery statement(int statementId) {
+    return this;
+  }
+
+  public String toString() {
+    return this.sql;
+  }
+
 }
