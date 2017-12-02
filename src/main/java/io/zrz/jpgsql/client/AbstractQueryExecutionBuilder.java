@@ -66,8 +66,8 @@ public abstract class AbstractQueryExecutionBuilder<T> {
     return this.result(this.queries.size() - 1, tuple);
   }
 
-  public T add(final String sql) {
-    return this.add(this.client.createQuery(sql));
+  public T add(final String sql, Object... params) {
+    return this.add(this.client.createQuery(sql, params.length), params);
   }
 
   public T add(final Query sql, final Object... params) {
