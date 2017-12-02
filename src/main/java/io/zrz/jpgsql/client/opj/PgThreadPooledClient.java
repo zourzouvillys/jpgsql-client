@@ -141,6 +141,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       info = new Properties();
     }
 
+    // ahem
+    info.setProperty("charSet", "UTF-8");
+    info.setProperty("characterEncoding", "UTF-8");
+    info.setProperty("useUnicode", "true");
+
     if (config.getPassword() != null) {
       info.setProperty("password", config.getPassword());
     }

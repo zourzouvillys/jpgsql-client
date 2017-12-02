@@ -1,6 +1,7 @@
 package io.zrz.jpgsql.client.opj;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -60,7 +61,7 @@ public class PgResultDecoder {
 
     }
 
-    return new String(bs);
+    return new String(bs, StandardCharsets.UTF_8);
   }
 
   private static DateTimeFormatter TIMEZONETZ_FORMATTER = new DateTimeFormatterBuilder()
