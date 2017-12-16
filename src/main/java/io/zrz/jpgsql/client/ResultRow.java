@@ -20,4 +20,6 @@ public interface ResultRow {
 
   long longval(final int field);
 
+  boolean boolval(int field);
+
 }

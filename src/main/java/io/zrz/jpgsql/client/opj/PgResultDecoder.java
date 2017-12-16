@@ -19,6 +19,7 @@ public class PgResultDecoder {
   }
 
   public static long toLong(final Field field, final byte[] bs) {
+
     final int oid = field.getOID();
 
     if (field.getFormat() == Field.TEXT_FORMAT) {
@@ -152,6 +153,22 @@ public class PgResultDecoder {
 
     throw new AssertionError(String.format("Can't convert binary field with OID %d to big decimal", oid));
 
+  }
+
+  public static boolean toBoolean(Field field, byte[] val) {
+
+    final int oid = field.getOID();
+
+    if (field.getFormat() == Field.TEXT_FORMAT) {
+      return val[0] == 't' ? true : false;
+    }
+
+    switch (oid) {
+      case Oid.BOOL:
+        return val[0] == 1 ? true : false;
+    }
+
+    throw new AssertionError(String.format("Can't convert binary field with OID %d to long", oid));
   }
 
 }

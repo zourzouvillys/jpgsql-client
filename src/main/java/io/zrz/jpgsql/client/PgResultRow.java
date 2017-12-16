@@ -52,4 +52,9 @@ public class PgResultRow implements ResultRow {
     return this.buffer.longval(this.row, field);
   }
 
+  @Override
+  public boolean boolval(int field) {
+    return buffer.boolval(this.row, field);
+  }
+
 }

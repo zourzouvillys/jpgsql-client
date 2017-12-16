@@ -143,6 +143,15 @@ final class PgResultRows implements RowBuffer {
   }
 
   @Override
+  public boolean boolval(int row, int field) {
+    final byte[] val = this.tuples.get(row)[field];
+    if (val == null) {
+      throw new NullPointerException();
+    }
+    return PgResultDecoder.toBoolean(this.fields.field(field).pgfield(), val);
+  }
+
+  @Override
   public ResultRow row(int offset) {
     return new PgResultRow(this, offset);
   }

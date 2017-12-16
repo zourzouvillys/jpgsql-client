@@ -183,6 +183,11 @@ class PgLocalConnection implements PgRawConnection {
           case Oid.UUID:
             pl.setBinaryParameter(i, (byte[]) params.getValue(i), oid);
             break;
+          case Oid.BYTEA: {
+            byte[] bytes = (byte[]) params.getValue(i);
+            pl.setBytea(i, bytes, 0, bytes.length);
+            break;
+          }
           case Oid.TEXT:
           case Oid.VARCHAR:
             pl.setStringParameter(i, (String) params.getValue(i), oid);

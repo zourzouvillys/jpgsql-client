@@ -30,6 +30,14 @@ public abstract class AbstractQueryExecutionBuilder<T> {
     this.client = client;
   }
 
+  public boolean isEmpty() {
+    return queries.isEmpty();
+  }
+
+  public void clear() {
+    queries.clear();
+  }
+
   public T beginReadOnly() {
     return this.add("BEGIN READ ONLY");
   }

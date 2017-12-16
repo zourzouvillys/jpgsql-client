@@ -144,4 +144,6 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
 
   ResultRow row(int offset);
 
+  boolean boolval(int row, int field);
+
 }

@@ -135,6 +135,12 @@ public class DefaultParametersList implements QueryParameters {
         this.values[i] = null;
 
       }
+      else if (arg.getClass().equals(byte[].class)) {
+
+        this.oids[i] = Oid.BYTEA;
+        this.values[i] = arg;
+
+      }
       else if (arg.getClass().isArray()) {
 
         throw new IllegalArgumentException("array types not yet supported");

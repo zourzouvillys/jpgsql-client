@@ -23,9 +23,9 @@ group = 'io.zrz'
 
 apply plugin: 'pride'
 apply plugin: 'java-library'
-apply plugin: 'eclipse'
 apply plugin: 'net.ltgt.apt'
 apply plugin: 'maven-publish'
+apply plugin: 'eclipse'
 
 
 repositories {
@@ -56,10 +56,17 @@ dependencies {
 	implementation 'io.reactivex.rxjava2:rxjava:2.1.2'
 	implementation 'net.jodah:failsafe:1.0.4'
 
-	testImplementation 'ch.qos.logback:logback-classic:1.2.2'
+	testImplementation 'ch.qos.logback:logback-classic:1.2.3'
 	testImplementation 'org.slf4j:jul-to-slf4j:1.7.21'
 	
     testCompile 'junit:junit:4.12'
+    
+    //
+    	compile 'io.netty:netty-buffer:4.1.17.Final'
+	compile 'io.netty:netty-codec:4.1.17.Final'
+	compile 'io.netty:netty-handler:4.1.17.Final'
+	compile 'io.netty:netty-transport:4.1.17.Final'
+	
 	    
 }
 
