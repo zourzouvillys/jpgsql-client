@@ -43,6 +43,14 @@ public class PgResultRow implements ResultRow {
   }
 
   @Override
+  public byte[] bytes(final int field, byte[] defaultValue) {
+    byte[] value = this.buffer.bytes(this.row, field);
+    if (value == null)
+      return defaultValue;
+    return value;
+  }
+
+  @Override
   public Optional<byte[]> bytes(final int field) {
     return Optional.ofNullable(this.buffer.bytes(this.row, field));
   }
@@ -55,6 +63,11 @@ public class PgResultRow implements ResultRow {
   @Override
   public boolean boolval(int field) {
     return buffer.boolval(this.row, field);
+  }
+
+  @Override
+  public byte[] bytea(int i) {
+    return buffer.bytea(this.row, i);
   }
 
 }

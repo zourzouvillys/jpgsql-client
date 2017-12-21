@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
+import org.postgresql.core.Field;
+import org.postgresql.util.PGbytea;
+
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Ints;
 
@@ -12,6 +15,7 @@ import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.ResultField;
 import io.zrz.jpgsql.client.ResultRow;
 import io.zrz.jpgsql.client.RowBuffer;
+import lombok.SneakyThrows;
 
 final class PgResultRows implements RowBuffer {
 
@@ -154,6 +158,23 @@ final class PgResultRows implements RowBuffer {
   @Override
   public ResultRow row(int offset) {
     return new PgResultRow(this, offset);
+  }
+
+  @SneakyThrows
+  @Override
+  public byte[] bytea(int row, int i) {
+
+    Field field = this.fields.field(i).pgfield();
+
+    final int oid = field.getOID();
+
+    byte[] raw = tuples.get(row)[i];
+
+    if (field.getFormat() == Field.TEXT_FORMAT) {
+      return PGbytea.toBytes(raw);
+    }
+
+    return raw;
   }
 
 }

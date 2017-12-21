@@ -38,6 +38,14 @@ public abstract class AbstractQueryExecutionBuilder<T> {
     queries.clear();
   }
 
+  public int size() {
+    return this.queries.size();
+  }
+
+  public T begin() {
+    return this.add("BEGIN");
+  }
+
   public T beginReadOnly() {
     return this.add("BEGIN READ ONLY");
   }
@@ -98,6 +106,10 @@ public abstract class AbstractQueryExecutionBuilder<T> {
 
     return new Tuple(query, params);
 
+  }
+
+  public String toString() {
+    return this.queries.stream().map(t -> t.getQuery().toString()).collect(Collectors.joining(";\n"));
   }
 
 }

@@ -132,7 +132,6 @@ public class PgObservableResultHandler extends ResultHandlerBase {
    *
    * it only logs to trace, because we assume the client will handle.
    *
-   * TODO: perhaps it should raise an onError, instead?
    */
 
   @Override
@@ -146,7 +145,7 @@ public class PgObservableResultHandler extends ResultHandlerBase {
         err.getServerErrorMessage(),
         error.getCause());
     log.trace("SQL error received ({}: {}", error.getClass(), res);
-    this.emitter.onNext(res);
+    this.emitter.onError(res);
 
   }
 

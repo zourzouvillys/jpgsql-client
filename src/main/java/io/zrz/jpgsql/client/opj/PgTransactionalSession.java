@@ -25,8 +25,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * a seized connection for a consumer who is performing multiple operations on a
- * txn.
+ * a seized connection for a consumer who is performing multiple operations on a txn.
  */
 
 @Slf4j
@@ -67,15 +66,10 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
   }
 
   /*
-   * called from the consumer thread.
-   *
-   * we still use a Flowable so that we can stop fetching from the server on
-   * huge datasets if the consumer isn't keeping up.
-   *
-   * however, we need to make it hot - otherwise it will never start, which
-   * would be unexpected for submitting a simple "COMMMIT". although consumers
-   * should really be checkign result status ... ahem.
-   *
+   * called from the consumer thread. we still use a Flowable so that we can stop fetching from the server on huge
+   * datasets if the consumer isn't keeping up. however, we need to make it hot - otherwise it will never start, which
+   * would be unexpected for submitting a simple "COMMMIT". although consumers should really be checkign result status
+   * ... ahem.
    */
 
   @Override
@@ -98,11 +92,7 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
   }
 
   /*
-   * run in the thread with the connection
-   *
-   * any exception propogated from here will dispatch an onError on the
-   * txnstate.
-   *
+   * run in the thread with the connection any exception propogated from here will dispatch an onError on the txnstate.
    */
 
   private void run(PgLocalConnection conn) throws SQLException, InterruptedException {
@@ -119,7 +109,8 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
 
           conn.rollback();
 
-        } else {
+        }
+        else {
 
           log.info("processing work item");
           startidle = null;
@@ -128,7 +119,8 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
         }
         startidle = Instant.now();
 
-      } else {
+      }
+      else {
 
         final Duration idle = Duration.between(startidle, Instant.now());
 
@@ -185,12 +177,14 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
     log.trace("running query");
     try {
       this.run(PgConnectionThread.connection());
-    } catch (final SQLException ex) {
+    }
+    catch (final SQLException ex) {
       // Any propagated SQLException results in the connection being closed.
       this.accepting = false;
       PgConnectionThread.close();
       this.txnstate.onError(new PostgresqlUnavailableException(ex));
-    } catch (final Exception ex) {
+    }
+    catch (final Exception ex) {
       this.accepting = false;
       // TODO: release the transaction, but don't close the connection.
       this.txnstate.onError(ex);

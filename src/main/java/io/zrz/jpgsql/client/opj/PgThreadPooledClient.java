@@ -1,9 +1,9 @@
 package io.zrz.jpgsql.client.opj;
 
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Properties;
 
+import org.postgresql.PGProperty;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.jdbc.PreferQueryMode;
@@ -15,6 +15,7 @@ import com.google.common.primitives.Ints;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.zrz.jpgsql.client.AbstractPostgresClient;
+import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.NotifyMessage;
 import io.zrz.jpgsql.client.PostgresClient;
 import io.zrz.jpgsql.client.PostgresConnectionProperties;
@@ -22,6 +23,7 @@ import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -129,7 +131,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     return (this.config.getUsername() == null) ? System.getProperty("user.name") : this.config.getUsername();
   }
 
-  PgConnection createConnection() throws SQLException {
+  @SneakyThrows
+  public PgConnection createConnection() {
 
     // new connection
     Preconditions.checkState(this.ds != null);
@@ -146,6 +149,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     info.setProperty("characterEncoding", "UTF-8");
     info.setProperty("useUnicode", "true");
 
+    PGProperty.SEND_BUFFER_SIZE.set(info, 1024 * 1024);
+
     if (config.getPassword() != null) {
       info.setProperty("password", config.getPassword());
     }
@@ -156,9 +161,10 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
   @Override
   public Flowable<QueryResult> submit(final Query query, final QueryParameters params) {
+
     final AmbientContext ctx = AmbientContext.capture();
     Preconditions.checkState(!pool.isShutdown(), query.toString());
-    return Flowable.create(emitter -> {
+    Flowable<QueryResult> res = Flowable.create(emitter -> {
       try {
         final PgQueryRunner runner = new PgQueryRunner(query, params, emitter, ctx);
         this.pool.execute(ctx.wrap(runner));
@@ -168,6 +174,20 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
         emitter.onError(ex);
       }
     }, BackpressureStrategy.BUFFER);
+
+    // map so we have the stacktrace from caller, not nested.
+    // StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+    PostgresQueryException trace = new PostgresQueryException(query);
+
+    return res.onErrorResumeNext(err -> {
+      // err.addSuppressed(err);
+      trace.initCause(err);
+      if (err instanceof ErrorResult) {
+        trace.setErrorResult((ErrorResult) err);
+      }
+      return Flowable.error(trace);
+    });
+
   }
 
   @Override

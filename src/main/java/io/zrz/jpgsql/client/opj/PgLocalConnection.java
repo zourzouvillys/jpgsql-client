@@ -138,16 +138,21 @@ class PgLocalConnection implements PgRawConnection {
 
   /**
    * execute the query.
+   * 
+   * @param suppressbegin2
+   * @param stdin
    *
    * @param named
    * @throws SQLException
    */
 
-  void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter) throws SQLException {
+  void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter)
+      throws SQLException {
     this.execute(query, params, emitter, 0);
   }
 
-  void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, final int flags) throws SQLException {
+  void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, final int flags)
+      throws SQLException {
 
     final org.postgresql.core.Query pgquery = this.cache.getUnchecked(query);
 

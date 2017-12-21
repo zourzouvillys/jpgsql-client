@@ -22,4 +22,8 @@ public interface ResultRow {
 
   boolean boolval(int field);
 
+  byte[] bytes(int field, byte[] defaultValue);
+
+  byte[] bytea(int i);
+
 }

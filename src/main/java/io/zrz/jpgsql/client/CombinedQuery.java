@@ -1,6 +1,7 @@
 package io.zrz.jpgsql.client;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.EqualsAndHashCode;
 
@@ -37,6 +38,10 @@ public class CombinedQuery implements Query {
   @Override
   public SimpleQuery statement(int statementId) {
     return queries.get(statementId);
+  }
+
+  public String toString() {
+    return this.queries.stream().map(t -> t.sql()).collect(Collectors.joining(";\n"));
   }
 
 }
