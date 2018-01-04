@@ -2,6 +2,7 @@ package io.zrz.jpgsql.client.opj;
 
 import java.util.Collection;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.postgresql.PGProperty;
 import org.postgresql.ds.PGSimpleDataSource;
@@ -25,6 +26,8 @@ import io.zrz.jpgsql.client.QueryResult;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 
 /**
  * the primary run thread never block on DB io. Instead, we expose a Connection-like API that only deals with prepared
@@ -33,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Slf4j
-public class PgThreadPooledClient extends AbstractPostgresClient implements PostgresClient {
+public class PgThreadPooledClient extends AbstractPostgresClient implements PostgresClient, AutoCloseable {
 
   private final PgConnectionThreadPoolExecutor pool;
 
@@ -45,6 +48,10 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
   @Getter
   private final Listener listener;
+
+  private RetryPolicy retryPolicy = new RetryPolicy()
+      .withDelay(1, TimeUnit.SECONDS)
+      .withMaxRetries(10);
 
   /**
    *
@@ -138,11 +145,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     Preconditions.checkState(this.ds != null);
 
     HostSpec spec = new HostSpec(config.getHostname(), config.getPort() == 0 ? 5432 : config.getPort());
-    Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
-
-    if (info == null) {
-      info = new Properties();
-    }
+    final Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
 
     // ahem
     info.setProperty("charSet", "UTF-8");
@@ -155,7 +158,9 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       info.setProperty("password", config.getPassword());
     }
 
-    return new PgConnection(new HostSpec[] { spec }, this.getUsername(), this.config.getDbname(), info, ds.getUrl());
+    return Failsafe.with(retryPolicy)
+        .onFailure(err -> log.error("error opening connection: {}", err.getMessage(), err))
+        .get(() -> new PgConnection(new HostSpec[] { spec }, this.getUsername(), this.config.getDbname(), info, ds.getUrl()));
 
   }
 
@@ -272,6 +277,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
   public void shutdown() {
     this.pool.shutdownNow();
+  }
+
+  @Override
+  public void close() {
+    this.shutdown();
   }
 
 }

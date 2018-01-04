@@ -7,7 +7,7 @@ import lombok.Builder.Default;
 import lombok.Value;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PostgresConnectionProperties {
 
   /**

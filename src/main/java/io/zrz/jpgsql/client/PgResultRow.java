@@ -1,6 +1,8 @@
 package io.zrz.jpgsql.client;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class PgResultRow implements ResultRow {
 
@@ -68,6 +70,12 @@ public class PgResultRow implements ResultRow {
   @Override
   public byte[] bytea(int i) {
     return buffer.bytea(this.row, i);
+  }
+
+  public String toString() {
+    return IntStream.range(0, this.fields())
+        .mapToObj(field -> this.field(field).label() + "=" + this.strval(field))
+        .collect(Collectors.joining(", ", "{ ", " }"));
   }
 
 }
