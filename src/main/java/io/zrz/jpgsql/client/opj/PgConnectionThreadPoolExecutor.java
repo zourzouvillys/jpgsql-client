@@ -42,15 +42,15 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
     this.setThreadFactory(new ThreadFactoryBuilder()
         .setThreadFactory(this)
         .setUncaughtExceptionHandler(this)
-        .setNameFormat("psql-%d")
+        .setNameFormat("psql-%d-" + Integer.toHexString(this.hashCode()))
         .build());
 
     this.pool = pool;
 
     super.setRejectedExecutionHandler(this);
 
-    super.setCorePoolSize(1);
-    super.setMaximumPoolSize(8);
+    super.setCorePoolSize(config.getMinIdle() + 1);
+    super.setMaximumPoolSize(config.getMaxPoolSize());
 
     this.prestartAllCoreThreads();
 

@@ -1,9 +1,12 @@
 package io.zrz.jpgsql.client;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
 import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * common API shared between {@link TransactionalSession} and {@link PostgresClient}.
@@ -72,6 +75,17 @@ public interface PostgresQueryProcessor {
    */
 
   Publisher<QueryResult> submit(Query query, QueryParameters params);
+
+  /**
+   * performs a copy.
+   * 
+   * @param sql
+   * @param data
+   * 
+   * @return
+   */
+
+  Flowable<QueryResult> copy(String sql, InputStream data);
 
   /**
    * execute query without any parameters.

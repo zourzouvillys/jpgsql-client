@@ -16,7 +16,9 @@ public interface Query {
    * create parameters to execute this query.
    */
 
-  QueryParameters createParameters();
+  default QueryParameters createParameters() {
+    return new DefaultParametersList(this.parameterCount());
+  }
 
   /**
    * how many parameters this query needs.
@@ -30,6 +32,8 @@ public interface Query {
 
   List<SimpleQuery> getSubqueries();
 
-  SimpleQuery statement(int statementId);
+  default SimpleQuery statement(int statementId) {
+    return getSubqueries().get(statementId);
+  }
 
 }

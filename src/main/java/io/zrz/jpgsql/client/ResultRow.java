@@ -1,5 +1,6 @@
 package io.zrz.jpgsql.client;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public interface ResultRow {
@@ -25,5 +26,7 @@ public interface ResultRow {
   byte[] bytes(int field, byte[] defaultValue);
 
   byte[] bytea(int i);
+
+  Instant instant(int i);
 
 }

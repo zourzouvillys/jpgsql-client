@@ -44,7 +44,8 @@ public class PostgresConnectionProperties {
    * The minimum number of idle connections.
    */
 
-  private int minIdle;
+  @Default
+  private int minIdle = 0;
 
   /**
    * how long a connection is idle before it is closed and removed from the pool.

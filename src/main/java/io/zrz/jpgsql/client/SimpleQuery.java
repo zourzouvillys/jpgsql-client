@@ -25,11 +25,6 @@ public class SimpleQuery implements Query {
   }
 
   @Override
-  public QueryParameters createParameters() {
-    return new DefaultParametersList(this.paramcount);
-  }
-
-  @Override
   public List<SimpleQuery> getSubqueries() {
     return Arrays.asList(this);
   }
@@ -45,15 +40,6 @@ public class SimpleQuery implements Query {
 
   public String sql() {
     return this.sql;
-  }
-
-  /**
-   * 
-   */
-
-  @Override
-  public SimpleQuery statement(int statementId) {
-    return this;
   }
 
   public String toString() {

@@ -1,5 +1,6 @@
 package io.zrz.jpgsql.client;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -76,6 +77,11 @@ public class PgResultRow implements ResultRow {
     return IntStream.range(0, this.fields())
         .mapToObj(field -> this.field(field).label() + "=" + this.strval(field))
         .collect(Collectors.joining(", ", "{ ", " }"));
+  }
+
+  @Override
+  public Instant instant(int field) {
+    return this.buffer.instant(this.row, field);
   }
 
 }

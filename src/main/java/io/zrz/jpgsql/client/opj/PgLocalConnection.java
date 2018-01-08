@@ -1,5 +1,6 @@
 package io.zrz.jpgsql.client.opj;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.Arrays;
@@ -21,12 +22,15 @@ import org.postgresql.jdbc.PgConnection;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.zrz.jpgsql.client.CombinedQuery;
+import io.zrz.jpgsql.client.CommandStatus;
+import io.zrz.jpgsql.client.CopyQuery;
 import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.NotifyMessage;
 import io.zrz.jpgsql.client.Query;
@@ -154,11 +158,16 @@ class PgLocalConnection implements PgRawConnection {
   void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, final int flags)
       throws SQLException {
 
+    if (query instanceof CopyQuery) {
+      copy((CopyQuery) query, emitter, flags);
+      return;
+    }
+
     final org.postgresql.core.Query pgquery = this.cache.getUnchecked(query);
 
     final ParameterList pl;
 
-    if (params != null) {
+    if (params != null && params.count() > 0) {
 
       pl = pgquery.createParameterList();
 
@@ -262,6 +271,22 @@ class PgLocalConnection implements PgRawConnection {
 
     if (this.pool.getListener() != null) {
       this.pool.getListener().queryCompleted(this);
+    }
+
+  }
+
+  private void copy(CopyQuery query, FlowableEmitter<QueryResult> emitter, int flags) {
+
+    try {
+      log.debug("starting COPY {}", query.command());
+      long rows = conn.getCopyAPI().copyIn(query.command(), query.data(), 65536);
+      log.debug("COPY complete, rows = {}", rows);
+      emitter.onNext(new CommandStatus(0, "COPY", Ints.checkedCast(rows), 0));
+      emitter.onComplete();
+    }
+    catch (SQLException | IOException e) {
+      log.debug("Error performing COPY", e);
+      emitter.onError(e);
     }
 
   }

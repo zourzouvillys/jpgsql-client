@@ -1,5 +1,6 @@
 package io.zrz.jpgsql.client.opj;
 
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
@@ -8,12 +9,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Preconditions;
-
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
+import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.SingleSubject;
+import io.zrz.jpgsql.client.CopyQuery;
 import io.zrz.jpgsql.client.PostgresqlUnavailableException;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
@@ -81,14 +82,23 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
 
     final Flowable<QueryResult> flowable = Flowable.create(emitter -> {
 
-      log.debug("added work item");
+      log.debug("added work item: {}", query);
 
       this.workqueue.add(new Work(query, params, emitter));
 
     }, BackpressureStrategy.BUFFER);
 
-    return flowable.publish().autoConnect();
+    return flowable
+        .publish()
+        .autoConnect()
+        .observeOn(Schedulers.computation())
+        .doOnEach(e -> log.debug("notif: {}", e));
 
+  }
+
+  @Override
+  public Flowable<QueryResult> copy(String sql, InputStream data) {
+    return submit(new CopyQuery(sql, data), null);
   }
 
   /*
@@ -96,6 +106,8 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
    */
 
   private void run(PgLocalConnection conn) throws SQLException, InterruptedException {
+
+    log.debug("starting txn");
 
     Instant startidle = Instant.now();
 
@@ -107,12 +119,13 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
 
         if (work.getEmitter() == null) {
 
+          log.debug("no emitter - rolling back, work was {}", work);
           conn.rollback();
 
         }
         else {
 
-          log.info("processing work item");
+          log.info("processing work item {}", work);
           startidle = null;
           conn.execute(work.getQuery(), work.getParams(), work.getEmitter());
 
@@ -144,7 +157,10 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
           this.txnstate.onSuccess(SessionTxnState.Closed);
           if (!this.workqueue.isEmpty()) {
             log.warn("work queue is not empty after session completed");
-            this.workqueue.forEach(e -> e.emitter.onError(new IllegalStateException("Session has already completed")));
+            this.workqueue.forEach(e -> {
+              if (e.emitter != null)
+                e.emitter.onError(new IllegalStateException("Session has already completed (in IDLE)"));
+            });
           }
           return;
         case FAILED:
@@ -152,7 +168,10 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
           this.txnstate.onSuccess(SessionTxnState.Error);
           if (!this.workqueue.isEmpty()) {
             log.warn("work queue is not empty after session completed");
-            this.workqueue.forEach(e -> e.emitter.onError(new IllegalStateException("Session has already completed")));
+            this.workqueue.forEach(e -> {
+              if (e.emitter != null)
+                e.emitter.onError(new IllegalStateException("Session has already completed (in FAILED) for " + e.getQuery()));
+            });
           }
           return;
         case OPEN:
@@ -180,11 +199,13 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
     }
     catch (final SQLException ex) {
       // Any propagated SQLException results in the connection being closed.
+      log.warn("connection failed: {}", ex.getMessage(), ex);
       this.accepting = false;
       PgConnectionThread.close();
       this.txnstate.onError(new PostgresqlUnavailableException(ex));
     }
     catch (final Exception ex) {
+      log.warn("connection failed: {}", ex.getMessage(), ex);
       this.accepting = false;
       // TODO: release the transaction, but don't close the connection.
       this.txnstate.onError(ex);
@@ -197,9 +218,11 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
 
   @Override
   public void close() {
-    Preconditions.checkState(this.accepting, "session is no longer active");
-    this.accepting = false;
-    this.workqueue.add(new Work(this.pool.createQuery("ROLLBACK"), null, null));
+    // Preconditions.checkState(this.accepting, "session is no longer active");
+    if (accepting) {
+      this.accepting = false;
+      this.workqueue.add(new Work(this.pool.createQuery("ROLLBACK"), null, null));
+    }
   }
 
   /*

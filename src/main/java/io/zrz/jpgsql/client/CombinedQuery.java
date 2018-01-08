@@ -21,11 +21,6 @@ public class CombinedQuery implements Query {
   }
 
   @Override
-  public QueryParameters createParameters() {
-    return new DefaultParametersList(this.params);
-  }
-
-  @Override
   public List<SimpleQuery> getSubqueries() {
     return this.queries;
   }
@@ -33,11 +28,6 @@ public class CombinedQuery implements Query {
   @Override
   public int parameterCount() {
     return this.params;
-  }
-
-  @Override
-  public SimpleQuery statement(int statementId) {
-    return queries.get(statementId);
   }
 
   public String toString() {

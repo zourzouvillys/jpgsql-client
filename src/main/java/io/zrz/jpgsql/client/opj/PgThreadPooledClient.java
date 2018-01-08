@@ -1,5 +1,6 @@
 package io.zrz.jpgsql.client.opj;
 
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +16,7 @@ import com.google.common.primitives.Ints;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.zrz.jpgsql.client.AbstractPostgresClient;
 import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.NotifyMessage;
@@ -24,7 +26,6 @@ import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -138,7 +139,10 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     return (this.config.getUsername() == null) ? System.getProperty("user.name") : this.config.getUsername();
   }
 
-  @SneakyThrows
+  /**
+   * blocks until a connection is active.
+   */
+
   public PgConnection createConnection() {
 
     // new connection
@@ -161,6 +165,35 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     return Failsafe.with(retryPolicy)
         .onFailure(err -> log.error("error opening connection: {}", err.getMessage(), err))
         .get(() -> new PgConnection(new HostSpec[] { spec }, this.getUsername(), this.config.getDbname(), info, ds.getUrl()));
+
+  }
+
+  /**
+   * non blocking reactive fetch of a connection.
+   */
+
+  public Single<PgConnection> requestConnection() {
+
+    // new connection
+    Preconditions.checkState(this.ds != null);
+
+    HostSpec spec = new HostSpec(config.getHostname(), config.getPort() == 0 ? 5432 : config.getPort());
+    final Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
+
+    // ahem
+    info.setProperty("charSet", "UTF-8");
+    info.setProperty("characterEncoding", "UTF-8");
+    info.setProperty("useUnicode", "true");
+
+    PGProperty.SEND_BUFFER_SIZE.set(info, 1024 * 1024);
+
+    if (config.getPassword() != null) {
+      info.setProperty("password", config.getPassword());
+    }
+
+    return Single.just(Failsafe.with(retryPolicy)
+        .onFailure(err -> log.error("error opening connection: {}", err.getMessage(), err))
+        .get(() -> new PgConnection(new HostSpec[] { spec }, this.getUsername(), this.config.getDbname(), info, ds.getUrl())));
 
   }
 
@@ -216,6 +249,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
   @Override
   public PgTransactionalSession open() {
+    log.debug("opening transactional session");
     final PgTransactionalSession runner = new PgTransactionalSession(this);
     try {
       this.pool.execute(runner);
@@ -282,6 +316,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   @Override
   public void close() {
     this.shutdown();
+  }
+
+  @Override
+  public Flowable<QueryResult> copy(String sql, InputStream data) {
+    return Flowable.error(new IllegalArgumentException("not implemented"));
   }
 
 }
