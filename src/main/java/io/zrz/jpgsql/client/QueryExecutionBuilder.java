@@ -26,4 +26,8 @@ public class QueryExecutionBuilder extends AbstractQueryExecutionBuilder<QueryEx
     return this;
   }
 
+  public Tuple toQuery() {
+    return this.buildQuery();
+  }
+
 }

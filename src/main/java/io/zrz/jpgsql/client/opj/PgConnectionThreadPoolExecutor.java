@@ -41,6 +41,7 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
 
     this.setThreadFactory(new ThreadFactoryBuilder()
         .setThreadFactory(this)
+        .setDaemon(true)
         .setUncaughtExceptionHandler(this)
         .setNameFormat("psql-%d-" + Integer.toHexString(this.hashCode()))
         .build());
