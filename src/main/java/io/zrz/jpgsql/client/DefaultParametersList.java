@@ -1,5 +1,6 @@
 package io.zrz.jpgsql.client;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 import org.postgresql.core.Oid;
@@ -77,10 +78,18 @@ public class DefaultParametersList implements QueryParameters {
   }
 
   @Override
+  public QueryParameters setStringArray(int pnum, Collection<String> value, int oid) {
+    this.checkIndex(pnum);
+    this.values[pnum - 1] = value.toArray(new String[0]);
+    this.oids[pnum - 1] = oid;
+    return this;
+  }
+
+  @Override
   public QueryParameters setStringArray(int pnum, Collection<String> value) {
     this.checkIndex(pnum);
     this.values[pnum - 1] = value.toArray(new String[0]);
-    this.oids[pnum - 1] = Oid.VARCHAR_ARRAY;
+    this.oids[pnum - 1] = Oid.TEXT_ARRAY;
     return this;
   }
 
@@ -143,7 +152,12 @@ public class DefaultParametersList implements QueryParameters {
       }
       else if (arg.getClass().isArray()) {
 
-        throw new IllegalArgumentException("array types not yet supported");
+        if (arg.getClass().getComponentType().equals(String.class)) {
+          this.setStringArray(i + 1, Arrays.asList((String[]) arg));
+        }
+        else {
+          throw new IllegalArgumentException("array types not yet supported");
+        }
 
       }
       else if (arg instanceof String) {
@@ -178,10 +192,22 @@ public class DefaultParametersList implements QueryParameters {
     final StringBuilder sb = new StringBuilder("{ ");
 
     for (int i = 0; i < this.count(); ++i) {
+
       if (i > 0) {
         sb.append(", ");
       }
-      sb.append(i + 1).append(" = ").append(this.values[i]).append(" [").append(Oid.toString(this.oids[i])).append("]");
+
+      sb.append(i + 1).append(" = ");
+
+      if (this.values[i].getClass().isArray()) {
+        sb.append(Arrays.toString((Object[]) this.values[i]));
+      }
+      else {
+        sb.append(this.values[i]);
+      }
+
+      sb.append(" [").append(Oid.toString(this.oids[i])).append("]");
+
     }
 
     sb.append(" }");

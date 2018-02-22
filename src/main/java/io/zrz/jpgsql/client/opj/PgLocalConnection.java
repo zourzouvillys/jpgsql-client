@@ -172,6 +172,7 @@ class PgLocalConnection implements PgRawConnection {
       pl = pgquery.createParameterList();
 
       for (int i = 1; i <= params.count(); ++i) {
+
         final int oid = params.getOid(i);
 
         final Object val = params.getValue(i);
@@ -203,22 +204,31 @@ class PgLocalConnection implements PgRawConnection {
             break;
           }
           case Oid.TEXT:
+          case Oid.JSON:
           case Oid.VARCHAR:
             pl.setStringParameter(i, (String) params.getValue(i), oid);
             break;
+          case Oid.JSONB_ARRAY:
+          case Oid.TEXT_ARRAY:
           case Oid.VARCHAR_ARRAY: {
             final StringBuilder sb = new StringBuilder();
             sb.append("{");
+            int pi = 0;
             for (final String str : (String[]) params.getValue(i)) {
+              if (pi++ > 0) {
+                sb.append(",");
+              }
               PgArray.escapeArrayElement(sb, str);
             }
             sb.append("}");
-            pl.setStringParameter(i, sb.toString(), oid);
+            String strval = sb.toString();
+            pl.setStringParameter(i, strval, oid);
             break;
           }
           default:
             throw new AssertionError(String.format("Don't know how to map param with OID %d", oid));
         }
+
       }
 
     }

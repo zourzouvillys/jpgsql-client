@@ -24,6 +24,8 @@ public interface QueryParameters {
 
   QueryParameters setStringArray(int pnum, Collection<String> value);
 
+  QueryParameters setStringArray(int pnum, Collection<String> value, int oid);
+
   QueryParameters setIntArray(int pnum, int[] array);
 
   QueryParameters setNull(int pnum, int oid);
@@ -37,9 +39,8 @@ public interface QueryParameters {
   int count();
 
   /**
-   * sets by guessing from the passed arguments. the number of parameters must
-   * match the number provided, otherwise an {@link IllegalArgumentException} will
-   * be thrown.
+   * sets by guessing from the passed arguments. the number of parameters must match the number provided, otherwise an
+   * {@link IllegalArgumentException} will be thrown.
    */
 
   QueryParameters setFrom(Object... args);

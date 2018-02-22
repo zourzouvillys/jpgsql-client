@@ -7,7 +7,6 @@ import java.util.List;
 import org.postgresql.core.Field;
 import org.postgresql.util.PGbytea;
 
-import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Ints;
 
 import io.zrz.jpgsql.client.PgResultRow;
@@ -73,7 +72,7 @@ final class PgResultRows implements RowBuffer {
       return Ints.saturatedCast(PgResultDecoder.toLong(this.fields.field(col).pgfield(), val));
     }
     catch (Exception ex) {
-      throw new RuntimeException(String.format("intval(%s): %s", fields.field(col), BaseEncoding.base16().encode(tuples.get(row)[col])), ex);
+      throw new RuntimeException(ex);
     }
   }
 
