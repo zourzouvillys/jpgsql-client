@@ -35,15 +35,31 @@ repositories {
 
 
 compileJava {
-  sourceCompatibility = '8'
-  targetCompatibility = '8'
+  sourceCompatibility = 1.8
+}
+
+eclipse {
+
+  classpath {
+    containers.clear()
+    containers.add('org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8')
+  }
+
+  jdt.file.withProperties { props ->
+    props.put('org.eclipse.jdt.core.compiler.codegen.targetPlatform', '1.8')
+    props.put('org.eclipse.jdt.core.compiler.source', '1.8')
+    props.put('org.eclipse.jdt.core.compiler.compliance', '1.8')
+  }
+  
+  classpath.defaultOutputDir = new File(buildDir, "classes/main")
+  
 }
 
 dependencies {
 
 	apt 'org.immutables:immutables:2.5.6'
-	apt 'org.projectlombok:lombok:1.16.18'
-	compile 'org.projectlombok:lombok:1.16.18'
+	apt 'org.projectlombok:lombok:1.16.20'
+	compile 'org.projectlombok:lombok:1.16.20'
 
 	compileOnly 'io.zrz:visitors:0.1'
 	apt 'io.zrz:visitors:0.1'
@@ -71,7 +87,7 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.2.1'
+    gradleVersion = '4.6'
 }
 
 
