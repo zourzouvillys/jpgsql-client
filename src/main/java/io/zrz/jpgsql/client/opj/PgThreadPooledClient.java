@@ -111,6 +111,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     this.ds.setLogUnclosedConnections(true);
     this.ds.setDisableColumnSanitiser(true);
 
+    // this.ds.setLoggerLevel("loggerLevel");
+
     this.ds.setSsl(this.config.isSsl());
 
     if (this.config.isSsl()) {

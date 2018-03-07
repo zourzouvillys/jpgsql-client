@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
 
@@ -15,6 +16,15 @@ public class PostgresUtils {
         return Single.just((CommandStatus) res);
       }
       return Single.error(new RuntimeException(res.toString()));
+    };
+  }
+
+  public static Function<QueryResult, Maybe<CommandStatus>> commandStatusMapper() {
+    return (res) -> {
+      if (res instanceof CommandStatus) {
+        return Maybe.just((CommandStatus) res);
+      }
+      return Maybe.error(new RuntimeException(res.toString()));
     };
   }
 

@@ -181,6 +181,11 @@ class PgLocalConnection implements PgRawConnection {
           pl.setNull(i, oid);
           continue;
         }
+        else if (val instanceof BinaryParamValue) {
+          BinaryParamValue b = (BinaryParamValue) val;
+          pl.setBinaryParameter(i, b.toByteArray(), b.getOid());
+          continue;
+        }
 
         switch (oid) {
           case Oid.INT4:

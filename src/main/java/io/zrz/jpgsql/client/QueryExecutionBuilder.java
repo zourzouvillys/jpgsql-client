@@ -3,7 +3,9 @@ package io.zrz.jpgsql.client;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class QueryExecutionBuilder extends AbstractQueryExecutionBuilder<QueryExecutionBuilder> {
 
   public QueryExecutionBuilder(PostgresQueryProcessor ds) {
@@ -34,6 +36,7 @@ public class QueryExecutionBuilder extends AbstractQueryExecutionBuilder<QueryEx
             case PROGRESS:
             case STATUS:
             case WARNING:
+              log.info("got {}", x);
             default:
               return Flowable.empty();
           }

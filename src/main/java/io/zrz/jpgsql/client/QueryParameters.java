@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.postgresql.core.Oid;
 import org.postgresql.util.ByteConverter;
 
+import io.zrz.jpgsql.client.opj.BinaryParamValue;
+
 /**
  * Parameters passed to execute a query.
  */
@@ -31,6 +33,8 @@ public interface QueryParameters {
   QueryParameters setNull(int pnum, int oid);
 
   QueryParameters setBytes(int pnum, byte[] bytes, int oid);
+
+  QueryParameters set(int pnum, BinaryParamValue value);
 
   Object getValue(int pnum);
 

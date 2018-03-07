@@ -7,6 +7,8 @@ import org.postgresql.core.Oid;
 
 import com.google.common.base.Preconditions;
 
+import io.zrz.jpgsql.client.opj.BinaryParamValue;
+
 /**
  * Default implementation of {@link QueryParameters}. Nothing to write home about.
  */
@@ -98,6 +100,14 @@ public class DefaultParametersList implements QueryParameters {
     this.checkIndex(pnum);
     this.values[pnum - 1] = value;
     this.oids[pnum - 1] = Oid.INT4_ARRAY;
+    return this;
+  }
+
+  @Override
+  public QueryParameters set(int pnum, BinaryParamValue value) {
+    this.checkIndex(pnum);
+    this.values[pnum - 1] = value;
+    this.oids[pnum - 1] = Oid.UNSPECIFIED;
     return this;
   }
 

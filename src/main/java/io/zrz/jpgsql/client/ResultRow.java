@@ -17,6 +17,14 @@ public interface ResultRow {
 
   String strval(final int field);
 
+  default String strval(final int field, String defaultValue) {
+    String value = strval(field);
+    if (value == null) {
+      return defaultValue;
+    }
+    return value;
+  }
+
   Optional<byte[]> bytes(final int field);
 
   long longval(final int field);

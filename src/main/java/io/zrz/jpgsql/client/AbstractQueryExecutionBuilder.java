@@ -86,6 +86,12 @@ public abstract class AbstractQueryExecutionBuilder<T> {
     return this.add(this.client.createQuery(sql, params.length), params);
   }
 
+  public T add(final String sql, QueryParameters params) {
+    Tuple tuple = Tuple.of(client.createQuery(sql, params.count()), params);
+    this.queries.add(tuple);
+    return this.result(this.queries.size() - 1, tuple);
+  }
+
   public T add(final Query sql, final Object... params) {
     final Query query = this.client.createQuery(sql);
     final Tuple tuple = Tuple.of(query, query.createParameters().setFrom(params).validate());

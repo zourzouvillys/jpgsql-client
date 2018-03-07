@@ -5,12 +5,12 @@ buildscript {
     mavenCentral()
     maven { url "https://plugins.gradle.org/m2/" }
   }
- 
+
   dependencies {
     classpath "net.ltgt.gradle:gradle-apt-plugin:0.10"
     classpath "com.prezi.pride:gradle-pride-plugin:0.11"
   }
-	
+
 }
 
 
@@ -34,25 +34,13 @@ repositories {
 }
 
 
-compileJava {
-  sourceCompatibility = 1.8
-}
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 eclipse {
 
-  classpath {
-    containers.clear()
-    containers.add('org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8')
-  }
+//  classpath.defaultOutputDir = new File(buildDir, "classes/main")
 
-  jdt.file.withProperties { props ->
-    props.put('org.eclipse.jdt.core.compiler.codegen.targetPlatform', '1.8')
-    props.put('org.eclipse.jdt.core.compiler.source', '1.8')
-    props.put('org.eclipse.jdt.core.compiler.compliance', '1.8')
-  }
-  
-  classpath.defaultOutputDir = new File(buildDir, "classes/main")
-  
 }
 
 dependencies {
@@ -74,16 +62,16 @@ dependencies {
 
 	testImplementation 'ch.qos.logback:logback-classic:1.2.3'
 	testImplementation 'org.slf4j:jul-to-slf4j:1.7.21'
-	
+
     testCompile 'junit:junit:4.12'
-    
+
     //
     	compile 'io.netty:netty-buffer:4.1.17.Final'
 	compile 'io.netty:netty-codec:4.1.17.Final'
 	compile 'io.netty:netty-handler:4.1.17.Final'
 	compile 'io.netty:netty-transport:4.1.17.Final'
-	
-	    
+
+
 }
 
 task wrapper(type: Wrapper) {
@@ -99,7 +87,7 @@ task sourcesJar(type: Jar) {
 
 publishing {
   publications {
-    maven(MavenPublication) { 
+    maven(MavenPublication) {
     		from components.java
       	groupId 'io.zrz.jpgsql'
       	artifactId 'jpgsql-client'
@@ -113,9 +101,9 @@ bintray {
 
   user = System.getenv('BINTRAY_USER')
   key = System.getenv('BINTRAY_KEY')
-    
+
   publications = ['maven']
-    
+
   pkg {
     repo = 'maven'
     name = 'jpgsql'
@@ -123,8 +111,6 @@ bintray {
     licenses = ['Apache-2.0']
     publicDownloadNumbers = false
     vcsUrl = 'https://github.com/zourzouvillys/jpgsql-client.git'
-  }    
-    
+  }
+
 }
-
-
