@@ -6,7 +6,6 @@ import io.zrz.jpgsql.client.ResultField;
 
 public class PgResultField implements ResultField {
 
-  private final Field field;
   private final int col;
   private int length;
   private int format;
@@ -18,10 +17,9 @@ public class PgResultField implements ResultField {
 
   public PgResultField(int col, Field field) {
     this.col = col;
-    this.field = field;
     this.length = field.getLength();
     this.format = field.getFormat();
-    this.tableoid = this.field.getTableOid();
+    this.tableoid = field.getTableOid();
     this.label = field.getColumnLabel();
     this.position = field.getPositionInTable();
     this.modifier = field.getMod();
@@ -76,10 +74,6 @@ public class PgResultField implements ResultField {
     sb.append("mod:").append(this.modifier()).append(" ");
     sb.append("}");
     return sb.toString();
-  }
-
-  public Field pgfield() {
-    return this.field;
   }
 
 }
