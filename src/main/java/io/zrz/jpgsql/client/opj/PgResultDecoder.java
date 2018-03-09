@@ -18,11 +18,11 @@ public class PgResultDecoder {
   public PgResultDecoder() {
   }
 
-  public static long toLong(final Field field, final byte[] bs) {
+  public static long toLong(final PgResultField field, final byte[] bs) {
 
-    final int oid = field.getOID();
+    final int oid = field.oid();
 
-    if (field.getFormat() == Field.TEXT_FORMAT) {
+    if (field.format() == Field.TEXT_FORMAT) {
       return Long.parseLong(new String(bs));
     }
 
@@ -38,11 +38,11 @@ public class PgResultDecoder {
     throw new AssertionError(String.format("Can't convert binary field with OID %d to long", oid));
   }
 
-  public static String toString(final Field field, final byte[] bs) {
+  public static String toString(final PgResultField field, final byte[] bs) {
 
-    final int oid = field.getOID();
+    final int oid = field.oid();
 
-    if (field.getFormat() == Field.BINARY_FORMAT) {
+    if (field.format() == Field.BINARY_FORMAT) {
 
       switch (oid) {
         case Oid.TIMESTAMP:
@@ -83,13 +83,13 @@ public class PgResultDecoder {
    * @return
    */
 
-  public static Instant toInstant(final Field field, final byte[] bytes) {
+  public static Instant toInstant(final PgResultField field, final byte[] bytes) {
 
-    final int oid = field.getOID();
+    final int oid = field.oid();
 
     switch (oid) {
       case Oid.TIMESTAMP: {
-        if (field.getFormat() == Field.TEXT_FORMAT) {
+        if (field.format() == Field.TEXT_FORMAT) {
 
           // values.put(field.label(), TIMEZONE_FORMATTER.parse(rows.strval(idx, i),
           // LocalDateTime::from).atOffset(ZoneOffset.UTC).toInstant());
@@ -100,7 +100,7 @@ public class PgResultDecoder {
         return LocalDateTime.of(2000, 1, 1, 0, 0).toInstant(ZoneOffset.UTC).plusMillis(time / 1000);
       }
       case Oid.TIMESTAMPTZ: {
-        if (field.getFormat() == Field.TEXT_FORMAT) {
+        if (field.format() == Field.TEXT_FORMAT) {
           return TIMEZONETZ_FORMATTER.parse(new String(bytes), Instant::from);
         }
         final long time = ByteConverter.int8(bytes, 0);
@@ -108,7 +108,7 @@ public class PgResultDecoder {
       }
       case Oid.FLOAT8: {
 
-        final BigDecimal val = (field.getFormat() == Field.TEXT_FORMAT)
+        final BigDecimal val = (field.format() == Field.TEXT_FORMAT)
             ? new BigDecimal(new String(bytes))
             : BigDecimal.valueOf(ByteConverter.float8(bytes, 0));
 
@@ -130,11 +130,11 @@ public class PgResultDecoder {
    *
    */
 
-  public static BigDecimal toBigDecimal(final Field field, final byte[] bs) {
+  public static BigDecimal toBigDecimal(final PgResultField field, final byte[] bs) {
 
-    final int oid = field.getOID();
+    final int oid = field.oid();
 
-    if (field.getFormat() == Field.TEXT_FORMAT) {
+    if (field.format() == Field.TEXT_FORMAT) {
       return new BigDecimal(Double.parseDouble(new String(bs)));
     }
 
@@ -155,11 +155,11 @@ public class PgResultDecoder {
 
   }
 
-  public static boolean toBoolean(Field field, byte[] val) {
+  public static boolean toBoolean(PgResultField field, byte[] val) {
 
-    final int oid = field.getOID();
+    final int oid = field.oid();
 
-    if (field.getFormat() == Field.TEXT_FORMAT) {
+    if (field.format() == Field.TEXT_FORMAT) {
       return val[0] == 't' ? true : false;
     }
 

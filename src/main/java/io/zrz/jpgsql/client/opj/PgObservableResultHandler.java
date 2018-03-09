@@ -11,6 +11,8 @@ import org.postgresql.core.ResultHandlerBase;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLWarning;
 
+import com.google.common.collect.ImmutableList;
+
 import io.reactivex.FlowableEmitter;
 import io.zrz.jpgsql.client.CommandStatus;
 import io.zrz.jpgsql.client.ErrorResult;
@@ -27,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PgObservableResultHandler extends ResultHandlerBase {
 
-  private static int BATCH_SIZE = 5000;
+  private static int BATCH_SIZE = 8192;
 
   private final FlowableEmitter<QueryResult> emitter;
   private final Query query;
@@ -71,7 +73,8 @@ public class PgObservableResultHandler extends ResultHandlerBase {
 
       while (remain > 0) {
         final int size = Math.min(remain, BATCH_SIZE);
-        this.emitter.onNext(new PgResultRows(this.query, this.statementId, ifields, tuples.subList(offset, offset + size), (size == remain)));
+        this.emitter
+            .onNext(new PgResultRows(this.query, this.statementId, ifields, ImmutableList.copyOf(tuples.subList(offset, offset + size)), (size == remain)));
         offset += size;
         remain -= size;
       }

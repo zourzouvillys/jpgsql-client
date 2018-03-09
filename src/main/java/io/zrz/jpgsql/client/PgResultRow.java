@@ -89,8 +89,10 @@ public class PgResultRow implements ResultRow {
           return "(null)";
         return "(" + data.length + " bytes)";
       }
-      default:
-        return this.strval(field);
+      default: {
+        byte[] data = buffer.bytes(row, field);
+        return "(" + data.length + " bytes)";
+      }
     }
   }
 

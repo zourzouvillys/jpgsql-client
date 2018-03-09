@@ -107,4 +107,14 @@ public class PostgresConnectionProperties {
   @Default
   private String applicationName = "jpgsql";
 
+  // 0 == no batching
+  @Default
+  private int defaultRowFetchSize = 0;
+
+  @Default
+  private int sendBufferSize = 1024 * 64;
+
+  @Default
+  private int recvBufferSize = 1024 * 64;
+
 }

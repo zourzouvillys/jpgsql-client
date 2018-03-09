@@ -2,6 +2,7 @@ package io.zrz.jpgsql.client.opj;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 
 import org.postgresql.core.Field;
@@ -64,15 +65,18 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public int intval(final int row, final int col) {
+    final byte[] val = this.tuples.get(row)[col];
+    if (val == null) {
+      throw new NullPointerException();
+    }
     try {
-      final byte[] val = this.tuples.get(row)[col];
-      if (val == null) {
-        throw new NullPointerException();
-      }
-      return Ints.saturatedCast(PgResultDecoder.toLong(this.fields.field(col).pgfield(), val));
+      return Ints.checkedCast(PgResultDecoder.toLong(this.fields.field(col), val));
     }
     catch (Exception ex) {
-      throw new RuntimeException(ex);
+      System.err.println(this.fields.field(col));
+      System.err.println(this.row(row));
+      System.err.println(this);
+      throw new RuntimeException("converting " + val.length + " bytes to int (" + Arrays.toString(val) + ")", ex);
     }
   }
 
@@ -82,7 +86,7 @@ final class PgResultRows implements RowBuffer {
     if (val == null) {
       return defaultValue;
     }
-    return Ints.saturatedCast(PgResultDecoder.toLong(this.fields.field(col).pgfield(), val));
+    return Ints.checkedCast(PgResultDecoder.toLong(this.fields.field(col), val));
   }
 
   @Override
@@ -101,7 +105,7 @@ final class PgResultRows implements RowBuffer {
     if (val == null) {
       return null;
     }
-    return PgResultDecoder.toString(this.fields.field(col).pgfield(), val);
+    return PgResultDecoder.toString(this.fields.field(col), val);
   }
 
   @Override
@@ -115,7 +119,7 @@ final class PgResultRows implements RowBuffer {
     if (val == null) {
       throw new NullPointerException();
     }
-    return PgResultDecoder.toLong(this.fields.field(col).pgfield(), val);
+    return PgResultDecoder.toLong(this.fields.field(col), val);
   }
 
   @Override
@@ -124,7 +128,7 @@ final class PgResultRows implements RowBuffer {
     if (val == null) {
       return defaultValue;
     }
-    return PgResultDecoder.toLong(this.fields.field(col).pgfield(), val);
+    return PgResultDecoder.toLong(this.fields.field(col), val);
   }
 
   @Override
@@ -133,7 +137,7 @@ final class PgResultRows implements RowBuffer {
     if (val == null) {
       return null;
     }
-    return PgResultDecoder.toBigDecimal(this.fields.field(col).pgfield(), val);
+    return PgResultDecoder.toBigDecimal(this.fields.field(col), val);
   }
 
   @Override
@@ -142,7 +146,7 @@ final class PgResultRows implements RowBuffer {
     if (val == null) {
       return null;
     }
-    return PgResultDecoder.toInstant(this.fields.field(col).pgfield(), val);
+    return PgResultDecoder.toInstant(this.fields.field(col), val);
   }
 
   @Override
@@ -151,7 +155,7 @@ final class PgResultRows implements RowBuffer {
     if (val == null) {
       throw new NullPointerException();
     }
-    return PgResultDecoder.toBoolean(this.fields.field(field).pgfield(), val);
+    return PgResultDecoder.toBoolean(this.fields.field(field), val);
   }
 
   @Override

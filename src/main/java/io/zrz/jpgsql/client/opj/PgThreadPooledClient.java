@@ -17,6 +17,7 @@ import com.google.common.primitives.Ints;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import io.zrz.jpgsql.client.AbstractPostgresClient;
 import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.NotifyMessage;
@@ -105,14 +106,24 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       this.ds.setApplicationName("jpgsql");
     else
       this.ds.setApplicationName(config.getApplicationName());
+
     this.ds.setReWriteBatchedInserts(false);
     this.ds.setAssumeMinServerVersion("9.6");
-    this.ds.setPreparedStatementCacheQueries(10000);
-    this.ds.setPreparedStatementCacheSizeMiB(10);
-    this.ds.setPrepareThreshold(1);
-    this.ds.setSendBufferSize(1028 * 32);
+    this.ds.setSendBufferSize(config.getSendBufferSize());
+    this.ds.setReceiveBufferSize(config.getRecvBufferSize());
     this.ds.setLogUnclosedConnections(true);
     this.ds.setDisableColumnSanitiser(true);
+
+    //
+    this.ds.setPreparedStatementCacheQueries(0);
+    this.ds.setPreparedStatementCacheSizeMiB(0);
+    this.ds.setPrepareThreshold(-1); // force binary
+    this.ds.setPreferQueryMode(PreferQueryMode.EXTENDED);
+
+    // reasonably large default fetch size
+
+    if (config.getDefaultRowFetchSize() > 0)
+      this.ds.setDefaultRowFetchSize(config.getDefaultRowFetchSize());
 
     // this.ds.setLoggerLevel("loggerLevel");
 
@@ -127,7 +138,6 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     }
 
     this.ds.setConnectTimeout((Ints.checkedCast(config.getConnectTimeout().toMillis()) / 1000) + 1);
-    this.ds.setPreferQueryMode(PreferQueryMode.EXTENDED_CACHE_EVERYTHING);
     this.ds.setTcpKeepAlive(true);
 
     if (this.config.isReadOnly()) {
@@ -161,7 +171,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     info.setProperty("characterEncoding", "UTF-8");
     info.setProperty("useUnicode", "true");
 
-    PGProperty.SEND_BUFFER_SIZE.set(info, 1024 * 1024);
+    PGProperty.SEND_BUFFER_SIZE.set(info, config.getSendBufferSize());
 
     if (config.getPassword() != null) {
       info.setProperty("password", config.getPassword());
@@ -222,14 +232,17 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     // StackTraceElement[] trace = Thread.currentThread().getStackTrace();
     PostgresQueryException trace = new PostgresQueryException(query);
 
-    return res.onErrorResumeNext(err -> {
-      // err.addSuppressed(err);
-      trace.initCause(err);
-      if (err instanceof ErrorResult) {
-        trace.setErrorResult((ErrorResult) err);
-      }
-      return Flowable.error(trace);
-    });
+    return res
+        .onErrorResumeNext(err -> {
+          // err.addSuppressed(err);
+          trace.initCause(err);
+          if (err instanceof ErrorResult) {
+            trace.setErrorResult((ErrorResult) err);
+          }
+          return Flowable.error(trace);
+        })
+        // always submit responses on a trampoline thread, to avoid blocking the pool.
+        .observeOn(Schedulers.computation());
 
   }
 

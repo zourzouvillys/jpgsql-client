@@ -8,45 +8,59 @@ public class PgResultField implements ResultField {
 
   private final Field field;
   private final int col;
+  private int length;
+  private int format;
+  private int tableoid;
+  private int position;
+  private String label;
+  private int modifier;
+  private int oid;
 
   public PgResultField(int col, Field field) {
     this.col = col;
     this.field = field;
+    this.length = field.getLength();
+    this.format = field.getFormat();
+    this.tableoid = this.field.getTableOid();
+    this.label = field.getColumnLabel();
+    this.position = field.getPositionInTable();
+    this.modifier = field.getMod();
+    this.oid = field.getOID();
   }
 
   @Override
   public int length() {
-    return this.field.getLength();
+    return length;
   }
 
   @Override
   public String label() {
-    return this.field.getColumnLabel();
+    return this.label;
   }
 
   @Override
   public int position() {
-    return this.field.getPositionInTable();
+    return this.position;
   }
 
   @Override
   public int format() {
-    return this.field.getFormat();
+    return format;
   }
 
   @Override
   public int tableoid() {
-    return this.field.getTableOid();
+    return this.tableoid;
   }
 
   @Override
   public int modifier() {
-    return this.field.getMod();
+    return this.modifier;
   }
 
   @Override
   public int oid() {
-    return this.field.getOID();
+    return this.oid;
   }
 
   @Override

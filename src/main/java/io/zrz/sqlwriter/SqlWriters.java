@@ -31,6 +31,7 @@ import static io.zrz.sqlwriter.SqlKeyword.UNLOGGED;
 import static io.zrz.sqlwriter.SqlKeyword.USING;
 import static io.zrz.sqlwriter.SqlKeyword.VALUES;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -292,6 +293,15 @@ public class SqlWriters {
 
   public static SqlGenerator literal(boolean value) {
     return w -> w.writeLiteral(value);
+  }
+
+  public static SqlGenerator literal(LocalDateTime value) {
+    return w -> {
+
+      w.writeQuotedString(value.toString());
+      w.writeOperator("::timestamp");
+
+    };
   }
 
   public static SqlGenerator[] idents(String... columns) {
