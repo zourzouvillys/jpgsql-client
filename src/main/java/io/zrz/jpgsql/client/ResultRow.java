@@ -37,4 +37,14 @@ public interface ResultRow {
 
   Instant instant(int i);
 
+  default boolean isNull(int index) {
+    return bytes(index) == null;
+  }
+
+  /**
+   * the row id within the statement result set.
+   */
+
+  int rowId();
+
 }

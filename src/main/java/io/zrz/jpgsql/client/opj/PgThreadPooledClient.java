@@ -101,7 +101,10 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       this.ds.setDatabaseName(config.getDbname());
     }
 
-    this.ds.setApplicationName("jpgsql");
+    if (config.getApplicationName() == null)
+      this.ds.setApplicationName("jpgsql");
+    else
+      this.ds.setApplicationName(config.getApplicationName());
     this.ds.setReWriteBatchedInserts(false);
     this.ds.setAssumeMinServerVersion("9.6");
     this.ds.setPreparedStatementCacheQueries(10000);

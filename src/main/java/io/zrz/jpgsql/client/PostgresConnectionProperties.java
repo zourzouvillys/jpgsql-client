@@ -10,6 +10,13 @@ import lombok.Value;
 @Builder(toBuilder = true)
 public class PostgresConnectionProperties {
 
+  public static enum SslMode {
+    Disable,
+    Require,
+    VerifyCA,
+    VerifyFull
+  }
+
   /**
    * The hostname. Localhost by default.
    */
@@ -96,5 +103,8 @@ public class PostgresConnectionProperties {
 
   @Default
   private Duration socketTimeout = null;
+
+  @Default
+  private String applicationName = "jpgsql";
 
 }

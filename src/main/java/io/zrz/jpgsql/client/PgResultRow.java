@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.postgresql.core.Oid;
+
 public class PgResultRow implements ResultRow {
 
   private final RowBuffer buffer;
@@ -74,14 +76,32 @@ public class PgResultRow implements ResultRow {
   }
 
   public String toString() {
-    return IntStream.range(0, this.fields())
-        .mapToObj(field -> this.field(field).label() + "=" + this.strval(field))
+    return "[" + statementId() + ":" + rowId() + "]: " + IntStream.range(0, this.fields())
+        .mapToObj(field -> this.field(field).label() + "=" + this.toString(field))
         .collect(Collectors.joining(", ", "{ ", " }"));
+  }
+
+  private String toString(int field) {
+    switch (this.field(field).oid()) {
+      case Oid.BYTEA: {
+        byte[] data = bytea(field);
+        if (data == null)
+          return "(null)";
+        return "(" + data.length + " bytes)";
+      }
+      default:
+        return this.strval(field);
+    }
   }
 
   @Override
   public Instant instant(int field) {
     return this.buffer.instant(this.row, field);
+  }
+
+  @Override
+  public int rowId() {
+    return row;
   }
 
 }
