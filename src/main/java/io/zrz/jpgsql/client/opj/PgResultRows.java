@@ -167,13 +167,13 @@ final class PgResultRows implements RowBuffer {
   @Override
   public byte[] bytea(int row, int i) {
 
-    Field field = this.fields.field(i).pgfield();
+    PgResultField field = this.fields.field(i);
 
-    final int oid = field.getOID();
+    final int oid = field.oid();
 
     byte[] raw = tuples.get(row)[i];
 
-    if (field.getFormat() == Field.TEXT_FORMAT) {
+    if (field.format() == Field.TEXT_FORMAT) {
       return PGbytea.toBytes(raw);
     }
 
