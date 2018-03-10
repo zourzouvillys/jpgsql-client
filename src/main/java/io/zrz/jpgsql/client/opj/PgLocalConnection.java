@@ -152,10 +152,10 @@ class PgLocalConnection implements PgRawConnection {
 
   void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter)
       throws SQLException {
-    this.execute(query, params, emitter, 0);
+    this.execute(query, params, emitter, 0, 0);
   }
 
-  void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, final int flags)
+  void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, int fetchSize, int flags)
       throws SQLException {
 
     if (query instanceof CopyQuery) {
@@ -264,7 +264,35 @@ class PgLocalConnection implements PgRawConnection {
         this.pool.getListener().executingQuery(this, query, params);
       }
 
-      this.exec.execute(pgquery, pl, new PgObservableResultHandler(query, emitter), 0, 0, flags);
+      if (fetchSize > 0) {
+        flags |= QueryExecutor.QUERY_FORWARD_CURSOR;
+      }
+
+      int fetchRows = fetchSize > 0 ? fetchSize : 0;
+
+      PgObservableResultHandler handler = new PgObservableResultHandler(query, emitter, fetchSize);
+
+      this.exec.execute(pgquery, pl, handler, 0, fetchRows, flags);
+
+      fetch: while (handler.cursor != null) {
+
+        while (emitter.requested() <= 0) {
+          try {
+            // urgh ... fugly.
+            Thread.sleep(10);
+          }
+          catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+          if (emitter.isCancelled()) {
+            handler.cursor.close();
+            break fetch;
+          }
+        }
+
+        exec.fetch(handler.cursor, handler, fetchRows);
+
+      }
 
     }
     finally {
@@ -321,6 +349,11 @@ class PgLocalConnection implements PgRawConnection {
     this.conn.rollback();
   }
 
+  void commit() throws SQLException {
+    log.debug("commiting back connection state");
+    this.conn.commit();
+  }
+
   public void notifications(final Collection<String> channels, final FlowableEmitter<NotifyMessage> emitter) {
 
     try {
@@ -372,7 +405,7 @@ class PgLocalConnection implements PgRawConnection {
             .map(x -> new SimpleQuery(x))
             .collect(Collectors.toList()));
 
-    Flowable.<QueryResult>create(subscribe -> this.execute(send, null, subscribe, SuppressBegin), BackpressureStrategy.BUFFER)
+    Flowable.<QueryResult>create(subscribe -> this.execute(send, null, subscribe, 0, SuppressBegin), BackpressureStrategy.BUFFER)
         .blockingForEach(x -> log.debug("set completed: {}", x));
 
   }
@@ -380,7 +413,7 @@ class PgLocalConnection implements PgRawConnection {
   @Override
   public void blockingExecute(final String string) {
 
-    Flowable.<QueryResult>create(subscribe -> this.execute(new SimpleQuery(string), null, subscribe, SuppressBegin), BackpressureStrategy.BUFFER)
+    Flowable.<QueryResult>create(subscribe -> this.execute(new SimpleQuery(string), null, subscribe, 0, SuppressBegin), BackpressureStrategy.BUFFER)
         .map(x -> {
           if (x.getKind() == QueryResultKind.ERROR) {
             throw (ErrorResult) x;

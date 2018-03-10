@@ -327,6 +327,12 @@ public class SqlWriter {
       return w.toString();
     }
 
+    default Publisher<QueryResult> submitTo(PostgresQueryProcessor pg) {
+      SqlWriter w = new SqlWriter(false);
+      w.write(this);
+      return w.submitTo(pg);
+    }
+
   }
 
   /**
@@ -360,6 +366,10 @@ public class SqlWriter {
 
     }
 
+  }
+
+  public void writeExprList(final Stream<SqlGenerator> items) {
+    writeExprList(items.collect(Collectors.toList()));
   }
 
   public void writeExprList(final List<SqlGenerator> items) {

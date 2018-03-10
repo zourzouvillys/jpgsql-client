@@ -19,8 +19,9 @@ public class DbIdent {
     return new DbIdent(ImmutableList.<String>builder().add(ident).add(strings).build());
   }
 
+  @Override
   public String toString() {
-    return names.stream().map(ident -> ident).collect(Collectors.joining("."));
+    return names.stream().map(ident -> SqlWriter.ident(ident).asString()).collect(Collectors.joining("."));
   }
 
 }

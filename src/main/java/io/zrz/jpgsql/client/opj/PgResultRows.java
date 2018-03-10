@@ -8,6 +8,7 @@ import java.util.List;
 import org.postgresql.core.Field;
 import org.postgresql.util.PGbytea;
 
+import com.google.common.base.Splitter;
 import com.google.common.primitives.Ints;
 
 import io.zrz.jpgsql.client.PgResultRow;
@@ -51,6 +52,11 @@ final class PgResultRows implements RowBuffer {
   @Override
   public ResultField field(final int index) {
     return this.fields.field(index);
+  }
+
+  @Override
+  public PgResultMeta meta() {
+    return this.fields;
   }
 
   @Override
@@ -178,6 +184,25 @@ final class PgResultRows implements RowBuffer {
     }
 
     return raw;
+  }
+
+  @Override
+  public ResultField field(String label) {
+    return this.fields.field(label);
+  }
+
+  @Override
+  public int[] int2vector(int row, int column) {
+
+    PgResultField field = this.fields.field(column);
+
+    switch (field.format()) {
+      case Field.TEXT_FORMAT:
+        return Splitter.on(' ').splitToList(strval(row, column)).stream().mapToInt(x -> Integer.parseInt(x)).toArray();
+    }
+
+    throw new IllegalArgumentException();
+
   }
 
 }

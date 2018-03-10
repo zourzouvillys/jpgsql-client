@@ -10,6 +10,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
 import io.reactivex.Flowable;
+import io.zrz.jpgsql.client.opj.PgResultMeta;
 import io.zrz.visitors.annotations.Visitable;
 
 @Visitable.Type
@@ -144,8 +145,14 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
 
   ResultRow row(int offset);
 
+  ResultField field(String label);
+
   boolean boolval(int row, int field);
 
   byte[] bytea(int row, int i);
+
+  PgResultMeta meta();
+
+  int[] int2vector(int row, int column);
 
 }

@@ -37,10 +37,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
@@ -119,6 +126,21 @@ public class SqlWriters {
   public static SqlWriter.SqlGenerator indexItem(String columnName, String opclass, SqlDirection direction, SqlNulls nulls) {
     return (w) -> {
       w.writeIdent(columnName);
+      if (opclass != null)
+        w.writeIdent(opclass);
+      if (direction != null) {
+        w.writeKeyword(direction == SqlDirection.ASC ? SqlKeyword.ASC : SqlKeyword.DESC);
+      }
+      if (nulls != null) {
+        w.writeKeyword(SqlKeyword.NULLS);
+        w.writeKeyword(nulls == SqlNulls.FIRST ? SqlKeyword.FIRST : SqlKeyword.LAST);
+      }
+    };
+  }
+
+  public static SqlWriter.SqlGenerator indexItem(SqlGenerator columnName, String opclass, SqlDirection direction, SqlNulls nulls) {
+    return (w) -> {
+      w.write(columnName);
       if (opclass != null)
         w.writeIdent(opclass);
       if (direction != null) {
@@ -690,6 +712,50 @@ public class SqlWriters {
       w.writeKeyword(SqlKeyword.IS);
       w.writeKeyword(SqlKeyword.NOT);
       w.writeKeyword(SqlKeyword.NULL);
+    };
+  }
+
+  public static Collector<SqlGenerator, ImmutableList.Builder<SqlGenerator>, SqlGenerator> toList(SqlKeyword joiner) {
+
+    return new Collector<SqlWriter.SqlGenerator, ImmutableList.Builder<SqlGenerator>, SqlWriter.SqlGenerator>() {
+
+      @Override
+      public Supplier<ImmutableList.Builder<SqlGenerator>> supplier() {
+        return () -> ImmutableList.builder();
+      }
+
+      @Override
+      public BiConsumer<ImmutableList.Builder<SqlGenerator>, SqlGenerator> accumulator() {
+        return (a, b) -> {
+          a.add(b);
+        };
+      }
+
+      @Override
+      public BinaryOperator<ImmutableList.Builder<SqlGenerator>> combiner() {
+        return (a, b) -> a.addAll(b.build());
+      }
+
+      @Override
+      public Function<ImmutableList.Builder<SqlGenerator>, SqlGenerator> finisher() {
+        return (a) -> SqlWriters.list(joiner, a.build());
+      }
+
+      @Override
+      public Set<Characteristics> characteristics() {
+        return ImmutableSet.of(Characteristics.CONCURRENT);
+      }
+
+    };
+
+  }
+
+  public static SqlGenerator dropIndexIfExists(String indexName) {
+    return w -> {
+      w.writeKeyword(DROP);
+      w.writeKeyword(INDEX);
+      w.writeKeyword(IF, EXISTS);
+      w.writeIdent(indexName);
     };
   }
 

@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.postgresql.core.Field;
 import org.postgresql.core.ResultCursor;
@@ -36,18 +37,24 @@ public class PgObservableResultHandler extends ResultHandlerBase {
 
   private int statementId = 0;
 
-  private int totalRows;
+  ResultCursor cursor;
 
-  PgObservableResultHandler(final Query query, final FlowableEmitter<QueryResult> emitter) {
+  private int fetchSize;
+
+  PgObservableResultHandler(final Query query, final FlowableEmitter<QueryResult> emitter, int fetchSize) {
+    this.fetchSize = fetchSize == 0 ? BATCH_SIZE : fetchSize;
     this.emitter = emitter;
-    this.query = query;
+    this.query = Objects.requireNonNull(query);
   }
 
   @Override
   public void handleResultRows(final org.postgresql.core.Query fromQuery, final Field[] fields, final List<byte[][]> tuples, final ResultCursor cursor) {
 
     if (cursor != null) {
-      log.error("don't support cursor queries - leak probable!");
+      this.cursor = cursor;
+    }
+    else {
+      this.cursor = null;
     }
 
     // log.debug("received {} rows in statement {}", tuples.size(),
@@ -66,22 +73,23 @@ public class PgObservableResultHandler extends ResultHandlerBase {
       int offset = 0;
       int remain = tuples.size();
 
-      this.totalRows += remain;
-
       // we dispatch in batches - even though in the PgConnection implementation
       // we have everything at the end.
 
       while (remain > 0) {
-        final int size = Math.min(remain, BATCH_SIZE);
+        final int size = Math.min(remain, fetchSize);
         this.emitter
-            .onNext(new PgResultRows(this.query, this.statementId, ifields, ImmutableList.copyOf(tuples.subList(offset, offset + size)), (size == remain)));
+            .onNext(new PgResultRows(this.query, this.statementId, ifields, ImmutableList.copyOf(tuples.subList(offset, offset + size)),
+                (cursor == null && size == remain)));
         offset += size;
         remain -= size;
       }
 
     }
 
-    this.statementId++;
+    if (cursor == null) {
+      this.statementId++;
+    }
 
   }
 
@@ -95,6 +103,9 @@ public class PgObservableResultHandler extends ResultHandlerBase {
 
   @Override
   public void handleCompletion() throws SQLException {
+    if (this.cursor != null) {
+      return;
+    }
     // log.debug("finished Query ({} rows over {} statements). errors: {}",
     // this.totalRows, this.statementId, this.getException());
     if (this.getException() != null) {
@@ -149,7 +160,10 @@ public class PgObservableResultHandler extends ResultHandlerBase {
         error.getCause());
     log.trace("SQL error received ({}: {}", error.getClass(), res);
     this.emitter.onError(res);
-
+    if (this.cursor != null) {
+      this.cursor.close();
+      this.cursor = null;
+    }
   }
 
 }

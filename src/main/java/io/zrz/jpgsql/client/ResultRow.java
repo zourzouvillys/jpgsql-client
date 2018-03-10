@@ -37,6 +37,8 @@ public interface ResultRow {
 
   Instant instant(int i);
 
+  int[] int2vector(int column);
+
   default boolean isNull(int index) {
     return bytes(index) == null;
   }
@@ -46,5 +48,27 @@ public interface ResultRow {
    */
 
   int rowId();
+
+  default String strval(String name) {
+    return strval(this.field(name).column());
+  }
+
+  ResultField field(String label);
+
+  default int intval(String label) {
+    return intval(this.field(label).column());
+  }
+
+  default boolean boolval(String label) {
+    return boolval(field(label).column());
+  }
+
+  default int[] int2vector(String label) {
+    return int2vector(field(label).column());
+  }
+
+  default Optional<byte[]> bytes(String label) {
+    return bytes(field(label).column());
+  }
 
 }

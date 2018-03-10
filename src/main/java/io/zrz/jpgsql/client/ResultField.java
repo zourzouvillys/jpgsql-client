@@ -16,4 +16,6 @@ public interface ResultField {
 
   int length();
 
+  int column();
+
 }

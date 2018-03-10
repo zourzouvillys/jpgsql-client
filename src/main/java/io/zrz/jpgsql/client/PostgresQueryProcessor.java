@@ -112,4 +112,6 @@ public interface PostgresQueryProcessor {
     return this.submit(query, qp);
   }
 
+  Flowable<QueryResult> fetch(int batchSize, String sql);
+
 }

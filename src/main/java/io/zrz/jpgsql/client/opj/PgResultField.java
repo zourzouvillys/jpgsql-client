@@ -62,6 +62,11 @@ public class PgResultField implements ResultField {
   }
 
   @Override
+  public int column() {
+    return this.col;
+  }
+
+  @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
     sb.append(this.label());

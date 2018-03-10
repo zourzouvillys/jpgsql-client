@@ -115,10 +115,12 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     this.ds.setDisableColumnSanitiser(true);
 
     //
-    this.ds.setPreparedStatementCacheQueries(0);
-    this.ds.setPreparedStatementCacheSizeMiB(0);
+    // this.ds.setPreparedStatementCacheQueries(0);
+    // this.ds.setPreparedStatementCacheSizeMiB(0);
     this.ds.setPrepareThreshold(-1); // force binary
     this.ds.setPreferQueryMode(PreferQueryMode.EXTENDED);
+
+    this.ds.setBinaryTransfer(true);
 
     // reasonably large default fetch size
 
@@ -214,12 +216,17 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
   @Override
   public Flowable<QueryResult> submit(final Query query, final QueryParameters params) {
+    return submit(query, params, 0);
+  }
+
+  public Flowable<QueryResult> submit(final Query query, final QueryParameters params, int fetchSize) {
 
     final AmbientContext ctx = AmbientContext.capture();
     Preconditions.checkState(!pool.isShutdown(), query.toString());
+
     Flowable<QueryResult> res = Flowable.create(emitter -> {
       try {
-        final PgQueryRunner runner = new PgQueryRunner(query, params, emitter, ctx);
+        final PgQueryRunner runner = new PgQueryRunner(query, params, emitter, ctx, fetchSize);
         this.pool.execute(ctx.wrap(runner));
       }
       catch (final Throwable ex) {
@@ -242,8 +249,15 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
           return Flowable.error(trace);
         })
         // always submit responses on a trampoline thread, to avoid blocking the pool.
-        .observeOn(Schedulers.computation());
+        .rebatchRequests(8)
+        .observeOn(Schedulers.computation(), true);
 
+  }
+
+  @Override
+  public Flowable<QueryResult> fetch(int fetchSize, String sql) {
+    Query q = this.createQuery(sql);
+    return submit(q, q.createParameters(), fetchSize);
   }
 
   @Override

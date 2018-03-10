@@ -20,11 +20,13 @@ class PgQueryRunner implements Runnable {
   private final FlowableEmitter<QueryResult> emitter;
   private final Query query;
   private final QueryParameters params;
+  private int fetchSize;
 
-  public PgQueryRunner(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, AmbientContext ctx) {
+  public PgQueryRunner(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, AmbientContext ctx, int fetchSize) {
     this.emitter = emitter;
     this.query = query;
     this.params = params;
+    this.fetchSize = fetchSize;
   }
 
   /**
@@ -37,7 +39,7 @@ class PgQueryRunner implements Runnable {
 
     try {
 
-      conn.execute(this.query, this.params, this.emitter, PgLocalConnection.SuppressBegin);
+      conn.execute(this.query, this.params, this.emitter, fetchSize, fetchSize == 0 ? PgLocalConnection.SuppressBegin : 0);
 
     }
     finally {
@@ -45,7 +47,7 @@ class PgQueryRunner implements Runnable {
       switch (conn.transactionState()) {
         case OPEN:
           log.warn("open transaction after one-shot command");
-          conn.rollback();
+          conn.commit();
           break;
         case FAILED:
           log.debug("txn failed, rolling back");

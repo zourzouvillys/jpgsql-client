@@ -28,6 +28,11 @@ public class PgResultRow implements ResultRow {
   }
 
   @Override
+  public ResultField field(final String label) {
+    return this.buffer.field(label);
+  }
+
+  @Override
   public int fields() {
     return this.buffer.fields();
   }
@@ -75,6 +80,7 @@ public class PgResultRow implements ResultRow {
     return buffer.bytea(this.row, i);
   }
 
+  @Override
   public String toString() {
     return "[" + statementId() + ":" + rowId() + "]: " + IntStream.range(0, this.fields())
         .mapToObj(field -> this.field(field).label() + "=" + this.toString(field))
@@ -82,6 +88,12 @@ public class PgResultRow implements ResultRow {
   }
 
   private String toString(int field) {
+
+    byte[] bf = buffer.bytes(row, field);
+
+    if (bf == null || bf.length == 0)
+      return "(null)";
+
     switch (this.field(field).oid()) {
       case Oid.BYTEA: {
         byte[] data = bytea(field);
@@ -104,6 +116,11 @@ public class PgResultRow implements ResultRow {
   @Override
   public int rowId() {
     return row;
+  }
+
+  @Override
+  public int[] int2vector(int column) {
+    return buffer.int2vector(this.row, column);
   }
 
 }

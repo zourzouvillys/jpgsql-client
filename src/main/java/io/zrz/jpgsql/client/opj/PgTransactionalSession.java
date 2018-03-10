@@ -244,4 +244,9 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
     return this.pool.createQuery(combine);
   }
 
+  @Override
+  public Flowable<QueryResult> fetch(int batchSize, String sql) {
+    throw new IllegalArgumentException();
+  }
+
 }
