@@ -481,11 +481,35 @@ public class SqlWriters {
   }
 
   public static SqlGenerator and(SqlGenerator... exprs) {
-    return list(AND, exprs);
+    return w -> {
+      w.writeStartExpr();
+      w.write(list(AND, exprs));
+      w.writeEndExpr();
+    };
   }
 
   public static SqlGenerator or(SqlGenerator... exprs) {
-    return list(OR, exprs);
+    return w -> {
+      w.writeStartExpr();
+      w.write(list(OR, exprs));
+      w.writeEndExpr();
+    };
+  }
+
+  public static SqlGenerator and(Collection<SqlGenerator> exprs) {
+    return w -> {
+      w.writeStartExpr();
+      w.write(list(AND, exprs));
+      w.writeEndExpr();
+    };
+  }
+
+  public static SqlGenerator or(Collection<SqlGenerator> exprs) {
+    return w -> {
+      w.writeStartExpr();
+      w.write(list(OR, exprs));
+      w.writeEndExpr();
+    };
   }
 
   public static SqlGenerator max(SqlGenerator field) {
