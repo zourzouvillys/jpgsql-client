@@ -438,6 +438,14 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator eq(SqlGenerator ident, SqlGenerator value) {
+    return w -> {
+      w.write(ident);
+      w.writeOperator("=");
+      w.write(value);
+    };
+  }
+
   public static SqlGenerator eq(String ident, int value) {
     return w -> {
       w.write(SqlWriter.ident(ident));
@@ -780,6 +788,31 @@ public class SqlWriters {
       w.writeKeyword(INDEX);
       w.writeKeyword(IF, EXISTS);
       w.writeIdent(indexName);
+    };
+  }
+
+  public static SqlGenerator createExtensionIfNotExists(String extensionName, String schema) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.CREATE, SqlKeyword.EXTENSION, SqlKeyword.IF, SqlKeyword.NOT, SqlKeyword.EXISTS);
+      w.writeIdent(extensionName);
+      w.writeKeyword(SqlKeyword.WITH, SqlKeyword.SCHEMA);
+      w.writeIdent(schema);
+    };
+  }
+
+  public static SqlGenerator ident(String... idents) {
+    return SqlWriter.ident(idents);
+  }
+
+  public static SqlGenerator substring(SqlGenerator ident, int start, int end) {
+    return function("substring", ident, literal(start), literal(end));
+  }
+
+  public static SqlGenerator ne(String ident, int value) {
+    return w -> {
+      w.writeIdent(ident);
+      w.writeOperator("<>");
+      w.writeLiteral(value);
     };
   }
 

@@ -316,9 +316,7 @@ public class SqlWriter {
     void write(SqlWriter w);
 
     default void addTo(QueryExecutionBuilder qb) {
-      SqlWriter w = new SqlWriter(false);
-      w.write(this);
-      w.addTo(qb);
+      addTo(qb, false);
     }
 
     default String asString() {
@@ -331,6 +329,13 @@ public class SqlWriter {
       SqlWriter w = new SqlWriter(false);
       w.write(this);
       return w.submitTo(pg);
+    }
+
+    default void addTo(QueryExecutionBuilder qb, boolean forceInline) {
+      SqlWriter w = new SqlWriter(forceInline);
+      w.write(this);
+      w.addTo(qb);
+
     }
 
   }

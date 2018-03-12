@@ -119,7 +119,10 @@ public enum SqlKeyword implements SqlGenerator {
   UNION,
   REPLACE,
   ROW,
-  CURRENT_TIMESTAMP
+  CURRENT_TIMESTAMP,
+  EXTENSION,
+  FILLFACTOR,
+  CHECK
 
   //
   ;
