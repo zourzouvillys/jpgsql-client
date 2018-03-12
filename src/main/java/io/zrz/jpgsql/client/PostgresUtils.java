@@ -7,7 +7,9 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class PostgresUtils {
 
   public static Function<QueryResult, Single<CommandStatus>> statusMapper() {
@@ -45,8 +47,21 @@ public class PostgresUtils {
         return Flowable.fromIterable(r);
 
       }
+      else if (res instanceof CommandStatus) {
+        return Flowable.empty();
+      }
+      else if (res instanceof SecureProgress) {
+        return Flowable.empty();
+      }
+      else if (res instanceof WarningResult) {
+        log.info("info: {}", res);
+        return Flowable.empty();
+      }
+      else if (res instanceof ErrorResult) {
+        return Flowable.error((ErrorResult) res);
+      }
 
-      return Flowable.error(new RuntimeException(res.toString()));
+      return Flowable.error(new RuntimeException(res.getClass().getSimpleName()));
 
     };
 

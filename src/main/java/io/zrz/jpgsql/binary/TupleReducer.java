@@ -1,0 +1,40 @@
+package io.zrz.jpgsql.binary;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
+import io.zrz.jpgsql.client.PostgresQueryProcessor;
+import io.zrz.jpgsql.client.Query;
+import io.zrz.jpgsql.client.QueryParameters;
+
+public class TupleReducer {
+
+  private List<Tuple> tuples = new LinkedList<>();
+
+  public TupleReducer add(Tuple val) {
+
+    this.tuples.add(val);
+
+    return this;
+
+  }
+
+  public Tuple build(PostgresQueryProcessor pg) {
+
+    final Query query = pg.createQuery(
+        this.tuples.stream().map(t -> t.getQuery()).collect(Collectors.toList()));
+
+    final QueryParameters params = query.createParameters();
+
+    this.tuples.stream()
+        .filter(t -> t.getParams() != null)
+        .sequential()
+        .reduce(1, (result, element) -> params.append(result, element.getParams()), (id, x) -> id);
+
+    return Tuple.of(query, params);
+
+  }
+
+}

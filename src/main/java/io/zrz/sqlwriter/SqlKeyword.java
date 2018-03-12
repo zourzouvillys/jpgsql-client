@@ -118,7 +118,8 @@ public enum SqlKeyword implements SqlGenerator {
   VIEW,
   UNION,
   REPLACE,
-  ROW
+  ROW,
+  CURRENT_TIMESTAMP
 
   //
   ;

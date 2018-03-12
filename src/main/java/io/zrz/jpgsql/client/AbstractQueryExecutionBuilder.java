@@ -64,6 +64,12 @@ public abstract class AbstractQueryExecutionBuilder<T> {
     return this.result(this.queries.size() - 1, tuple);
   }
 
+  public T setLocal(final String key, final double value) {
+    final Tuple tuple = Tuple.of(this.client.createQuery(String.format("SET LOCAL %s = %f", key, value)), null);
+    this.queries.add(tuple);
+    return this.result(this.queries.size() - 1, tuple);
+  }
+
   public T set(final String key, final long value) {
     final Tuple tuple = Tuple.of(this.client.createQuery(String.format("SET %s = %d", key, value)), null);
     this.queries.add(tuple);
@@ -114,6 +120,7 @@ public abstract class AbstractQueryExecutionBuilder<T> {
 
   }
 
+  @Override
   public String toString() {
     return this.queries.stream().map(t -> t.getQuery().toString()).collect(Collectors.joining(";\n"));
   }
