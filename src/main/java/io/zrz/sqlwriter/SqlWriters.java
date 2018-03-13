@@ -340,6 +340,10 @@ public class SqlWriters {
 
   }
 
+  public static SqlGenerator select(DbIdent table, SqlGenerator filter, String... columns) {
+    return select(table, filter, Arrays.stream(columns).map(SqlWriters::ident).toArray(SqlGenerator[]::new));
+  }
+
   public static SqlGenerator select(DbIdent table, SqlGenerator filter, SqlGenerator... columns) {
     return w -> {
       w.writeKeyword(SqlKeyword.SELECT);
@@ -452,6 +456,14 @@ public class SqlWriters {
       w.write(SqlWriter.ident(ident));
       w.writeOperator("=");
       w.writeLiteral(value);
+    };
+  }
+
+  public static SqlGenerator eq(String ident, String value) {
+    return w -> {
+      w.write(SqlWriter.ident(ident));
+      w.writeOperator("=");
+      w.writeQuotedString(value);
     };
   }
 
