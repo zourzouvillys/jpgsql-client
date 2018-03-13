@@ -720,6 +720,14 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator binaryExpression(String operator, SqlGenerator left, String right) {
+    return w -> {
+      w.write(left);
+      w.writeOperator(operator);
+      w.writeQuotedString(right);
+    };
+  }
+
   public static SqlGenerator binaryExpression(String operator, String fieldName, SqlGenerator right) {
     return binaryExpression(operator, SqlWriter.ident(fieldName), right);
   }
@@ -834,6 +842,10 @@ public class SqlWriters {
       w.writeOperator("<>");
       w.writeLiteral(value);
     };
+  }
+
+  public static SqlGenerator lower(String ident) {
+    return lower(ident(ident));
   }
 
 }
