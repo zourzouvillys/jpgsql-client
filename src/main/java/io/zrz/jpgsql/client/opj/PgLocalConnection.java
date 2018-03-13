@@ -426,4 +426,15 @@ class PgLocalConnection implements PgRawConnection {
 
   }
 
+  @SneakyThrows
+  @Override
+  public void setReadOnly(boolean b) {
+    getConnection().setReadOnly(b);
+  }
+
+  @Override
+  public String getServerVersion() {
+    return getConnection().getServerMajorVersion() + "." + getConnection().getServerMinorVersion();
+  }
+
 }

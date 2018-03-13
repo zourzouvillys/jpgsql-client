@@ -18,4 +18,8 @@ public interface PgRawConnection {
 
   void blockingExecute(String string);
 
+  void setReadOnly(boolean b);
+
+  String getServerVersion();
+
 }
