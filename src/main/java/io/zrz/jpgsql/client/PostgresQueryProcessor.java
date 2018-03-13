@@ -1,11 +1,11 @@
 package io.zrz.jpgsql.client;
 
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
 import org.reactivestreams.Publisher;
 
+import io.netty.buffer.ByteBuf;
 import io.reactivex.Flowable;
 
 /**
@@ -80,12 +80,12 @@ public interface PostgresQueryProcessor {
    * performs a copy.
    * 
    * @param sql
-   * @param data
+   * @param upstream
    * 
    * @return
    */
 
-  Flowable<QueryResult> copy(String sql, InputStream data);
+  Publisher<Long> copyTo(String sql, Publisher<ByteBuf> upstream);
 
   /**
    * execute query without any parameters.

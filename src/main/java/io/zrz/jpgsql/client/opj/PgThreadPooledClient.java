@@ -1,19 +1,22 @@
 package io.zrz.jpgsql.client.opj;
 
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.postgresql.PGProperty;
+import org.postgresql.copy.CopyIn;
+import org.postgresql.copy.PGCopyOutputStream;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.jdbc.PreferQueryMode;
 import org.postgresql.util.HostSpec;
+import org.reactivestreams.Publisher;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 
+import io.netty.buffer.ByteBuf;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -27,6 +30,7 @@ import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -350,9 +354,68 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     this.shutdown();
   }
 
+  public static final byte[] BINARY_PREAMBLE = new byte[] {
+      'P',
+      'G',
+      'C',
+      'O',
+      'P',
+      'Y',
+      '\n',
+      -1,
+      '\r',
+      '\n',
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+  };
+
+  /**
+   * start a new connection and copy to it.
+   */
+
+  @SneakyThrows
   @Override
-  public Flowable<QueryResult> copy(String sql, InputStream data) {
-    return Flowable.error(new IllegalArgumentException("not implemented"));
+  public Publisher<Long> copyTo(String sql, Publisher<ByteBuf> data) {
+
+    Flowable<ByteBuf> upstream = Flowable.fromPublisher(data);
+
+    return this.requestConnection()
+        .flatMapCompletable(conn -> {
+
+          CopyIn copy = conn.getCopyAPI().copyIn(sql);
+          PGCopyOutputStream out = new PGCopyOutputStream(copy, 1024 * 1024 * 8);
+
+          out.write(BINARY_PREAMBLE);
+
+          return upstream
+              // .observeOn(Schedulers.newThread())
+              .doOnNext(buf -> {
+
+                while (buf.isReadable()) {
+                  buf.readBytes(out, buf.readableBytes());
+                }
+                buf.release();
+
+              })
+              .ignoreElements()
+              .doOnComplete(() -> {
+
+                out.close();
+
+              })
+              .doAfterTerminate(conn::close);
+
+        })
+        .toSingleDefault(1L)
+        .toFlowable();
+
   }
 
 }

@@ -13,4 +13,6 @@ public interface BinaryStreamWriter extends BinaryRecordWriter {
 
   void writeRaw(int oid);
 
+  void writeRaw(byte[] found);
+
 }

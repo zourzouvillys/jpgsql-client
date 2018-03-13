@@ -319,4 +319,9 @@ public class ByteBufBinaryWriter implements BinaryStreamWriter {
     buf.writeInt(oid);
   }
 
+  @Override
+  public void writeRaw(byte[] found) {
+    buf.writeBytes(found);
+  }
+
 }

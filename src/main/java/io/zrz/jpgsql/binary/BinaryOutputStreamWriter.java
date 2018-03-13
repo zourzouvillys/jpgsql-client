@@ -166,4 +166,10 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
     throw new IllegalArgumentException();
   }
 
+  @SneakyThrows
+  @Override
+  public void writeRaw(byte[] found) {
+    out.write(found);
+  }
+
 }

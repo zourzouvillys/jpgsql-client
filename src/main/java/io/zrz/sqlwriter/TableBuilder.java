@@ -15,9 +15,12 @@ import static io.zrz.sqlwriter.SqlKeyword.PARTITION;
 import static io.zrz.sqlwriter.SqlKeyword.TABLE;
 import static io.zrz.sqlwriter.SqlKeyword.TEMP;
 import static io.zrz.sqlwriter.SqlKeyword.UNLOGGED;
+import static io.zrz.sqlwriter.SqlKeyword.WITH;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
 import lombok.Getter;
@@ -30,6 +33,7 @@ public class TableBuilder {
   @Getter
   private List<SqlGenerator> columns = new LinkedList<>();
   private List<SqlGenerator> checks = new LinkedList<>();
+  private Map<String, SqlGenerator> storageParameters = new HashMap<>();
 
   private boolean unlogged;
 
@@ -137,6 +141,27 @@ public class TableBuilder {
         w.writeIdent(partitionList);
         w.writeEndExpr();
 
+        w.writeNewline(false);
+
+      }
+
+      if (!this.storageParameters.isEmpty()) {
+
+        w.writeKeyword(WITH);
+
+        w.writeExprList(storageParameters.entrySet().stream().map(x -> {
+
+          return xw -> {
+            w.writeIdent(x.getKey());
+            w.writeOperator("=");
+            w.write(x.getValue());
+
+          };
+
+        }));
+
+        w.writeNewline(false);
+
       }
 
       if (this.dropOnCommit) {
@@ -182,6 +207,21 @@ public class TableBuilder {
 
   public TableBuilder addCheck(SqlGenerator check) {
     this.checks.add(check);
+    return this;
+  }
+
+  public TableBuilder storageParameter(String name, SqlGenerator value) {
+    this.storageParameters.put(name, value);
+    return this;
+  }
+
+  public TableBuilder storageParameter(String name, int value) {
+    this.storageParameters.put(name, SqlWriters.literal(value));
+    return this;
+  }
+
+  public TableBuilder storageParameter(String name, boolean value) {
+    this.storageParameters.put(name, SqlWriters.literal(value));
     return this;
   }
 

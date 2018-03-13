@@ -1,6 +1,5 @@
 package io.zrz.jpgsql.client.opj;
 
-import java.io.InputStream;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
@@ -9,12 +8,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.reactivestreams.Publisher;
+
+import io.netty.buffer.ByteBuf;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.SingleSubject;
-import io.zrz.jpgsql.client.CopyQuery;
 import io.zrz.jpgsql.client.PostgresqlUnavailableException;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
@@ -97,8 +98,8 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
   }
 
   @Override
-  public Flowable<QueryResult> copy(String sql, InputStream data) {
-    return submit(new CopyQuery(sql, data), null);
+  public Publisher<Long> copyTo(String sql, Publisher<ByteBuf> data) {
+    throw new IllegalArgumentException();
   }
 
   /*

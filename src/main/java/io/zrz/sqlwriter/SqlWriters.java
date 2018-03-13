@@ -30,6 +30,7 @@ import static io.zrz.sqlwriter.SqlKeyword.UNIQUE;
 import static io.zrz.sqlwriter.SqlKeyword.UNLOGGED;
 import static io.zrz.sqlwriter.SqlKeyword.USING;
 import static io.zrz.sqlwriter.SqlKeyword.VALUES;
+import static io.zrz.sqlwriter.SqlKeyword.VIEW;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -547,6 +548,13 @@ public class SqlWriters {
   public static SqlGenerator dropTableIfExists(DbIdent ident) {
     return w -> {
       w.writeKeyword(DROP, TABLE, IF, EXISTS);
+      w.writeIdent(ident);
+    };
+  }
+
+  public static SqlGenerator dropViewIfExists(DbIdent ident) {
+    return w -> {
+      w.writeKeyword(DROP, VIEW, IF, EXISTS);
       w.writeIdent(ident);
     };
   }
