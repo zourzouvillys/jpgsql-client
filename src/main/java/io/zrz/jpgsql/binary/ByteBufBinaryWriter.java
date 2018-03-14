@@ -149,7 +149,9 @@ public class ByteBufBinaryWriter implements BinaryStreamWriter {
 
   @Override
   public ByteBufBinaryWriter writeBigint(long value) {
-    throw new RuntimeException();
+    buf.writeInt(8);
+    buf.writeLong(value);
+    return this;
   }
 
   @Override

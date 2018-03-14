@@ -935,4 +935,8 @@ public class SqlWriters {
     return binaryExpression("< ", left, right);
   }
 
+  public static SqlGenerator left(SqlGenerator ident, int i) {
+    return function("left", ident, literal(i));
+  }
+
 }
