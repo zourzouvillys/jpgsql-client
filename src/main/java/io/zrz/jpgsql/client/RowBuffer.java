@@ -2,6 +2,7 @@ package io.zrz.jpgsql.client;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -154,5 +155,7 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
   PgResultMeta meta();
 
   int[] int2vector(int row, int column);
+
+  Collection<String> textArray(int row, int column);
 
 }

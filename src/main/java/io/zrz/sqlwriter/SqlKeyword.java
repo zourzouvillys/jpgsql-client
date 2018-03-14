@@ -122,7 +122,12 @@ public enum SqlKeyword implements SqlGenerator {
   CURRENT_TIMESTAMP,
   EXTENSION,
   FILLFACTOR,
-  CHECK
+  CHECK,
+  EPOCH,
+  TYPE,
+  NOTIFY,
+  OF,
+  OPTIONS
 
   //
   ;

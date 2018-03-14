@@ -26,6 +26,7 @@ import static io.zrz.sqlwriter.SqlKeyword.TABLE;
 import static io.zrz.sqlwriter.SqlKeyword.TABLES;
 import static io.zrz.sqlwriter.SqlKeyword.TABLESPACE;
 import static io.zrz.sqlwriter.SqlKeyword.TO;
+import static io.zrz.sqlwriter.SqlKeyword.TYPE;
 import static io.zrz.sqlwriter.SqlKeyword.UNIQUE;
 import static io.zrz.sqlwriter.SqlKeyword.UNLOGGED;
 import static io.zrz.sqlwriter.SqlKeyword.USING;
@@ -435,6 +436,22 @@ public class SqlWriters {
 
   }
 
+  public static SqlGenerator identStartsWith(String ident, String value) {
+    return w -> {
+      w.writeIdent(ident);
+      w.writeKeyword(SqlKeyword.LIKE);
+      w.writeQuotedString(value + "%");
+    };
+  }
+
+  public static SqlGenerator identLike(String ident, String value) {
+    return w -> {
+      w.writeIdent(ident);
+      w.writeOperator("=");
+      w.writeQuotedString(value);
+    };
+  }
+
   public static SqlGenerator eq(SqlGenerator ident, String value) {
     return w -> {
       w.write(ident);
@@ -564,6 +581,14 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator dropTypesIfExistsCascade(DbIdent... types) {
+    return w -> {
+      w.writeKeyword(DROP, TYPE, IF, EXISTS);
+      w.writeList(SqlWriter.comma(), types);
+      w.writeKeyword(SqlKeyword.CASCADE);
+    };
+  }
+
   public static SqlGenerator dropViewIfExists(DbIdent ident) {
     return w -> {
       w.writeKeyword(DROP, VIEW, IF, EXISTS);
@@ -668,19 +693,29 @@ public class SqlWriters {
   }
 
   public static SqlGenerator orderBy(SqlGenerator expr, SqlDirection direction, SqlNulls nulls) {
-
     return w -> {
       w.writeKeyword(SqlKeyword.ORDER, SqlKeyword.BY);
+      w.write(orderByExpr(expr, direction, nulls));
+    };
+  }
+
+  public static SqlGenerator orderByExpr(SqlGenerator expr, SqlDirection direction, SqlNulls nulls) {
+
+    return w -> {
+
       w.write(expr);
-      switch (direction) {
-        case ASC:
-          w.writeKeyword(SqlKeyword.ASC);
-          break;
-        case DESC:
-          w.writeKeyword(SqlKeyword.DESC);
-          break;
-        default:
-          throw new IllegalArgumentException();
+
+      if (direction != null) {
+        switch (direction) {
+          case ASC:
+            w.writeKeyword(SqlKeyword.ASC);
+            break;
+          case DESC:
+            w.writeKeyword(SqlKeyword.DESC);
+            break;
+          default:
+            throw new IllegalArgumentException();
+        }
       }
 
       if (nulls == SqlNulls.LAST) {
@@ -689,6 +724,7 @@ public class SqlWriters {
       }
 
     };
+
   }
 
   public static SqlGenerator array(String... items) {
@@ -720,6 +756,10 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator binaryExpression(String operator, SqlGenerator left, int right) {
+    return binaryExpression(operator, left, literal(right));
+  }
+
   public static SqlGenerator binaryExpression(String operator, SqlGenerator left, String right) {
     return w -> {
       w.write(left);
@@ -734,6 +774,10 @@ public class SqlWriters {
 
   public static SqlGenerator lower(SqlGenerator arg) {
     return function("lower", arg);
+  }
+
+  public static SqlGenerator lowerIdent(String arg) {
+    return function("lower", ident(arg));
   }
 
   public static SqlGenerator between(SqlGenerator left, String lower, String upper) {
@@ -844,8 +888,51 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator lower(String ident) {
-    return lower(ident(ident));
+  public static SqlGenerator multiply(SqlGenerator left, int right) {
+    return binaryExpression("*", left, right);
+  }
+
+  public static SqlGenerator coalesce(SqlGenerator... exprs) {
+    return function("coalesce", exprs);
+  }
+
+  public static SqlGenerator extractEpochFrom(SqlGenerator expr) {
+    return function("extract", (SqlWriter w) -> {
+      w.writeKeyword(SqlKeyword.EPOCH);
+      w.writeKeyword(SqlKeyword.FROM);
+      w.write(expr);
+    });
+  }
+
+  public static SqlGenerator coalesce(SqlGenerator val1, int val2) {
+    return coalesce(val1, literal(val2));
+  }
+
+  public static SqlGenerator as(SqlGenerator expr, String label) {
+    return w -> {
+      w.write(expr);
+      w.writeKeyword(SqlKeyword.AS);
+      w.writeIdent(label);
+    };
+  }
+
+  public static SqlGenerator notify(String channel, String payload) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.NOTIFY);
+      w.writeIdent(channel);
+      if (payload != null) {
+        w.writeComma();
+        w.writeQuotedString(payload);
+      }
+    };
+  }
+
+  public static SqlGenerator gte(SqlGenerator left, SqlGenerator right) {
+    return binaryExpression(">= ", left, right);
+  }
+
+  public static SqlGenerator lt(SqlGenerator left, SqlGenerator right) {
+    return binaryExpression("< ", left, right);
   }
 
 }

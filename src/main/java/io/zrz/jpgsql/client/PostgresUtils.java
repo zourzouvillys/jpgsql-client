@@ -3,9 +3,13 @@ package io.zrz.jpgsql.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import lombok.extern.slf4j.Slf4j;
 
@@ -65,6 +69,57 @@ public class PostgresUtils {
 
     };
 
+  }
+
+  public static Function<PgResultRow, Publisher<? extends String>> flatArray(int column) {
+    return row -> Flowable.fromIterable(row.textArray(column));
+  }
+
+  public static Consumer<? super QueryResult> log(Logger logger) {
+    return res -> {
+
+      if (res instanceof RowBuffer) {
+
+        logger.debug("row: {}", res);
+
+      }
+      else if (res instanceof CommandStatus) {
+        CommandStatus cmd = (CommandStatus) res;
+
+        switch (cmd.getStatus()) {
+          case "BEGIN":
+          case "COMMIT":
+            logger.debug("{}", cmd);
+            break;
+          default:
+            if (cmd.getUpdateCount() == 0) {
+              logger.debug("{}", cmd.getStatus());
+            }
+            else {
+              logger.debug("{} ({} rows)", cmd.getStatus(), cmd.getUpdateCount());
+            }
+            break;
+        }
+
+      }
+      else if (res instanceof SecureProgress) {
+      }
+      else if (res instanceof WarningResult) {
+        WarningResult warning = ((WarningResult) res);
+        switch (warning.getSeverity()) {
+          case "NOTICE":
+            logger.debug("{}", warning.getMessage());
+            break;
+          default:
+            logger.warn("[{}] {}", warning.getSeverity(), warning.getMessage());
+            break;
+        }
+      }
+      else if (res instanceof ErrorResult) {
+        logger.error("{}", res);
+      }
+
+    };
   }
 
 }

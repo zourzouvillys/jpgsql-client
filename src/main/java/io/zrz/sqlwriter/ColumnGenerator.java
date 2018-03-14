@@ -13,7 +13,7 @@ public class ColumnGenerator {
   private SqlGenerator defaultValue;
   private DbIdent references;
   private int dim;
-  private boolean unique;
+  private Integer unique;
   private Integer primaryKey;
   private List<SqlGenerator> checks = new LinkedList<>();
 
@@ -85,23 +85,47 @@ public class ColumnGenerator {
   }
 
   public SqlGenerator build() {
+    return build(false);
+  }
+
+  SqlGenerator build(boolean isType) {
+
     return new SqlGenerator() {
       @Override
       public void write(SqlWriter w) {
 
         w.writeIdent(columnName);
-        w.writeIdent(dataType);
 
-        for (int i = 0; i < dim; ++i) {
-          w.writeOperator("[]");
+        if (!isType) {
+
+          w.writeIdent(dataType);
+
+          for (int i = 0; i < dim; ++i) {
+            w.writeOperator("[]");
+          }
+
+        }
+        else {
+
+          w.writeKeyword(SqlKeyword.WITH);
+          w.writeKeyword(SqlKeyword.OPTIONS);
+
         }
 
         if (notNull) {
           w.writeKeyword(SqlKeyword.NOT, SqlKeyword.NULL);
         }
 
-        if (unique) {
+        if (unique != null) {
           w.writeKeyword(SqlKeyword.UNIQUE);
+          if (unique != 100) {
+            w.writeKeyword(SqlKeyword.WITH);
+            w.writeStartExpr();
+            w.writeKeyword(SqlKeyword.FILLFACTOR);
+            w.writeOperator("=");
+            w.writeLiteral(unique);
+            w.writeEndExpr();
+          }
         }
 
         if (primaryKey != null) {
@@ -168,7 +192,12 @@ public class ColumnGenerator {
   }
 
   public ColumnGenerator unique() {
-    this.unique = true;
+    this.unique = 100;
+    return this;
+  }
+
+  public ColumnGenerator unique(int fillFactor) {
+    this.unique = fillFactor;
     return this;
   }
 

@@ -1,6 +1,7 @@
 package io.zrz.jpgsql.client;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -121,6 +122,10 @@ public class PgResultRow implements ResultRow {
   @Override
   public int[] int2vector(int column) {
     return buffer.int2vector(this.row, column);
+  }
+
+  public Collection<String> textArray(int column) {
+    return buffer.textArray(row, column);
   }
 
 }

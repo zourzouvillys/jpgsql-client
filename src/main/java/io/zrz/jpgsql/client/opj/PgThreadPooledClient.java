@@ -22,6 +22,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.zrz.jpgsql.client.AbstractPostgresClient;
+import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
 import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.NotifyMessage;
 import io.zrz.jpgsql.client.PostgresClient;
@@ -150,7 +151,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       this.ds.setReadOnly(true);
     }
 
-    log.debug("connparm {}", this.ds);
+    log.debug("connparm {}", config);
 
     this.pool = new PgConnectionThreadPoolExecutor(this, config);
 
@@ -259,9 +260,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   @Override
-  public Flowable<QueryResult> fetch(int fetchSize, String sql) {
-    Query q = this.createQuery(sql);
-    return submit(q, q.createParameters(), fetchSize);
+  public Flowable<QueryResult> fetch(int fetchSize, Tuple tuple) {
+    return submit(tuple.getQuery(), tuple.getParams(), fetchSize);
   }
 
   @Override
@@ -287,6 +287,20 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   public PgTransactionalSession open() {
     log.debug("opening transactional session");
     final PgTransactionalSession runner = new PgTransactionalSession(this);
+    try {
+      this.pool.execute(runner);
+    }
+    catch (final Exception ex) {
+      log.warn("failed to open session", ex);
+      runner.failed(ex);
+    }
+    return runner;
+  }
+
+  @Override
+  public PgSingleSession openSession() {
+    log.debug("opening single session");
+    final PgSingleSession runner = new PgSingleSession(this);
     try {
       this.pool.execute(runner);
     }
@@ -416,6 +430,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
         .toSingleDefault(1L)
         .toFlowable();
 
+  }
+
+  @Override
+  public PostgresConnectionProperties config() {
+    return config;
   }
 
 }

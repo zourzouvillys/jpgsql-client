@@ -7,6 +7,8 @@ import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
 import io.reactivex.Flowable;
+import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
+import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
 
 /**
  * common API shared between {@link TransactionalSession} and {@link PostgresClient}.
@@ -88,6 +90,16 @@ public interface PostgresQueryProcessor {
   Publisher<Long> copyTo(String sql, Publisher<ByteBuf> upstream);
 
   /**
+   * 
+   * @param query
+   * @return
+   */
+
+  default Publisher<QueryResult> submit(SqlGenerator query) {
+    return query.submitTo(this);
+  }
+
+  /**
    * execute query without any parameters.
    *
    * @see #submit(Query, QueryParameters).
@@ -112,6 +124,14 @@ public interface PostgresQueryProcessor {
     return this.submit(query, qp);
   }
 
-  Flowable<QueryResult> fetch(int batchSize, String sql);
+  Flowable<QueryResult> fetch(int batchSize, Tuple tuple);
+
+  default Flowable<QueryResult> fetch(int batchSize, String sql) {
+    return fetch(batchSize, Tuple.of(createQuery(sql), DefaultParametersList.emptyParameters()));
+  }
+
+  default Flowable<QueryResult> fetch(int batchSize, SqlGenerator g) {
+    return fetch(batchSize, g.asTuple());
+  }
 
 }

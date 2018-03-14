@@ -158,6 +158,8 @@ class PgLocalConnection implements PgRawConnection {
   void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, int fetchSize, int flags)
       throws SQLException {
 
+    log.debug("executing {}, params {}", query, params);
+
     if (query instanceof CopyQuery) {
       copy((CopyQuery) query, emitter, flags);
       return;

@@ -14,10 +14,14 @@ import java.util.stream.Stream;
 
 import org.reactivestreams.Publisher;
 
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 
+import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
+import io.zrz.jpgsql.client.DefaultParametersList;
 import io.zrz.jpgsql.client.PostgresQueryProcessor;
 import io.zrz.jpgsql.client.QueryExecutionBuilder;
+import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
 import io.zrz.jpgsql.client.SimpleQuery;
 
@@ -174,10 +178,23 @@ public class SqlWriter {
 
   public SqlWriter writeRawExpr(final String string) {
     this.spacing();
-
     this.sb.append("(");
     this.sb.append(string);
     this.sb.append(")");
+    this.state = State.KW;
+    return this;
+  }
+
+  private static final CharMatcher STORAGE_PARAM_KEY = CharMatcher.javaLetterOrDigit().or(CharMatcher.anyOf(".-_"));
+
+  // note: package protected to avoid API consumers using. it doesn't do any escaping.
+
+  SqlWriter writeStorageParameterKey(final String key) {
+    if (!STORAGE_PARAM_KEY.matchesAllOf(key)) {
+      throw new IllegalArgumentException("invalid storage parameter key: " + key);
+    }
+    this.spacing();
+    this.sb.append(key);
     this.state = State.KW;
     return this;
   }
@@ -244,6 +261,20 @@ public class SqlWriter {
   public void addTo(final QueryExecutionBuilder b) {
     final SimpleQuery q = new SimpleQuery(this.sb.toString(), this.params.size());
     b.add(q, this.params.toArray());
+  }
+
+  public SimpleQuery createQuery() {
+    return new SimpleQuery(this.sb.toString(), this.params.size());
+  }
+
+  public Tuple createTuple() {
+    return Tuple.of(createQuery(), createParameters());
+  }
+
+  public QueryParameters createParameters() {
+    DefaultParametersList p = new DefaultParametersList(this.params.size());
+    p.setFrom(this.params.toArray());
+    return p;
   }
 
   public void writeTextSearchRHS(final String config, final String query) {
@@ -335,7 +366,12 @@ public class SqlWriter {
       SqlWriter w = new SqlWriter(forceInline);
       w.write(this);
       w.addTo(qb);
+    }
 
+    default Tuple asTuple() {
+      SqlWriter w = new SqlWriter(false);
+      w.write(this);
+      return w.createTuple();
     }
 
   }
@@ -431,7 +467,7 @@ public class SqlWriter {
   }
 
   public Publisher<QueryResult> submitTo(PostgresQueryProcessor db) {
-    QueryExecutionBuilder qb = db.executionBuilder();
+    QueryExecutionBuilder qb = Objects.requireNonNull(db, "missing db").executionBuilder();
     addTo(qb);
     return qb.execute();
   }

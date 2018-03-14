@@ -3,6 +3,7 @@ package io.zrz.jpgsql.client.opj;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.postgresql.core.Field;
@@ -199,6 +200,28 @@ final class PgResultRows implements RowBuffer {
     switch (field.format()) {
       case Field.TEXT_FORMAT:
         return Splitter.on(' ').splitToList(strval(row, column)).stream().mapToInt(x -> Integer.parseInt(x)).toArray();
+    }
+
+    throw new IllegalArgumentException();
+
+  }
+
+  @Override
+  public Collection<String> textArray(int row, int column) {
+
+    if (this.row(row).isNull(column)) {
+      return null;
+    }
+
+    PgResultField field = this.fields.field(column);
+
+    switch (field.format()) {
+      case Field.TEXT_FORMAT: {
+        String value = strval(row, column);
+        value = value.substring(1, value.length() - 1);
+        return Splitter.on(",").splitToList(value);
+      }
+
     }
 
     throw new IllegalArgumentException();

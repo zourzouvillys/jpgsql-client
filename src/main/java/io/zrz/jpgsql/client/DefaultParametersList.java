@@ -224,4 +224,8 @@ public class DefaultParametersList implements QueryParameters {
     return sb.toString();
   }
 
+  public static QueryParameters emptyParameters() {
+    return new DefaultParametersList(0);
+  }
+
 }

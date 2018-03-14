@@ -17,6 +17,15 @@ import org.reactivestreams.Publisher;
 public interface PostgresClient extends PostgresQueryProcessor, AutoCloseable {
 
   /**
+   * provide a dedicated session to the server. this is a direct mapping to a single client connection.
+   * 
+   * the session may be provided from a pool, or may result in a new connection.
+   * 
+   */
+
+  PgSession openSession();
+
+  /**
    * open a {@link TransactionalSession} to perform multiple request/response interactions within a single transaction.
    * only should be used for transactions which span multiple round trips.
    */
@@ -34,8 +43,11 @@ public interface PostgresClient extends PostgresQueryProcessor, AutoCloseable {
    * close the client
    */
 
+  @Override
   default void close() {
 
   }
+
+  PostgresConnectionProperties config();
 
 }

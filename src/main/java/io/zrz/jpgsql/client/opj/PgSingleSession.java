@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -17,22 +16,22 @@ import io.reactivex.FlowableEmitter;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.SingleSubject;
 import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
+import io.zrz.jpgsql.client.PgSession;
 import io.zrz.jpgsql.client.PostgresqlUnavailableException;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
 import io.zrz.jpgsql.client.SessionTxnState;
-import io.zrz.jpgsql.client.TransactionalSession;
 import io.zrz.jpgsql.client.TransactionalSessionDeadlineExceededException;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * a seized connection for a consumer who is performing multiple operations on a txn.
+ * a single seized connection, outside the scope of a transaction (although transactions may be started).
  */
 
 @Slf4j
-class PgTransactionalSession implements TransactionalSession, Runnable {
+class PgSingleSession implements Runnable, PgSession {
 
   @Value
   private static class Work {
@@ -51,29 +50,9 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
   private boolean accepting = true;
   private final PgThreadPooledClient pool;
 
-  PgTransactionalSession(PgThreadPooledClient pool) {
+  PgSingleSession(PgThreadPooledClient pool) {
     this.pool = pool;
   }
-
-  /*
-   * provide the handle for observing our state.
-   */
-
-  @Override
-  public CompletableFuture<SessionTxnState> txnstate() {
-    final CompletableFuture<SessionTxnState> future = new CompletableFuture<>();
-    this.txnstate
-        .doOnError(future::completeExceptionally)
-        .subscribe(future::complete);
-    return future;
-  }
-
-  /*
-   * called from the consumer thread. we still use a Flowable so that we can stop fetching from the server on huge
-   * datasets if the consumer isn't keeping up. however, we need to make it hot - otherwise it will never start, which
-   * would be unexpected for submitting a simple "COMMMIT". although consumers should really be checkign result status
-   * ... ahem.
-   */
 
   @Override
   public Flowable<QueryResult> submit(Query query, QueryParameters params) {
@@ -85,7 +64,6 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
     final Flowable<QueryResult> flowable = Flowable.create(emitter -> {
 
       log.debug("added work item: {}", query);
-
       this.workqueue.add(new Work(query, params, emitter));
 
     }, BackpressureStrategy.BUFFER);
@@ -109,7 +87,9 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
 
   private void run(PgLocalConnection conn) throws SQLException, InterruptedException {
 
-    log.debug("starting txn");
+    log.debug("starting session");
+
+    conn.getConnection().setAutoCommit(false);
 
     Instant startidle = Instant.now();
 
@@ -129,7 +109,7 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
 
           log.info("processing work item {}", work);
           startidle = null;
-          conn.execute(work.getQuery(), work.getParams(), work.getEmitter());
+          conn.execute(work.getQuery(), work.getParams(), work.getEmitter(), 0, PgLocalConnection.SuppressBegin);
 
         }
         startidle = Instant.now();
@@ -155,16 +135,16 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
 
       switch (conn.transactionState()) {
         case IDLE:
-          this.accepting = false;
-          this.txnstate.onSuccess(SessionTxnState.Closed);
-          if (!this.workqueue.isEmpty()) {
-            log.warn("work queue is not empty after session completed");
-            this.workqueue.forEach(e -> {
-              if (e.emitter != null)
-                e.emitter.onError(new IllegalStateException("Session has already completed (in IDLE)"));
-            });
-          }
-          return;
+          // this.accepting = false;
+          // this.txnstate.onSuccess(SessionTxnState.Closed);
+          // if (!this.workqueue.isEmpty()) {
+          // log.warn("work queue is not empty after session completed");
+          // this.workqueue.forEach(e -> {
+          // if (e.emitter != null)
+          // e.emitter.onError(new IllegalStateException("Session has already completed (in IDLE)"));
+          // });
+          // }
+          break;
         case FAILED:
           this.accepting = false;
           this.txnstate.onSuccess(SessionTxnState.Error);
@@ -179,6 +159,7 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
         case OPEN:
           if (!this.accepting && this.workqueue.isEmpty()) {
             // rollback - which will terminate us.
+            log.info("rolling back");
             conn.rollback();
           }
           // still going ..

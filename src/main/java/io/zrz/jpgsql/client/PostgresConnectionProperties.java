@@ -117,4 +117,7 @@ public class PostgresConnectionProperties {
   @Default
   private int recvBufferSize = 1024 * 64;
 
+  @Default
+  private boolean debug = false;
+
 }

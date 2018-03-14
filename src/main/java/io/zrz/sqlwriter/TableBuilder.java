@@ -25,7 +25,7 @@ import java.util.Map;
 import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
 import lombok.Getter;
 
-public class TableBuilder {
+public class TableBuilder implements SqlGenerator {
 
   @Getter
   private DbIdent tableName;
@@ -45,9 +45,16 @@ public class TableBuilder {
 
   private DbIdent like;
 
+  private DbIdent ofType;
+
   public TableBuilder(DbIdent tableName) {
+    this(tableName, null);
+  }
+
+  public TableBuilder(DbIdent tableName, DbIdent ofType) {
     this.tableName = tableName;
     this.ifNotExists = true;
+    this.ofType = ofType;
   }
 
   public TableBuilder(String ident, String... idents) {
@@ -95,6 +102,11 @@ public class TableBuilder {
       }
 
       w.writeIdent(tableName);
+
+      if (this.ofType != null) {
+        w.writeKeyword(SqlKeyword.OF);
+        w.writeIdent(this.ofType);
+      }
 
       w.writeStartExpr();
       w.writeNewline();
@@ -152,7 +164,7 @@ public class TableBuilder {
         w.writeExprList(storageParameters.entrySet().stream().map(x -> {
 
           return xw -> {
-            w.writeIdent(x.getKey());
+            w.writeStorageParameterKey(x.getKey());
             w.writeOperator("=");
             w.write(x.getValue());
 
@@ -174,7 +186,7 @@ public class TableBuilder {
   }
 
   public TableBuilder addColumn(ColumnGenerator gb) {
-    this.columns.add(gb.build());
+    this.columns.add(gb.build(this.ofType != null));
     return this;
   }
 
@@ -223,6 +235,28 @@ public class TableBuilder {
   public TableBuilder storageParameter(String name, boolean value) {
     this.storageParameters.put(name, SqlWriters.literal(value));
     return this;
+  }
+
+  @Override
+  public void write(SqlWriter w) {
+    w.write(build());
+  }
+
+  public static TableBuilder ofType(DbIdent tableName, DbIdent typeName) {
+    return new TableBuilder(tableName, typeName);
+  }
+
+  public TableBuilder fillFactor(int factor) {
+    return storageParameter("fillfactor", factor);
+  }
+
+  public TableBuilder parallel_workers(int count) {
+    return storageParameter("parallel_workers", count);
+  }
+
+  public TableBuilder autoVacuumEnabled(boolean enabled) {
+    storageParameter("toast.autovacuum_enabled", enabled);
+    return storageParameter("autovacuum_enabled", enabled);
   }
 
 }

@@ -4,9 +4,10 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 
+import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
 import lombok.Getter;
 
-public class DbIdent {
+public class DbIdent implements SqlGenerator {
 
   @Getter
   private ImmutableList<String> names;
@@ -22,6 +23,15 @@ public class DbIdent {
   @Override
   public String toString() {
     return names.stream().map(ident -> SqlWriter.ident(ident).asString()).collect(Collectors.joining("."));
+  }
+
+  public String getSimpleName() {
+    return this.names.get(this.names.size() - 1);
+  }
+
+  @Override
+  public void write(SqlWriter w) {
+    w.writeIdent(this);
   }
 
 }
