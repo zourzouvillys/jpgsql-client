@@ -971,4 +971,19 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator alterTableAddPrimaryKey(DbIdent tableName, SqlGenerator... items) {
+    return w -> {
+
+      w.writeKeyword(SqlKeyword.ALTER);
+      w.writeKeyword(SqlKeyword.TABLE);
+      w.writeIdent(tableName);
+      w.writeKeyword(SqlKeyword.ADD);
+      w.writeKeyword(SqlKeyword.PRIMARY);
+      w.writeKeyword(SqlKeyword.KEY);
+
+      w.writeExprList(items);
+
+    };
+  }
+
 }

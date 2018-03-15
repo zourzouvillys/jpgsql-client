@@ -11,6 +11,8 @@ import org.postgresql.copy.CopyIn;
 import org.postgresql.jdbc.PgConnection;
 import org.reactivestreams.Publisher;
 
+import com.google.common.primitives.Ints;
+
 import io.netty.buffer.ByteBuf;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -19,6 +21,7 @@ import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.SingleSubject;
 import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
+import io.zrz.jpgsql.client.CommandStatus;
 import io.zrz.jpgsql.client.PgSession;
 import io.zrz.jpgsql.client.PostgresqlUnavailableException;
 import io.zrz.jpgsql.client.Query;
@@ -76,7 +79,7 @@ class PgSingleSession implements Runnable, PgSession {
     return flowable
         .publish()
         .autoConnect()
-        .observeOn(Schedulers.computation())
+        .observeOn(Schedulers.computation(), true)
         .doOnEach(e -> log.debug("notif: {}", e));
 
   }
@@ -98,10 +101,10 @@ class PgSingleSession implements Runnable, PgSession {
     return flowable
         .publish()
         .autoConnect()
-        .observeOn(Schedulers.computation())
         .doOnEach(e -> log.debug("notif: {}", e))
-        .ignoreElements()
-        .observeOn(Schedulers.computation())
+        .map(x -> (long) (((CommandStatus) x).getUpdateCount()))
+        .observeOn(Schedulers.computation(), true)
+        .singleOrError()
         .toFlowable();
 
   }
@@ -124,10 +127,29 @@ class PgSingleSession implements Runnable, PgSession {
 
       if (work != null) {
 
-        if (work.getEmitter() == null) {
+        if (work.getQuery() == null && work.getEmitter() == null) {
+
+          log.debug("single session finished");
+
+          switch (conn.transactionState()) {
+            case IDLE:
+              return;
+            case FAILED:
+              return;
+            case OPEN:
+              log.warn("rolling back");
+              conn.rollback();
+              return;
+          }
+
+          return;
+
+        }
+        else if (work.getEmitter() == null) {
 
           log.debug("no emitter - rolling back, work was {}", work);
           conn.rollback();
+          return;
 
         }
         else if (work.getSource() != null) {
@@ -142,6 +164,8 @@ class PgSingleSession implements Runnable, PgSession {
                 .blockingGet();
 
             log.info("copy completed {}", value);
+
+            work.emitter.onNext(new CommandStatus(0, "COPY", Ints.checkedCast(value), 0));
 
             work.emitter.onComplete();
 
@@ -247,7 +271,7 @@ class PgSingleSession implements Runnable, PgSession {
 
         })
         .ignoreElements()
-        .doOnComplete(() -> {
+        .andThen(Single.defer(() -> {
 
           log.debug("closing copy stream");
 
@@ -255,8 +279,9 @@ class PgSingleSession implements Runnable, PgSession {
 
           log.debug("CopyIn finished, {} rows", len);
 
-        })
-        .toSingleDefault(1L);
+          return Single.just(len);
+
+        }));
 
   }
 
@@ -292,10 +317,14 @@ class PgSingleSession implements Runnable, PgSession {
   @Override
   public void close() {
     // Preconditions.checkState(this.accepting, "session is no longer active");
-    if (accepting) {
-      this.accepting = false;
-      this.workqueue.add(new Work(this.pool.createQuery("ROLLBACK"), null, null, null));
-    }
+    // if (accepting) {
+    // this.accepting = false;
+    // this.workqueue.add(new Work(this.pool.createQuery("ROLLBACK"), null, null, null));
+    // }
+
+    this.workqueue.add(new Work(null, null, null, null));
+    this.accepting = false;
+
   }
 
   /*
