@@ -7,12 +7,15 @@ import java.util.List;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.postgresql.copy.CopyIn;
+import org.postgresql.jdbc.PgConnection;
 import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
+import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.SingleSubject;
 import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
@@ -23,6 +26,7 @@ import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
 import io.zrz.jpgsql.client.SessionTxnState;
 import io.zrz.jpgsql.client.TransactionalSessionDeadlineExceededException;
+import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +42,7 @@ class PgSingleSession implements Runnable, PgSession {
     private Query query;
     private QueryParameters params;
     private FlowableEmitter<QueryResult> emitter;
+    private Publisher<ByteBuf> source;
   }
 
   private static final Duration LOOP_WAIT = Duration.ofSeconds(1);
@@ -64,7 +69,7 @@ class PgSingleSession implements Runnable, PgSession {
     final Flowable<QueryResult> flowable = Flowable.create(emitter -> {
 
       log.debug("added work item: {}", query);
-      this.workqueue.add(new Work(query, params, emitter));
+      this.workqueue.add(new Work(query, params, emitter, null));
 
     }, BackpressureStrategy.BUFFER);
 
@@ -78,7 +83,27 @@ class PgSingleSession implements Runnable, PgSession {
 
   @Override
   public Publisher<Long> copyTo(String sql, Publisher<ByteBuf> data) {
-    throw new IllegalArgumentException();
+
+    if (!this.accepting) {
+      throw new IllegalStateException(String.format("This session is no longer active"));
+    }
+
+    final Flowable<QueryResult> flowable = Flowable.create(emitter -> {
+
+      log.debug("starting COPY");
+      this.workqueue.add(new Work(this.createQuery(sql), null, emitter, data));
+
+    }, BackpressureStrategy.BUFFER);
+
+    return flowable
+        .publish()
+        .autoConnect()
+        .observeOn(Schedulers.computation())
+        .doOnEach(e -> log.debug("notif: {}", e))
+        .ignoreElements()
+        .observeOn(Schedulers.computation())
+        .toFlowable();
+
   }
 
   /*
@@ -103,6 +128,35 @@ class PgSingleSession implements Runnable, PgSession {
 
           log.debug("no emitter - rolling back, work was {}", work);
           conn.rollback();
+
+        }
+        else if (work.getSource() != null) {
+
+          String sql = work.getQuery().statement(0).sql();
+
+          log.info("starting {}", sql);
+
+          try {
+
+            long value = processCopy(conn.getConnection(), sql, work.getSource())
+                .blockingGet();
+
+            log.info("copy completed {}", value);
+
+            work.emitter.onComplete();
+
+          }
+          catch (Throwable t) {
+
+            log.warn("copy error: {}", t.getMessage(), t);
+            work.emitter.onError(t);
+
+          }
+          finally {
+
+            log.debug("copy finished");
+
+          }
 
         }
         else {
@@ -170,6 +224,42 @@ class PgSingleSession implements Runnable, PgSession {
 
   }
 
+  @SneakyThrows
+  private Single<Long> processCopy(PgConnection conn, String sql, Publisher<ByteBuf> source) {
+
+    CopyIn copy = conn.getCopyAPI().copyIn(sql);
+
+    // PGCopyOutputStream out = new PGCopyOutputStream(copy, 1024 * 1024 * 64);
+
+    copy.writeToCopy(PgThreadPooledClient.BINARY_PREAMBLE, 0, PgThreadPooledClient.BINARY_PREAMBLE.length);
+
+    return Flowable.fromPublisher(source)
+
+        .doOnNext(buf -> {
+
+          while (buf.isReadable()) {
+            byte[] out = new byte[buf.readableBytes()];
+            buf.readBytes(out);
+            copy.writeToCopy(out, 0, out.length);
+          }
+
+          buf.release();
+
+        })
+        .ignoreElements()
+        .doOnComplete(() -> {
+
+          log.debug("closing copy stream");
+
+          long len = copy.endCopy();
+
+          log.debug("CopyIn finished, {} rows", len);
+
+        })
+        .toSingleDefault(1L);
+
+  }
+
   /*
    * called when the job is allocated - runs in the thread.
    */
@@ -204,7 +294,7 @@ class PgSingleSession implements Runnable, PgSession {
     // Preconditions.checkState(this.accepting, "session is no longer active");
     if (accepting) {
       this.accepting = false;
-      this.workqueue.add(new Work(this.pool.createQuery("ROLLBACK"), null, null));
+      this.workqueue.add(new Work(this.pool.createQuery("ROLLBACK"), null, null, null));
     }
   }
 

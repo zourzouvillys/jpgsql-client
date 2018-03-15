@@ -87,6 +87,25 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator deleteFrom(DbIdent table, SqlGenerator where) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.DELETE);
+      w.writeKeyword(SqlKeyword.FROM);
+      w.writeIdent(table);
+      w.writeKeyword(SqlKeyword.WHERE);
+      w.write(where);
+    };
+  }
+
+  public static SqlGenerator insertInto(DbIdent target, SqlGenerator select) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.INSERT);
+      w.writeKeyword(SqlKeyword.INTO);
+      w.writeIdent(target);
+      w.write(select);
+    };
+  }
+
   public static SqlWriter.SqlGenerator copyBinaryFromStdin(DbIdent tableName, String... columns) {
 
     return w -> {
@@ -916,6 +935,13 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator notify(String channel) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.NOTIFY);
+      w.writeIdent(channel);
+    };
+  }
+
   public static SqlGenerator notify(String channel, String payload) {
     return w -> {
       w.writeKeyword(SqlKeyword.NOTIFY);
@@ -937,6 +963,12 @@ public class SqlWriters {
 
   public static SqlGenerator left(SqlGenerator ident, int i) {
     return function("left", ident, literal(i));
+  }
+
+  public static SqlGenerator star() {
+    return w -> {
+      w.writeStar();
+    };
   }
 
 }
