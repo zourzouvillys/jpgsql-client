@@ -13,7 +13,9 @@ public class QueryGenerator implements SqlGenerator {
 
   private DbIdent table;
   private List<SqlGenerator> columns = new LinkedList<>();
+  private List<SqlGenerator> joins = new LinkedList<>();
   private List<SqlGenerator> where = new LinkedList<>();
+  private List<SqlGenerator> groupBy = new LinkedList<>();
   private List<SqlGenerator> orderBy = new LinkedList<>();
   private OptionalInt limit = OptionalInt.empty();
 
@@ -88,9 +90,16 @@ public class QueryGenerator implements SqlGenerator {
     w.writeKeyword(SqlKeyword.FROM);
     w.writeIdent(table);
 
+    this.joins.forEach(gen -> w.write(gen));
+
     if (!this.where.isEmpty()) {
       w.writeKeyword(SqlKeyword.WHERE);
       w.writeList(SqlKeyword.AND, this.where);
+    }
+
+    if (!this.groupBy.isEmpty()) {
+      w.writeKeyword(SqlKeyword.GROUP, SqlKeyword.BY);
+      w.writeList(SqlWriter.comma(), this.groupBy);
     }
 
     if (!this.orderBy.isEmpty()) {
@@ -105,5 +114,25 @@ public class QueryGenerator implements SqlGenerator {
 
     });
 
+  }
+
+  public QueryGenerator innerJoin(DbIdent of, SqlGenerator on) {
+    this.joins.add(w -> {
+      w.writeKeyword(SqlKeyword.INNER);
+      w.writeKeyword(SqlKeyword.JOIN);
+      w.writeIdent(of);
+      w.writeKeyword(SqlKeyword.ON);
+      w.writeExprList(on);
+    });
+    return this;
+  }
+
+  public QueryGenerator selectCount() {
+    return select(SqlWriters.count());
+  }
+
+  public SqlGenerator groupBy(SqlGenerator expr) {
+    this.groupBy.add(expr);
+    return this;
   }
 }

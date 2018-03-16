@@ -17,9 +17,12 @@ import org.reactivestreams.Publisher;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 
+import io.reactivex.Flowable;
 import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
 import io.zrz.jpgsql.client.DefaultParametersList;
+import io.zrz.jpgsql.client.PgResultRow;
 import io.zrz.jpgsql.client.PostgresQueryProcessor;
+import io.zrz.jpgsql.client.PostgresUtils;
 import io.zrz.jpgsql.client.QueryExecutionBuilder;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
@@ -93,6 +96,28 @@ public class SqlWriter {
     return this;
   }
 
+  public SqlWriter writeArrayLiteral(Collection<String> values) {
+    Objects.requireNonNull(values);
+    this.spacing();
+
+    if (inline) {
+      writeKeyword(SqlKeyword.ARRAY);
+      writeOperator("[");
+      writeList(comma(), values.stream().map(val -> SqlWriters.literal(val)));
+      writeOperator("]");
+    }
+    else {
+
+      final int pnum = this.addParam(values.toArray(new String[0]));
+      this.sb.append("$").append(pnum).append("");
+      this.state = State.KW;
+
+    }
+
+    return this;
+
+  }
+
   public SqlWriter writeByteArray(byte[] value) {
     Objects.requireNonNull(value);
     this.spacing();
@@ -125,6 +150,15 @@ public class SqlWriter {
   }
 
   private int addParam(final String param) {
+    int idx = params.indexOf(param);
+    if (idx == -1) {
+      this.params.add(param);
+      return this.params.size();
+    }
+    return idx + 1;
+  }
+
+  private int addParam(final String[] param) {
     int idx = params.indexOf(param);
     if (idx == -1) {
       this.params.add(param);
@@ -304,11 +338,27 @@ public class SqlWriter {
   }
 
   public void writeLiteral(final BigInteger value) {
+    this.spacing();
     this.sb.append(value.longValue());
+    this.state = State.IDENT;
   }
 
   public void writeLiteral(final BigDecimal value) {
+    this.spacing();
     this.sb.append(value.toString());
+    this.state = State.IDENT;
+  }
+
+  public void writeLiteral(final double value) {
+    this.spacing();
+    this.sb.append(value);
+    this.state = State.IDENT;
+  }
+
+  public void writeLiteral(final long value) {
+    this.spacing();
+    this.sb.append(value);
+    this.state = State.IDENT;
   }
 
   public static SqlGenerator ident(final String... idents) {
@@ -369,9 +419,25 @@ public class SqlWriter {
     }
 
     default Tuple asTuple() {
-      SqlWriter w = new SqlWriter(false);
+      return asTuple(false);
+    }
+
+    default Tuple asTuple(boolean forceInline) {
+      SqlWriter w = new SqlWriter(forceInline);
       w.write(this);
       return w.createTuple();
+    }
+
+    default Flowable<PgResultRow> queryWith(PostgresQueryProcessor pg) {
+      Tuple t = asTuple();
+      return Flowable.fromPublisher(pg.submit(t.getQuery(), t.getParams()))
+          .flatMap(PostgresUtils.rowMapper());
+    }
+
+    default Flowable<PgResultRow> queryWith(PostgresQueryProcessor pg, boolean forceInline) {
+      Tuple t = asTuple(forceInline);
+      return Flowable.fromPublisher(pg.submit(t.getQuery(), t.getParams()))
+          .flatMap(PostgresUtils.rowMapper());
     }
 
   }

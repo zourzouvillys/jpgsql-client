@@ -7,15 +7,20 @@ import io.zrz.jpgsql.client.PostgresQueryProcessor;
 import io.zrz.jpgsql.client.PostgresUtils;
 import io.zrz.sqlwriter.DbIdent;
 import io.zrz.sqlwriter.QueryGenerator;
+import io.zrz.sqlwriter.SqlWriters;
 
 public class PgCatalog {
 
   private PostgresQueryProcessor pg;
 
-  private Flowable<PgClassRecord> catalog = Flowable.defer(() -> QueryGenerator.from(DbIdent.of("pg_catalog", "pg_class")).submitTo(pg))
-      .flatMap(PostgresUtils.rowMapper())
-      .map(row -> new PgClassRecord(row))
-      .cache();
+  private Flowable<PgClassRecord> catalog = Flowable.defer(() ->
+
+  QueryGenerator.from(DbIdent.of("pg_catalog", "pg_class"))
+      .innerJoin(
+          DbIdent.of("pg_catalog", "pg_namespace"),
+          SqlWriters.eq(DbIdent.of("pg_namespace", "oid"), DbIdent.of("pg_class", "relnamespace")))
+      .submitTo(pg))
+      .flatMap(PostgresUtils.rowMapper()).map(row -> new PgClassRecord(row)).cache();
 
   public PgCatalog(PostgresQueryProcessor pg) {
     this.pg = pg;
@@ -27,7 +32,7 @@ public class PgCatalog {
 
   public Single<Boolean> exists(DbIdent klass) {
     return catalog
-        .filter(x -> x.getSimpleName().equals(klass.getSimpleName()))
+        .filter(x -> x.getNamespaceName().equals(klass.getNamespaceName()) && x.getSimpleName().equals(klass.getSimpleName()))
         .map(x -> true)
         .single(false);
   }

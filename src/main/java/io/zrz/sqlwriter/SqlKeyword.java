@@ -127,7 +127,10 @@ public enum SqlKeyword implements SqlGenerator {
   TYPE,
   NOTIFY,
   OF,
-  OPTIONS
+  OPTIONS,
+  COUNT,
+  BEGIN,
+  ROLLBACK,
 
   //
   ;

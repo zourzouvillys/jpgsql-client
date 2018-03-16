@@ -135,7 +135,6 @@ class PgSingleSession implements Runnable, PgSession {
             case IDLE:
               return;
             case FAILED:
-              return;
             case OPEN:
               log.warn("rolling back");
               conn.rollback();
@@ -173,6 +172,8 @@ class PgSingleSession implements Runnable, PgSession {
           catch (Throwable t) {
 
             log.warn("copy error: {}", t.getMessage(), t);
+            conn.rollback();
+            this.accepting = false;
             work.emitter.onError(t);
 
           }

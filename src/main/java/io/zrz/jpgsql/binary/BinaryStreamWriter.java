@@ -11,8 +11,22 @@ public interface BinaryStreamWriter extends BinaryRecordWriter {
 
   BinaryStreamWriter writeStartRecord(int numfields);
 
-  void writeRaw(int oid);
+  /**
+   * write a raw record out.
+   * 
+   * @param oid
+   * @param data
+   * 
+   */
 
-  void writeRaw(byte[] found);
+  void writeRawField(int oid, byte[] data);
+
+  /**
+   * writes a single INT4.
+   * 
+   * @param oid
+   */
+
+  void writeOid(int oid);
 
 }

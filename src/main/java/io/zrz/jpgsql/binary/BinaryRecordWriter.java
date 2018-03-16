@@ -29,7 +29,18 @@ public interface BinaryRecordWriter {
   BinaryStreamWriter writeTextArray(List<String> collect);
 
   /**
+   * @param oid
    * 
+   */
+
+  default BinaryRecordWriter writeNull(int oid) {
+    return writeNull();
+  }
+
+  /**
+   * 
+   * @param oid
+   * @return
    */
 
   BinaryRecordWriter writeNull();

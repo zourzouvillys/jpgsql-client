@@ -161,15 +161,17 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
     throw new IllegalArgumentException();
   }
 
+  @SneakyThrows
   @Override
-  public void writeRaw(int oid) {
-    throw new IllegalArgumentException();
+  public void writeRawField(int oid, byte[] data) {
+    out.writeInt(data.length);
+    out.write(data);
   }
 
   @SneakyThrows
   @Override
-  public void writeRaw(byte[] found) {
-    out.write(found);
+  public void writeOid(int oid) {
+    out.writeInt(oid);
   }
 
 }

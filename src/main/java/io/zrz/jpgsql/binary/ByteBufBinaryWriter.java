@@ -317,13 +317,14 @@ public class ByteBufBinaryWriter implements BinaryStreamWriter {
   }
 
   @Override
-  public void writeRaw(int oid) {
-    buf.writeInt(oid);
+  public void writeRawField(int oid, byte[] data) {
+    buf.writeInt(data.length);
+    buf.writeBytes(data);
   }
 
   @Override
-  public void writeRaw(byte[] found) {
-    buf.writeBytes(found);
+  public void writeOid(int oid) {
+    buf.writeInt(oid);
   }
 
 }

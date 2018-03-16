@@ -34,4 +34,8 @@ public class DbIdent implements SqlGenerator {
     w.writeIdent(this);
   }
 
+  public String getNamespaceName() {
+    return this.names.get(0);
+  }
+
 }

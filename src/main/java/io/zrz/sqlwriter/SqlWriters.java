@@ -49,6 +49,7 @@ import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
@@ -94,6 +95,20 @@ public class SqlWriters {
       w.writeIdent(table);
       w.writeKeyword(SqlKeyword.WHERE);
       w.write(where);
+    };
+  }
+
+  public static SqlGenerator deleteFrom(DbIdent table, SqlGenerator where, SqlGenerator... returning) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.DELETE);
+      w.writeKeyword(SqlKeyword.FROM);
+      w.writeIdent(table);
+      w.writeKeyword(SqlKeyword.WHERE);
+      w.write(where);
+      if (returning != null && returning.length > 0) {
+        w.writeKeyword(SqlKeyword.RETURNING);
+        w.writeList(SqlWriter.comma(), returning);
+      }
     };
   }
 
@@ -325,7 +340,19 @@ public class SqlWriters {
 
   }
 
+  public static SqlGenerator literal(Set<String> values) {
+    return w -> w.write(array(values.stream().map(SqlWriters::literal)));
+  }
+
   public static SqlGenerator literal(int i) {
+    return w -> w.writeLiteral(i);
+  }
+
+  public static SqlGenerator literal(long i) {
+    return w -> w.writeLiteral(i);
+  }
+
+  public static SqlGenerator literal(double i) {
     return w -> w.writeLiteral(i);
   }
 
@@ -656,6 +683,15 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator set(String key, SqlGenerator value) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.SET);
+      w.writeIdent(key);
+      w.writeKeyword(SqlKeyword.TO);
+      w.write(value);
+    };
+  }
+
   public static SqlGenerator setLocal(String key, String value) {
     return setLocal(key, SqlWriter.quotedString(value));
   }
@@ -747,7 +783,11 @@ public class SqlWriters {
   }
 
   public static SqlGenerator array(String... items) {
-    return array(Arrays.stream(items).map(SqlWriters::literal).toArray(SqlGenerator[]::new));
+    return cast(array(Arrays.stream(items).map(SqlWriters::literal).toArray(SqlGenerator[]::new)), "text[]");
+  }
+
+  public static SqlGenerator array(Stream<SqlGenerator> stream) {
+    return array(stream.toArray(SqlGenerator[]::new));
   }
 
   public static SqlGenerator array(SqlGenerator... items) {
@@ -908,7 +948,19 @@ public class SqlWriters {
   }
 
   public static SqlGenerator multiply(SqlGenerator left, int right) {
-    return binaryExpression("*", left, right);
+    return parenthisize(binaryExpression("*", left, right));
+  }
+
+  private static SqlGenerator parenthisize(SqlGenerator expr) {
+    return w -> {
+      w.writeStartExpr();
+      w.write(expr);
+      w.writeEndExpr();
+    };
+  }
+
+  public static SqlGenerator divide(SqlGenerator left, SqlGenerator right) {
+    return binaryExpression("/", left, right);
   }
 
   public static SqlGenerator coalesce(SqlGenerator... exprs) {
@@ -961,6 +1013,10 @@ public class SqlWriters {
     return binaryExpression("< ", left, right);
   }
 
+  public static SqlGenerator lt(SqlGenerator left, long right) {
+    return binaryExpression("< ", left, literal(right));
+  }
+
   public static SqlGenerator left(SqlGenerator ident, int i) {
     return function("left", ident, literal(i));
   }
@@ -983,6 +1039,128 @@ public class SqlWriters {
 
       w.writeExprList(items);
 
+    };
+  }
+
+  public static SqlGenerator selectCount(DbIdent table) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.SELECT);
+      w.writeKeyword(SqlKeyword.COUNT);
+      w.writeStartExpr();
+      w.writeStar();
+      w.writeEndExpr();
+      w.writeKeyword(SqlKeyword.FROM);
+      w.writeIdent(table);
+    };
+  }
+
+  public static SqlGenerator selectOne(DbIdent table, SqlGenerator... fields) {
+    return select(table, 1, fields);
+  }
+
+  public static SqlGenerator select(DbIdent table, int limit, SqlGenerator... fields) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.SELECT);
+      w.write(SqlWriters.list(SqlWriter.comma(), fields));
+      w.writeKeyword(SqlKeyword.FROM);
+      w.writeIdent(table);
+      w.writeKeyword(SqlKeyword.LIMIT);
+      w.writeLiteral(limit);
+    };
+  }
+
+  public static SqlGenerator with(ImmutableMap<String, SqlGenerator> withers, SqlGenerator cmd) {
+    return w -> {
+
+      w.writeKeyword(SqlKeyword.WITH);
+
+      w.writeList(comma(true), withers.entrySet().stream().map(val -> {
+        return cw -> {
+          cw.writeIdent(val.getKey());
+          cw.writeKeyword(SqlKeyword.AS);
+          cw.writeStartExpr();
+          cw.writeNewline(true);
+          cw.write(val.getValue());
+          cw.writeEndExpr();
+        };
+      }));
+
+      w.writeNewline(false);
+
+      w.write(cmd);
+
+    };
+
+  }
+
+  private static final SqlGenerator _comma = (w) -> w.writeComma();
+  private static final SqlGenerator _commaAndNewLine = (w) -> {
+    w.writeComma();
+    w.writeNewline();
+  };
+
+  private static SqlGenerator comma(boolean newline) {
+    return newline ? _commaAndNewLine : _comma;
+  }
+
+  public static SqlGenerator subselect(QueryGenerator statement) {
+    return w -> {
+      w.writeStartExpr();
+      w.write(statement);
+      w.writeEndExpr();
+    };
+  }
+
+  public static SqlGenerator any(SqlGenerator arrayValue) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.ANY);
+      w.writeStartExpr();
+      w.write(arrayValue);
+      w.writeEndExpr();
+    };
+  }
+
+  public static SqlGenerator count() {
+    return w -> {
+      w.writeKeyword(SqlKeyword.COUNT);
+      w.writeStartExpr();
+      w.writeStar();
+      w.writeEndExpr();
+    };
+  }
+
+  public static SqlGenerator update(DbIdent updateTable, ImmutableMap<String, SqlGenerator> updates, DbIdent fromTable, SqlGenerator where) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.UPDATE);
+      w.writeIdent(updateTable);
+      w.writeKeyword(SqlKeyword.SET);
+      w.writeList(comma(false), updates.entrySet().stream().map(e -> eq(ident(e.getKey()), e.getValue())));
+      if (fromTable != null) {
+        w.writeKeyword(SqlKeyword.FROM);
+        w.writeIdent(fromTable);
+      }
+      if (where != null) {
+        w.writeKeyword(SqlKeyword.WHERE);
+        w.write(where);
+      }
+    };
+  }
+
+  public static SqlGenerator begin() {
+    return w -> {
+      w.writeKeyword(SqlKeyword.BEGIN);
+    };
+  }
+
+  public static SqlGenerator commit() {
+    return w -> {
+      w.writeKeyword(SqlKeyword.COMMIT);
+    };
+  }
+
+  public static SqlGenerator rollback() {
+    return w -> {
+      w.writeKeyword(SqlKeyword.ROLLBACK);
     };
   }
 
