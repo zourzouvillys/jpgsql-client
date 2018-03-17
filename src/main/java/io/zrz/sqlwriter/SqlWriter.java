@@ -26,6 +26,7 @@ import io.zrz.jpgsql.client.PostgresUtils;
 import io.zrz.jpgsql.client.QueryExecutionBuilder;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
+import io.zrz.jpgsql.client.ResultRow;
 import io.zrz.jpgsql.client.SimpleQuery;
 
 /**
@@ -410,6 +411,12 @@ public class SqlWriter {
       SqlWriter w = new SqlWriter(false);
       w.write(this);
       return w.submitTo(pg);
+    }
+
+    default Flowable<ResultRow> fetchRows(PostgresQueryProcessor pg) {
+      SqlWriter w = new SqlWriter(false);
+      w.write(this);
+      return Flowable.fromPublisher(w.submitTo(pg)).flatMap(PostgresUtils.rowMapper());
     }
 
     default void addTo(QueryExecutionBuilder qb, boolean forceInline) {

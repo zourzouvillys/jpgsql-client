@@ -44,6 +44,8 @@ class PgQueryRunner implements Runnable {
     }
     finally {
 
+      log.debug("command completed with txnstatus {}", conn.transactionState());
+
       switch (conn.transactionState()) {
         case OPEN:
           log.warn("open transaction after one-shot command");

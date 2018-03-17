@@ -33,10 +33,13 @@ import static io.zrz.sqlwriter.SqlKeyword.USING;
 import static io.zrz.sqlwriter.SqlKeyword.VALUES;
 import static io.zrz.sqlwriter.SqlKeyword.VIEW;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -52,6 +55,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
 
@@ -118,6 +122,59 @@ public class SqlWriters {
       w.writeKeyword(SqlKeyword.INTO);
       w.writeIdent(target);
       w.write(select);
+    };
+  }
+
+  public static SqlGenerator insertInto(DbIdent target, List<String> fields, SqlGenerator select) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.INSERT);
+      w.writeKeyword(SqlKeyword.INTO);
+      w.writeIdent(target);
+      w.writeExprList(fields.toArray(new String[0]));
+      w.write(select);
+    };
+  }
+
+  public static SqlGenerator merge(DbIdent target, List<String> fields, SqlGenerator values, Map<String, SqlGenerator> mergeFields, SqlGenerator... returning) {
+    return w -> {
+
+      w.writeKeyword(SqlKeyword.INSERT);
+      w.writeKeyword(SqlKeyword.INTO);
+
+      w.writeIdent(target);
+
+      w.writeExprList(fields.toArray(new String[0]));
+
+      w.write(values);
+
+      w.writeKeyword(SqlKeyword.ON);
+      w.writeKeyword(SqlKeyword.CONFLICT);
+
+      w.writeExprList(Sets.difference(ImmutableSet.copyOf(fields), mergeFields.keySet()).stream().map(SqlWriters::ident));
+
+      w.writeKeyword(SqlKeyword.DO);
+      w.writeKeyword(SqlKeyword.UPDATE);
+      w.writeKeyword(SqlKeyword.SET);
+
+      List<SqlGenerator> mergeKeys = new LinkedList<>();
+      List<SqlGenerator> mergeValues = new LinkedList<>();
+
+      mergeFields.forEach((k, v) -> {
+
+        mergeKeys.add(ident(k));
+        mergeValues.add(v);
+
+      });
+
+      w.writeExprList(mergeKeys);
+      w.writeOperator("=");
+      w.writeExprList(mergeValues);
+
+      if (returning.length > 0) {
+        w.writeKeyword(SqlKeyword.RETURNING);
+        w.writeList(comma(), returning);
+      }
+
     };
   }
 
@@ -344,8 +401,16 @@ public class SqlWriters {
     return w -> w.write(array(values.stream().map(SqlWriters::literal)));
   }
 
+  public static SqlGenerator literal(Duration internal) {
+    return cast(literal(SqlUtils.toSqlString(internal)), "interval");
+  }
+
   public static SqlGenerator literal(int i) {
     return w -> w.writeLiteral(i);
+  }
+
+  public static SqlGenerator literal(byte[] bytea) {
+    return w -> w.writeByteArray(bytea);
   }
 
   public static SqlGenerator literal(long i) {
@@ -1099,6 +1164,10 @@ public class SqlWriters {
     w.writeNewline();
   };
 
+  private static SqlGenerator comma() {
+    return _comma;
+  }
+
   private static SqlGenerator comma(boolean newline) {
     return newline ? _commaAndNewLine : _comma;
   }
@@ -1162,6 +1231,56 @@ public class SqlWriters {
     return w -> {
       w.writeKeyword(SqlKeyword.ROLLBACK);
     };
+  }
+
+  public static SqlGenerator defaultValues() {
+    return w -> w.writeKeyword(SqlKeyword.DEFAULT, SqlKeyword.VALUES);
+  }
+
+  public static SqlGenerator values(Stream<SqlGenerator> values) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.VALUES);
+      w.writeList(SqlWriters.comma(true), values);
+    };
+  }
+
+  public static SqlGenerator values(SqlGenerator... values) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.VALUES);
+      w.writeList(SqlWriters.comma(true), values);
+    };
+  }
+
+  public static SqlGenerator onConflictDoUpdate(String... idents) {
+    return w -> {
+
+      w.writeKeyword(SqlKeyword.ON);
+      w.writeKeyword(SqlKeyword.CONFLICT);
+      w.writeKeyword(SqlKeyword.DO);
+      w.writeKeyword(SqlKeyword.UPDATE);
+      w.writeKeyword(SqlKeyword.SET);
+
+      w.writeExprList(Arrays.stream(idents).map(ident -> ident(ident)));
+      w.writeOperator("=");
+      w.writeExprList(Arrays.stream(idents).map(ident -> ident("excluded", ident)));
+
+    };
+  }
+
+  public static SqlGenerator excluded(String name) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.EXCLUDED);
+      w.writeOperator(".");
+      w.writeIdent(name);
+    };
+  }
+
+  public static SqlGenerator plus(SqlGenerator left, int right) {
+    return binaryExpression("+", left, right);
+  }
+
+  public static SqlGenerator plus(SqlGenerator left, SqlGenerator right) {
+    return binaryExpression("+", left, right);
   }
 
 }

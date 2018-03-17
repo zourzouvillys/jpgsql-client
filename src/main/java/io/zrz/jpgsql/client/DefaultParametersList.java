@@ -3,6 +3,7 @@ package io.zrz.jpgsql.client;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.postgresql.core.Oid;
 
 import com.google.common.base.Preconditions;
@@ -209,8 +210,23 @@ public class DefaultParametersList implements QueryParameters {
 
       sb.append(i + 1).append(" = ");
 
-      if (this.values[i].getClass().isArray()) {
-        sb.append(Arrays.toString((Object[]) this.values[i]));
+      Class<? extends @NonNull Object> klass = this.values[i].getClass();
+
+      if (klass.isArray()) {
+
+        if (this.values[i].getClass().equals(byte[].class)) {
+
+          sb.append("(");
+          sb.append(((byte[]) this.values[i]).length);
+          sb.append(" bytes)");
+
+        }
+        else if (klass.getComponentType().equals(String.class)) {
+
+          sb.append(Arrays.toString((Object[]) this.values[i]));
+
+        }
+
       }
       else {
         sb.append(this.values[i]);

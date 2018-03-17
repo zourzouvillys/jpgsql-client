@@ -32,7 +32,7 @@ public class TableBuilder implements SqlGenerator {
 
   @Getter
   private List<SqlGenerator> columns = new LinkedList<>();
-  private List<SqlGenerator> checks = new LinkedList<>();
+  private List<SqlGenerator> tableComponents = new LinkedList<>();
   private Map<String, SqlGenerator> storageParameters = new HashMap<>();
 
   private boolean unlogged;
@@ -72,6 +72,10 @@ public class TableBuilder implements SqlGenerator {
 
   public TableBuilder addTextColumn(String columnName) {
     return withColumn(ColumnGenerator.withName(columnName, "text").build());
+  }
+
+  public TableBuilder addTimestampTZColumn(String columnName) {
+    return withColumn(ColumnGenerator.withName(columnName, "timestamptz").build());
   }
 
   public TableBuilder addIntColumn(String columnName) {
@@ -124,17 +128,14 @@ public class TableBuilder implements SqlGenerator {
         xw.writeNewline();
       }, columns);
 
-      if (!checks.isEmpty()) {
+      if (!tableComponents.isEmpty()) {
 
         w.writeComma();
         w.writeNewline();
         w.writeList(SqlWriter.comma(),
-            this.checks.stream().map(check -> (SqlWriter xw) -> {
+            this.tableComponents.stream().map(check -> (SqlWriter xw) -> {
 
-              xw.writeKeyword(SqlKeyword.CHECK);
-              xw.writeStartExpr();
               xw.write(check);
-              xw.writeEndExpr();
 
             }));
 
@@ -218,7 +219,10 @@ public class TableBuilder implements SqlGenerator {
   }
 
   public TableBuilder addCheck(SqlGenerator check) {
-    this.checks.add(check);
+    this.tableComponents.add(w -> {
+      w.writeKeyword(SqlKeyword.CHECK);
+      w.writeExprList(check);
+    });
     return this;
   }
 
@@ -257,6 +261,14 @@ public class TableBuilder implements SqlGenerator {
   public TableBuilder autoVacuumEnabled(boolean enabled) {
     storageParameter("toast.autovacuum_enabled", enabled);
     return storageParameter("autovacuum_enabled", enabled);
+  }
+
+  public TableBuilder unique(String... idents) {
+    this.tableComponents.add(w -> {
+      w.writeKeyword(SqlKeyword.UNIQUE);
+      w.writeExprList(idents);
+    });
+    return this;
   }
 
 }

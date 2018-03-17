@@ -13,6 +13,8 @@ import org.postgresql.core.Field;
 import org.postgresql.core.Oid;
 import org.postgresql.util.ByteConverter;
 
+import io.zrz.jpgsql.binary.PostgresTimestamp;
+
 public class PgResultDecoder {
 
   public PgResultDecoder() {
@@ -88,6 +90,7 @@ public class PgResultDecoder {
     final int oid = field.oid();
 
     switch (oid) {
+
       case Oid.TIMESTAMP: {
         if (field.format() == Field.TEXT_FORMAT) {
 
@@ -99,12 +102,16 @@ public class PgResultDecoder {
         final long time = ByteConverter.int8(bytes, 0);
         return LocalDateTime.of(2000, 1, 1, 0, 0).toInstant(ZoneOffset.UTC).plusMillis(time / 1000);
       }
+
       case Oid.TIMESTAMPTZ: {
+
         if (field.format() == Field.TEXT_FORMAT) {
           return TIMEZONETZ_FORMATTER.parse(new String(bytes), Instant::from);
         }
+
         final long time = ByteConverter.int8(bytes, 0);
-        return Instant.ofEpochMilli(time / 1000);
+        return Instant.ofEpochMilli(PostgresTimestamp.toUnixMicros(time) / 1000);
+
       }
       case Oid.FLOAT8: {
 

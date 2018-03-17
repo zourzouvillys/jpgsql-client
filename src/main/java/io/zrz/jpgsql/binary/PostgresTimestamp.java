@@ -16,4 +16,12 @@ public class PostgresTimestamp {
     return (unixEpochMicros - POSTGRES_EPOCH_MICROS);
   }
 
+  public static long toUnixMillis(long pgEpochMillis) {
+    return (pgEpochMillis + POSTGRES_EPOCH_MILLIS);
+  }
+
+  public static long toUnixMicros(long pgEpochMicros) {
+    return (pgEpochMicros + POSTGRES_EPOCH_MICROS);
+  }
+
 }

@@ -71,4 +71,16 @@ public interface ResultRow {
     return bytes(field(label).column());
   }
 
+  default byte[] bytea(String label) {
+    return bytea(field(label).column());
+  }
+
+  default long longval(String label) {
+    return longval(field(label).column());
+  }
+
+  default Instant instant(String label) {
+    return instant(field(label).column());
+  }
+
 }

@@ -278,10 +278,11 @@ class PgLocalConnection implements PgRawConnection {
 
       fetch: while (handler.cursor != null) {
 
-        while (emitter.requested() <= 0) {
+        while (handler.cursor != null && emitter.requested() <= 0 && !emitter.isCancelled()) {
           try {
             // urgh ... fugly.
             Thread.sleep(10);
+            log.debug("sleeping, slow consumer");
           }
           catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -292,7 +293,18 @@ class PgLocalConnection implements PgRawConnection {
           }
         }
 
-        exec.fetch(handler.cursor, handler, fetchRows);
+        if (emitter.isCancelled()) {
+
+          log.debug("emitter cancelled");
+          handler.cursor.close();
+          break;
+
+        }
+        else {
+
+          exec.fetch(handler.cursor, handler, fetchRows);
+
+        }
 
       }
 
