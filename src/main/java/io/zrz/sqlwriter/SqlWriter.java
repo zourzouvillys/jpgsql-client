@@ -224,7 +224,7 @@ public class SqlWriter {
 
   // note: package protected to avoid API consumers using. it doesn't do any escaping.
 
-  SqlWriter writeStorageParameterKey(final String key) {
+  public SqlWriter writeStorageParameterKey(final String key) {
     if (!STORAGE_PARAM_KEY.matchesAllOf(key)) {
       throw new IllegalArgumentException("invalid storage parameter key: " + key);
     }

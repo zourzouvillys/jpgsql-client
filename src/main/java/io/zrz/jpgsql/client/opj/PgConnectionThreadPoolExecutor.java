@@ -50,7 +50,10 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
 
     super.setRejectedExecutionHandler(this);
 
-    super.setCorePoolSize(config.getMinIdle() + 1);
+    if (config.getMinIdle() > 0) {
+      super.setCorePoolSize(config.getMinIdle() + 1);
+    }
+
     super.setMaximumPoolSize(config.getMaxPoolSize());
 
     this.prestartAllCoreThreads();
@@ -86,7 +89,9 @@ public class PgConnectionThreadPoolExecutor extends ThreadPoolExecutor implement
 
   @Override
   public void uncaughtException(Thread t, Throwable e) {
-    log.error("error in group " + t.getThreadGroup().getName() + " failed with an uncaught exception", e);
+
+    log.error("error in group {}, failed with uncaught exception", t.getThreadGroup().getName(), e);
+
   }
 
 }

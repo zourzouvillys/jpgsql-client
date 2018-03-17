@@ -80,6 +80,19 @@ public class PostgresConnectionProperties {
   private int maxPoolSize = 10;
 
   /**
+   * how long a pending query can wait for a connection to be available when it seems like progress has been stalled.
+   * 
+   * this happens when no connections are available, and we're trying to connect.
+   * 
+   * if set to zero, enqueing will be rejected and all enqueued queries will be rejected when there is no connection
+   * available, with the exception of the first startup - which uses the connectTimeout instead.
+   * 
+   */
+
+  @Default
+  private Duration maxStalledWait = Duration.ofSeconds(2);
+
+  /**
    * The number of queries that can be queued for execution.
    *
    * If set to zero, this will not allow more than the {@link #getMaxPoolSize()} number of pending/executing queries.
