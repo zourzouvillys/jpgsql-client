@@ -34,7 +34,9 @@ import static io.zrz.sqlwriter.SqlKeyword.VALUES;
 import static io.zrz.sqlwriter.SqlKeyword.VIEW;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -323,6 +325,19 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator now(ZoneOffset offset) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.NOW);
+      w.writeStartExpr();
+      w.writeEndExpr();
+      w.writeKeyword(SqlKeyword.AT);
+      w.writeKeyword(SqlKeyword.TIME);
+      w.writeKeyword(SqlKeyword.ZONE);
+      w.writeQuotedString(offset.getId());
+
+    };
+  }
+
   public static SqlGenerator attachTable(DbIdent master, DbIdent partition, SqlGenerator... values) {
     return attachTable(master, partition, ImmutableList.copyOf(values));
   }
@@ -405,6 +420,10 @@ public class SqlWriters {
     return cast(literal(SqlUtils.toSqlString(internal)), "interval");
   }
 
+  public static SqlGenerator literal(Instant time) {
+    return cast(literal(time.toString()), "timestamptz");
+  }
+
   public static SqlGenerator literal(int i) {
     return w -> w.writeLiteral(i);
   }
@@ -424,6 +443,14 @@ public class SqlWriters {
   public static SqlGenerator literal(String value) {
     Objects.requireNonNull(value);
     return w -> w.writeQuotedString(value);
+  }
+
+  public static SqlGenerator literal(String value, DbIdent type) {
+    return cast(literal(value), type, 0);
+  }
+
+  public static SqlGenerator literal(String value, DbIdent type, int dims) {
+    return cast(literal(value), type, dims);
   }
 
   public static SqlGenerator literal(boolean value) {
@@ -868,7 +895,15 @@ public class SqlWriters {
     return w -> {
       w.write(expr);
       w.writeOperator("::");
-      w.writeTypename(type);
+      w.writeTypename(type, 0);
+    };
+  }
+
+  public static SqlGenerator cast(SqlGenerator expr, DbIdent type, int dims) {
+    return w -> {
+      w.write(expr);
+      w.writeOperator("::");
+      w.writeTypename(type, dims);
     };
   }
 
@@ -1281,6 +1316,13 @@ public class SqlWriters {
 
   public static SqlGenerator plus(SqlGenerator left, SqlGenerator right) {
     return binaryExpression("+", left, right);
+  }
+
+  public static SqlGenerator listen(String channel) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.LISTEN);
+      w.writeIdent(channel);
+    };
   }
 
 }

@@ -18,13 +18,23 @@ public class QueryGenerator implements SqlGenerator {
   private List<SqlGenerator> groupBy = new LinkedList<>();
   private List<SqlGenerator> orderBy = new LinkedList<>();
   private OptionalInt limit = OptionalInt.empty();
+  private String tableAlias;
 
   public QueryGenerator(DbIdent table) {
+    this(table, null);
+  }
+
+  public QueryGenerator(DbIdent table, String alias) {
     this.table = table;
+    this.tableAlias = alias;
+  }
+
+  public static QueryGenerator from(DbIdent table, String alias) {
+    return new QueryGenerator(table, alias);
   }
 
   public static QueryGenerator from(DbIdent table) {
-    return new QueryGenerator(table);
+    return new QueryGenerator(table, null);
   }
 
   public static QueryGenerator fromIdent(String tableName) {
@@ -90,6 +100,11 @@ public class QueryGenerator implements SqlGenerator {
     w.writeKeyword(SqlKeyword.FROM);
     w.writeIdent(table);
 
+    if (tableAlias != null) {
+      w.writeKeyword(SqlKeyword.AS);
+      w.writeIdent(this.tableAlias);
+    }
+
     this.joins.forEach(gen -> w.write(gen));
 
     if (!this.where.isEmpty()) {
@@ -117,10 +132,18 @@ public class QueryGenerator implements SqlGenerator {
   }
 
   public QueryGenerator innerJoin(DbIdent of, SqlGenerator on) {
+    return innerJoin(null, of, on);
+  }
+
+  public QueryGenerator innerJoin(String innerAlias, DbIdent of, SqlGenerator on) {
     this.joins.add(w -> {
       w.writeKeyword(SqlKeyword.INNER);
       w.writeKeyword(SqlKeyword.JOIN);
       w.writeIdent(of);
+      if (tableAlias != null) {
+        w.writeKeyword(SqlKeyword.AS);
+        w.writeIdent(innerAlias);
+      }
       w.writeKeyword(SqlKeyword.ON);
       w.writeExprList(on);
     });

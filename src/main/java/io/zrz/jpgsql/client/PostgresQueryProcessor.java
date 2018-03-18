@@ -118,7 +118,7 @@ public interface PostgresQueryProcessor {
   }
 
   default Publisher<QueryResult> submit(String sql, Object... params) {
-    final Query query = this.createQuery(sql);
+    final Query query = this.createQuery(sql, params.length);
     final QueryParameters qp = query.createParameters();
     qp.setFrom(params);
     return this.submit(query, qp);

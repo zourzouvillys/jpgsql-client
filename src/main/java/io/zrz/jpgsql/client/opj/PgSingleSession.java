@@ -3,7 +3,9 @@ package io.zrz.jpgsql.client.opj;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -18,17 +20,19 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.Single;
+import io.reactivex.processors.UnicastProcessor;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.SingleSubject;
 import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
 import io.zrz.jpgsql.client.CommandStatus;
+import io.zrz.jpgsql.client.NotifyMessage;
 import io.zrz.jpgsql.client.PgSession;
 import io.zrz.jpgsql.client.PostgresqlUnavailableException;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
 import io.zrz.jpgsql.client.SessionTxnState;
-import io.zrz.jpgsql.client.TransactionalSessionDeadlineExceededException;
+import io.zrz.sqlwriter.SqlWriters;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -123,9 +127,11 @@ class PgSingleSession implements Runnable, PgSession {
 
     while (true) {
 
-      final Work work = this.workqueue.poll(LOOP_WAIT.toNanos(), TimeUnit.NANOSECONDS);
+      final Work work = this.workqueue.poll(100, TimeUnit.MILLISECONDS);
 
       if (work != null) {
+
+        pollIfNeeded(conn, 1);
 
         if (work.getQuery() == null && work.getEmitter() == null) {
 
@@ -135,6 +141,9 @@ class PgSingleSession implements Runnable, PgSession {
             case IDLE:
               return;
             case FAILED:
+              log.warn("rolling back");
+              conn.rollback();
+              return;
             case OPEN:
               log.warn("rolling back");
               conn.rollback();
@@ -168,6 +177,8 @@ class PgSingleSession implements Runnable, PgSession {
 
             work.emitter.onComplete();
 
+            pollIfNeeded(conn, -1);
+
           }
           catch (Throwable t) {
 
@@ -187,30 +198,26 @@ class PgSingleSession implements Runnable, PgSession {
         else {
 
           log.info("processing work item {}", work);
+
           startidle = null;
+
           conn.execute(work.getQuery(), work.getParams(), work.getEmitter(), 0, PgLocalConnection.SuppressBegin);
 
+          log.debug("query completed");
+
+          pollIfNeeded(conn, -1);
+
         }
+
         startidle = Instant.now();
 
       }
       else {
 
-        final Duration idle = Duration.between(startidle, Instant.now());
-
-        if (idle.compareTo(MAX_IDLE) > 0) {
-          log.warn("aborting transaction due to {} idle", idle);
-          this.accepting = false;
-          conn.rollback();
-          this.txnstate.onError(new TransactionalSessionDeadlineExceededException());
-          return;
-        }
-
-        log.warn("idle {} loops in open transaction", Duration.between(startidle, Instant.now()));
+        // idle ...
+        pollIfNeeded(conn, 1);
 
       }
-
-      log.debug("txn state now {}", conn.transactionState());
 
       switch (conn.transactionState()) {
         case IDLE:
@@ -225,6 +232,7 @@ class PgSingleSession implements Runnable, PgSession {
           // }
           break;
         case FAILED:
+          log.trace("txn state now {}", conn.transactionState());
           this.accepting = false;
           this.txnstate.onSuccess(SessionTxnState.Error);
           if (!this.workqueue.isEmpty()) {
@@ -236,6 +244,7 @@ class PgSingleSession implements Runnable, PgSession {
           }
           return;
         case OPEN:
+          log.trace("txn state now {}", conn.transactionState());
           if (!this.accepting && this.workqueue.isEmpty()) {
             // rollback - which will terminate us.
             log.info("rolling back");
@@ -244,6 +253,29 @@ class PgSingleSession implements Runnable, PgSession {
           // still going ..
           break;
       }
+
+    }
+
+  }
+
+  private void pollIfNeeded(PgLocalConnection conn, int i) {
+
+    if (listeners.isEmpty()) {
+      return;
+    }
+
+    for (NotifyMessage n : conn.notifications(i)) {
+
+      UnicastProcessor<NotifyMessage> p = this.listeners.get(n.channel());
+
+      if (p == null) {
+        log.warn("notification for unknown channel {}", n.channel());
+        continue;
+      }
+
+      log.debug("got notification for {}", n.channel());
+
+      p.onNext(n);
 
     }
 
@@ -323,8 +355,9 @@ class PgSingleSession implements Runnable, PgSession {
     // this.workqueue.add(new Work(this.pool.createQuery("ROLLBACK"), null, null, null));
     // }
 
-    this.workqueue.add(new Work(null, null, null, null));
+    log.debug("closing single session");
     this.accepting = false;
+    this.workqueue.add(new Work(null, null, null, null));
 
   }
 
@@ -351,5 +384,22 @@ class PgSingleSession implements Runnable, PgSession {
   public Flowable<QueryResult> fetch(int batchSize, Tuple query) {
     throw new IllegalArgumentException();
   }
+
+  @Override
+  public Publisher<NotifyMessage> listen(String channel) {
+    UnicastProcessor<NotifyMessage> listener = UnicastProcessor.create();
+    this.listeners.put(channel, listener);
+    Flowable.fromPublisher(this.submit(SqlWriters.listen(channel)))
+        .subscribe(msg -> {
+          log.debug("subscribed to {}", channel);
+        }, err -> {
+          log.warn("notification error: {}", err);
+          UnicastProcessor<NotifyMessage> ch = listeners.remove(channel);
+          ch.onError(err);
+        });
+    return listener;
+  }
+
+  private Map<String, UnicastProcessor<NotifyMessage>> listeners = new HashMap<>();
 
 }

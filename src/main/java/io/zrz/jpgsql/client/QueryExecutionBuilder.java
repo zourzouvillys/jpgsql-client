@@ -3,6 +3,7 @@ package io.zrz.jpgsql.client;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import io.zrz.sqlwriter.SqlWriters;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -33,10 +34,19 @@ public class QueryExecutionBuilder extends AbstractQueryExecutionBuilder<QueryEx
               return (RowBuffer) x;
             case ERROR:
               return Flowable.error((ErrorResult) x);
+            case STATUS: {
+              CommandStatus status = (CommandStatus) x;
+              switch (status.getStatus()) {
+                case "BEGIN":
+                case "COMMIT":
+                  return Flowable.empty();
+              }
+              log.info("unexpected fetch status {}", x);
+              return Flowable.empty();
+            }
             case PROGRESS:
-            case STATUS:
             case WARNING:
-              log.info("got {}", x);
+              log.info("unexpected fetch event {}", x);
             default:
               return Flowable.empty();
           }
@@ -50,6 +60,16 @@ public class QueryExecutionBuilder extends AbstractQueryExecutionBuilder<QueryEx
 
   public Tuple toQuery() {
     return this.buildQuery();
+  }
+
+  public QueryExecutionBuilder notify(String channel) {
+    SqlWriters.notify(channel).addTo(this, true);
+    return this;
+  }
+
+  public QueryExecutionBuilder notify(String channel, String payload) {
+    SqlWriters.notify(channel, payload).addTo(this, true);
+    return this;
   }
 
 }

@@ -21,6 +21,9 @@ public class PostgresUtils {
       if (res instanceof CommandStatus) {
         return Single.just((CommandStatus) res);
       }
+      else if (res instanceof ErrorResult) {
+        return Single.error((ErrorResult) res);
+      }
       return Single.error(new RuntimeException(res.toString()));
     };
   }

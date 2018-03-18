@@ -131,9 +131,14 @@ public enum SqlKeyword implements SqlGenerator {
   COUNT,
   BEGIN,
   ROLLBACK,
-
+  LISTEN,
+  AT,
+  TIME,
+  ZONE,
   //
-  ;
+  END,
+  THEN,
+  ENUM;
 
   private static final Set<String> LOOKUP = Arrays.asList(values()).stream().map(x -> x.name()).collect(ImmutableSet.toImmutableSet());
 

@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -389,10 +390,14 @@ class PgLocalConnection implements PgRawConnection {
         final PGNotification[] notifications = this.conn.getNotifications(1000);
 
         if (notifications != null) {
-          emitter.onNext(new NotifyMessage(notifications));
+
+          Arrays.stream(notifications).map(NotifyMessage::new).forEach(emitter::onNext);
+
         }
 
       }
+
+      emitter.onComplete();
 
     }
     catch (final SQLException e) {
@@ -440,15 +445,44 @@ class PgLocalConnection implements PgRawConnection {
 
   }
 
+  /**
+   * 
+   */
+
   @SneakyThrows
   @Override
   public void setReadOnly(boolean b) {
     getConnection().setReadOnly(b);
   }
 
+  /**
+   * 
+   */
+
   @Override
   public String getServerVersion() {
     return getConnection().getServerMajorVersion() + "." + getConnection().getServerMinorVersion();
+  }
+
+  /**
+   * polls the connection for notifications
+   * 
+   * @param i
+   */
+
+  @SneakyThrows
+  List<NotifyMessage> notifications(int i) {
+
+    PGNotification[] nd = getConnection().getNotifications(i);
+
+    if (nd == null) {
+      return Collections.emptyList();
+    }
+
+    return Arrays.stream(nd)
+        .map(x -> new NotifyMessage(x))
+        .collect(Collectors.toList());
+
   }
 
 }

@@ -9,10 +9,22 @@ import lombok.ToString;
 public class NotifyMessage {
 
   @Getter
-  private final PGNotification[] notifications;
+  private final PGNotification msg;
 
-  public NotifyMessage(PGNotification[] notifications) {
-    this.notifications = notifications;
+  public NotifyMessage(PGNotification notifications) {
+    this.msg = notifications;
+  }
+
+  public String channel() {
+    return msg.getName();
+  }
+
+  public String parameter() {
+    return msg.getParameter();
+  }
+
+  public int pid() {
+    return msg.getPID();
   }
 
 }

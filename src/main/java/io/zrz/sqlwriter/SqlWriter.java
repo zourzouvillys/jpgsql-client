@@ -168,9 +168,22 @@ public class SqlWriter {
     return idx + 1;
   }
 
-  public SqlWriter writeTypename(String type) {
+  public SqlWriter writeTypename(String type, int dims) {
     this.spacing();
-    this.sb.append(type);
+    writeIdent(type);
+    for (int i = 0; i < dims; ++i) {
+      this.sb.append("[]");
+    }
+    this.state = State.IDENT;
+    return this;
+  }
+
+  public SqlWriter writeTypename(DbIdent type, int dims) {
+    this.spacing();
+    writeIdent(type);
+    for (int i = 0; i < dims; ++i) {
+      this.sb.append("[]");
+    }
     this.state = State.IDENT;
     return this;
   }
