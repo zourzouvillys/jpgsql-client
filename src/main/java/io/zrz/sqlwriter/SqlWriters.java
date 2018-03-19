@@ -417,11 +417,11 @@ public class SqlWriters {
   }
 
   public static SqlGenerator literal(Duration internal) {
-    return cast(literal(SqlUtils.toSqlString(internal)), "interval");
+    return cast(literal(SqlUtils.toSqlString(internal)), PgTypes.INTERVAL);
   }
 
   public static SqlGenerator literal(Instant time) {
-    return cast(literal(time.toString()), "timestamptz");
+    return cast(literal(time.toString()), PgTypes.TIMESTAMPTZ);
   }
 
   public static SqlGenerator literal(int i) {
@@ -875,7 +875,7 @@ public class SqlWriters {
   }
 
   public static SqlGenerator array(String... items) {
-    return cast(array(Arrays.stream(items).map(SqlWriters::literal).toArray(SqlGenerator[]::new)), "text[]");
+    return cast(array(Arrays.stream(items).map(SqlWriters::literal).toArray(SqlGenerator[]::new)), "text", 1);
   }
 
   public static SqlGenerator array(Stream<SqlGenerator> stream) {
@@ -891,11 +891,19 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator cast(SqlGenerator expr, String type) {
+  public static SqlGenerator cast(SqlGenerator expr, SqlType type) {
     return w -> {
       w.write(expr);
       w.writeOperator("::");
-      w.writeTypename(type, 0);
+      w.writeTypename(type.ident(), 0);
+    };
+  }
+
+  public static SqlGenerator cast(SqlGenerator expr, String type, int dims) {
+    return w -> {
+      w.write(expr);
+      w.writeOperator("::");
+      w.writeTypename(type, dims);
     };
   }
 
