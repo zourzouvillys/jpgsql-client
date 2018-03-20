@@ -19,6 +19,7 @@ public class QueryGenerator implements SqlGenerator {
   private List<SqlGenerator> orderBy = new LinkedList<>();
   private OptionalInt limit = OptionalInt.empty();
   private String tableAlias;
+  private boolean forUpdate;
 
   public QueryGenerator(DbIdent table) {
     this(table, null);
@@ -129,6 +130,11 @@ public class QueryGenerator implements SqlGenerator {
 
     });
 
+    if (this.forUpdate) {
+      w.writeKeyword(SqlKeyword.FOR);
+      w.writeKeyword(SqlKeyword.UPDATE);
+    }
+
   }
 
   public QueryGenerator innerJoin(DbIdent of, SqlGenerator on) {
@@ -154,8 +160,13 @@ public class QueryGenerator implements SqlGenerator {
     return select(SqlWriters.count());
   }
 
-  public SqlGenerator groupBy(SqlGenerator expr) {
+  public QueryGenerator groupBy(SqlGenerator expr) {
     this.groupBy.add(expr);
+    return this;
+  }
+
+  public QueryGenerator forUpdate() {
+    this.forUpdate = true;
     return this;
   }
 }

@@ -50,6 +50,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
@@ -813,6 +814,20 @@ public class SqlWriters {
       w.writeKeyword(SqlKeyword.ARRAY);
       w.writeOperator("[");
       w.writeList(SqlWriter.comma(), items);
+      w.writeOperator("]");
+      w.writeEndExpr();
+    };
+  }
+
+  public static SqlGenerator inAnyArray(SqlGenerator field, IntStream values) {
+    return w -> {
+      w.write(field);
+      w.writeOperator("=");
+      w.writeKeyword(SqlKeyword.ANY);
+      w.writeStartExpr();
+      w.writeKeyword(SqlKeyword.ARRAY);
+      w.writeOperator("[");
+      w.writeList(SqlWriter.comma(), values.mapToObj(SqlWriters::literal));
       w.writeOperator("]");
       w.writeEndExpr();
     };
