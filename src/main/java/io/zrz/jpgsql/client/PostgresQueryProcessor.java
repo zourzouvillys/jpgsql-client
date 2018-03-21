@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.reactivestreams.Publisher;
 
+import com.google.common.io.ByteSource;
+
 import io.netty.buffer.ByteBuf;
 import io.reactivex.Flowable;
 import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
@@ -88,6 +90,15 @@ public interface PostgresQueryProcessor {
    */
 
   Publisher<Long> copyTo(String sql, Publisher<ByteBuf> upstream);
+
+  /**
+   * 
+   * @param sql
+   * @param upstream
+   * @return
+   */
+
+  Publisher<Long> copyTo(String sql, ByteSource source);
 
   /**
    * 

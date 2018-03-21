@@ -14,6 +14,7 @@ import org.postgresql.util.HostSpec;
 import org.reactivestreams.Publisher;
 
 import com.google.common.base.Preconditions;
+import com.google.common.io.ByteSource;
 import com.google.common.primitives.Ints;
 
 import io.netty.buffer.ByteBuf;
@@ -440,6 +441,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   @Override
   public PostgresClient client() {
     return this;
+  }
+
+  @Override
+  public Publisher<Long> copyTo(String sql, ByteSource source) {
+    throw new IllegalArgumentException();
   }
 
 }

@@ -1,5 +1,6 @@
 package io.zrz.jpgsql.client.opj;
 
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
@@ -13,6 +14,7 @@ import org.postgresql.copy.CopyIn;
 import org.postgresql.jdbc.PgConnection;
 import org.reactivestreams.Publisher;
 
+import com.google.common.io.ByteSource;
 import com.google.common.primitives.Ints;
 
 import io.netty.buffer.ByteBuf;
@@ -50,7 +52,7 @@ class PgSingleSession implements Runnable, PgSession {
     private Query query;
     private QueryParameters params;
     private FlowableEmitter<QueryResult> emitter;
-    private Publisher<ByteBuf> source;
+    private Object source;
   }
 
   private static final Duration LOOP_WAIT = Duration.ofSeconds(1);
@@ -116,6 +118,33 @@ class PgSingleSession implements Runnable, PgSession {
         .singleOrError()
         .toFlowable();
 
+  }
+
+  @Override
+  public Publisher<Long> copyTo(String sql, ByteSource source) {
+
+    log.debug("starting COPY TO: {}", sql);
+
+    if (!this.accepting) {
+      throw new IllegalStateException(String.format("This session is no longer active"));
+    }
+
+    final Flowable<QueryResult> flowable = Flowable.create(emitter -> {
+
+      log.debug("starting COPY");
+      this.workqueue.add(new Work(this.createQuery(sql), null, emitter, source));
+
+    }, BackpressureStrategy.BUFFER);
+
+    return flowable
+        .publish()
+        .autoConnect()
+        .doOnEach(e -> log.debug("notif: {}", e))
+        .map(x -> (long) (((CommandStatus) x).getUpdateCount()))
+        .subscribeOn(Schedulers.io(), true)
+        .observeOn(Schedulers.io(), true)
+        .singleOrError()
+        .toFlowable();
   }
 
   /*
@@ -287,7 +316,26 @@ class PgSingleSession implements Runnable, PgSession {
   }
 
   @SneakyThrows
-  private Single<Long> processCopy(PgConnection conn, String sql, Publisher<ByteBuf> source) {
+  private Single<Long> processCopy(PgConnection conn, String sql, Object source) {
+
+    if (source instanceof ByteSource) {
+
+      ByteSource ssource = ((ByteSource) source);
+
+      ByteSource preamble = ByteSource.wrap(PgThreadPooledClient.BINARY_PREAMBLE);
+
+      try (InputStream in = ByteSource.concat(preamble, ssource).openBufferedStream()) {
+
+        return Single.just(Long.valueOf(conn.getCopyAPI().copyIn(sql, in)));
+
+      }
+      catch (Throwable t) {
+
+        return Single.error(t);
+
+      }
+
+    }
 
     CopyIn copy = conn.getCopyAPI().copyIn(sql);
 
@@ -295,7 +343,7 @@ class PgSingleSession implements Runnable, PgSession {
 
     copy.writeToCopy(PgThreadPooledClient.BINARY_PREAMBLE, 0, PgThreadPooledClient.BINARY_PREAMBLE.length);
 
-    return Flowable.fromPublisher(source)
+    return Flowable.fromPublisher((Publisher<ByteBuf>) source)
 
         .doOnNext(buf -> {
 

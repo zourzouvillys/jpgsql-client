@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.reactivestreams.Publisher;
 
+import com.google.common.io.ByteSource;
+
 import io.netty.buffer.ByteBuf;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -255,6 +257,11 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
   @Override
   public PostgresClient client() {
     return pool;
+  }
+
+  @Override
+  public Publisher<Long> copyTo(String sql, ByteSource source) {
+    throw new IllegalArgumentException();
   }
 
 }
