@@ -17,6 +17,7 @@ import io.reactivex.FlowableEmitter;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.SingleSubject;
 import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
+import io.zrz.jpgsql.client.PostgresClient;
 import io.zrz.jpgsql.client.PostgresqlUnavailableException;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
@@ -249,6 +250,11 @@ class PgTransactionalSession implements TransactionalSession, Runnable {
   @Override
   public Flowable<QueryResult> fetch(int batchSize, Tuple query) {
     throw new IllegalArgumentException();
+  }
+
+  @Override
+  public PostgresClient client() {
+    return pool;
   }
 
 }

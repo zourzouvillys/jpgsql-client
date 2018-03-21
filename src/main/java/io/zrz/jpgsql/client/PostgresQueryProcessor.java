@@ -134,4 +134,6 @@ public interface PostgresQueryProcessor {
     return fetch(batchSize, g.asTuple());
   }
 
+  PostgresClient client();
+
 }

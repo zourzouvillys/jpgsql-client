@@ -27,6 +27,7 @@ import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
 import io.zrz.jpgsql.client.CommandStatus;
 import io.zrz.jpgsql.client.NotifyMessage;
 import io.zrz.jpgsql.client.PgSession;
+import io.zrz.jpgsql.client.PostgresClient;
 import io.zrz.jpgsql.client.PostgresqlUnavailableException;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
@@ -401,5 +402,10 @@ class PgSingleSession implements Runnable, PgSession {
   }
 
   private Map<String, UnicastProcessor<NotifyMessage>> listeners = new HashMap<>();
+
+  @Override
+  public PostgresClient client() {
+    return pool;
+  }
 
 }

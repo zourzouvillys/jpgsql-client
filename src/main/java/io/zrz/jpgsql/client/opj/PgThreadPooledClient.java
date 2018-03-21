@@ -437,4 +437,9 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     return config;
   }
 
+  @Override
+  public PostgresClient client() {
+    return this;
+  }
+
 }
