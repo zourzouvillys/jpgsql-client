@@ -1,5 +1,8 @@
 package io.zrz.sqlwriter;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
@@ -36,6 +39,12 @@ public class DbIdent implements SqlGenerator {
 
   public String getNamespaceName() {
     return this.names.get(0);
+  }
+
+  public DbIdent withReplacedSimpleName(UnaryOperator<String> operator) {
+    List<String> parts = new ArrayList<String>(this.names);
+    parts.set(parts.size() - 1, operator.apply(parts.get(parts.size() - 1)));
+    return new DbIdent(ImmutableList.copyOf(parts));
   }
 
 }

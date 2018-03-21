@@ -106,8 +106,7 @@ public class PgObservableResultHandler extends ResultHandlerBase {
     if (this.cursor != null) {
       return;
     }
-    // log.debug("finished Query ({} rows over {} statements). errors: {}",
-    // this.totalRows, this.statementId, this.getException());
+    log.debug("finished Query (over {} statements). errors: {}", this.statementId, this.getException());
     if (this.getException() != null) {
       this.emitter.onError(this.getException());
     }

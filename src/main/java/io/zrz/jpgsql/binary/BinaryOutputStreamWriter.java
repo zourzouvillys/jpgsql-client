@@ -1,6 +1,8 @@
 package io.zrz.jpgsql.binary;
 
 import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -23,10 +25,14 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
     this.out = out;
   }
 
+  public BinaryOutputStreamWriter(OutputStream out) {
+    this.out = new DataOutputStream(out);
+  }
+
   @SneakyThrows
   @Override
   public BinaryRecordWriter writeNull() {
-    out.writeByte(-1);
+    out.writeInt(-1);
     return this;
   }
 

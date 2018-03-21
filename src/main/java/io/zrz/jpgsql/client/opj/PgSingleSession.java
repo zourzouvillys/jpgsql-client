@@ -84,13 +84,16 @@ class PgSingleSession implements Runnable, PgSession {
     return flowable
         .publish()
         .autoConnect()
-        .observeOn(Schedulers.computation(), true)
+        .subscribeOn(Schedulers.io(), true)
+        .observeOn(Schedulers.io(), true)
         .doOnEach(e -> log.debug("notif: {}", e));
 
   }
 
   @Override
   public Publisher<Long> copyTo(String sql, Publisher<ByteBuf> data) {
+
+    log.debug("starting COPY TO: {}", sql);
 
     if (!this.accepting) {
       throw new IllegalStateException(String.format("This session is no longer active"));
@@ -108,7 +111,8 @@ class PgSingleSession implements Runnable, PgSession {
         .autoConnect()
         .doOnEach(e -> log.debug("notif: {}", e))
         .map(x -> (long) (((CommandStatus) x).getUpdateCount()))
-        .observeOn(Schedulers.computation(), true)
+        .subscribeOn(Schedulers.io(), true)
+        .observeOn(Schedulers.io(), true)
         .singleOrError()
         .toFlowable();
 
@@ -198,7 +202,7 @@ class PgSingleSession implements Runnable, PgSession {
         }
         else {
 
-          log.info("processing work item {}", work);
+          log.debug("processing work item {}", work);
 
           startidle = null;
 

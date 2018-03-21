@@ -105,6 +105,11 @@ public abstract class AbstractQueryExecutionBuilder<T> {
     return this.result(this.queries.size() - 1, tuple);
   }
 
+  public T add(Tuple tuple) {
+    this.queries.add(tuple);
+    return this.result(this.queries.size() - 1, tuple);
+  }
+
   protected Tuple buildQuery() {
 
     final Query query = this.client.createQuery(this.queries.stream().map(t -> t.query).collect(Collectors.toList()));

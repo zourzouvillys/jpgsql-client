@@ -201,6 +201,26 @@ public class SqlWriters {
 
   }
 
+  public static SqlWriter.SqlGenerator copyBinaryFromStdin(DbIdent tableName, Collection<String> columns) {
+
+    return w -> {
+
+      w.writeKeyword(SqlKeyword.COPY);
+      w.writeIdent(tableName);
+
+      if (!columns.isEmpty()) {
+        w.writeExprList(SqlWriters.idents(columns));
+      }
+
+      w.writeKeyword(SqlKeyword.FROM);
+      w.writeKeyword(SqlKeyword.STDIN);
+      w.writeKeyword(SqlKeyword.WITH);
+      w.writeKeyword(SqlKeyword.BINARY);
+
+    };
+
+  }
+
   public static SqlWriter.SqlGenerator createTable(String schemaName, String tableName) {
     return (w) -> {
       w.writeKeyword(CREATE, TABLE, IF, NOT, EXISTS);
@@ -478,6 +498,10 @@ public class SqlWriters {
 
     return res;
 
+  }
+
+  public static SqlGenerator[] idents(Collection<String> columns) {
+    return columns.stream().map(x -> ident(x)).toArray(SqlGenerator[]::new);
   }
 
   public static SqlGenerator select(DbIdent table, SqlGenerator filter, String... columns) {
