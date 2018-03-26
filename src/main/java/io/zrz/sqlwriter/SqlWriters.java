@@ -64,26 +64,26 @@ import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
 
 public class SqlWriters {
 
-  public static SqlWriter.SqlGenerator createSchema(String schemaName) {
+  public static SqlWriter.SqlGenerator createSchema(final String schemaName) {
     return (w) -> {
       w.writeKeyword(CREATE, SCHEMA);
       w.writeIdent(schemaName);
     };
   }
 
-  public static SqlWriter.SqlGenerator createSchemaIfNotExists(String schemaName) {
+  public static SqlWriter.SqlGenerator createSchemaIfNotExists(final String schemaName) {
     return (w) -> {
       w.writeKeyword(CREATE, SCHEMA, IF, NOT, EXISTS);
       w.writeIdent(schemaName);
     };
   }
 
-  public static SqlWriter.SqlGenerator columnIdent(DbIdent ident) {
+  public static SqlWriter.SqlGenerator columnIdent(final DbIdent ident) {
     return (w) -> {
 
-      List<String> idents = Lists.newArrayList(ident.getNames());
+      final List<String> idents = Lists.newArrayList(ident.getNames());
 
-      String columnName = idents.remove(idents.size() - 1);
+      final String columnName = idents.remove(idents.size() - 1);
 
       w.writeKeyword(SqlKeyword.REFERENCES);
 
@@ -95,7 +95,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator deleteFrom(DbIdent table, SqlGenerator where) {
+  public static SqlGenerator deleteFrom(final DbIdent table, final SqlGenerator where) {
     return w -> {
       w.writeKeyword(SqlKeyword.DELETE);
       w.writeKeyword(SqlKeyword.FROM);
@@ -105,7 +105,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator deleteFrom(DbIdent table, SqlGenerator where, SqlGenerator... returning) {
+  public static SqlGenerator deleteFrom(final DbIdent table, final SqlGenerator where, final SqlGenerator... returning) {
     return w -> {
       w.writeKeyword(SqlKeyword.DELETE);
       w.writeKeyword(SqlKeyword.FROM);
@@ -119,7 +119,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator insertInto(DbIdent target, SqlGenerator select) {
+  public static SqlGenerator insertInto(final DbIdent target, final SqlGenerator select) {
     return w -> {
       w.writeKeyword(SqlKeyword.INSERT);
       w.writeKeyword(SqlKeyword.INTO);
@@ -128,7 +128,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator insertInto(DbIdent target, List<String> fields, SqlGenerator select) {
+  public static SqlGenerator insertInto(final DbIdent target, final List<String> fields, final SqlGenerator select) {
     return w -> {
       w.writeKeyword(SqlKeyword.INSERT);
       w.writeKeyword(SqlKeyword.INTO);
@@ -138,7 +138,8 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator merge(DbIdent target, List<String> fields, SqlGenerator values, Map<String, SqlGenerator> mergeFields, SqlGenerator... returning) {
+  public static SqlGenerator merge(final DbIdent target, final List<String> fields, final SqlGenerator values, final Map<String, SqlGenerator> mergeFields,
+      final SqlGenerator... returning) {
     return w -> {
 
       w.writeKeyword(SqlKeyword.INSERT);
@@ -159,8 +160,8 @@ public class SqlWriters {
       w.writeKeyword(SqlKeyword.UPDATE);
       w.writeKeyword(SqlKeyword.SET);
 
-      List<SqlGenerator> mergeKeys = new LinkedList<>();
-      List<SqlGenerator> mergeValues = new LinkedList<>();
+      final List<SqlGenerator> mergeKeys = new LinkedList<>();
+      final List<SqlGenerator> mergeValues = new LinkedList<>();
 
       mergeFields.forEach((k, v) -> {
 
@@ -181,7 +182,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlWriter.SqlGenerator copyBinaryFromStdin(DbIdent tableName, String... columns) {
+  public static SqlWriter.SqlGenerator copyBinaryFromStdin(final DbIdent tableName, final String... columns) {
 
     return w -> {
 
@@ -201,7 +202,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlWriter.SqlGenerator copyBinaryFromStdin(DbIdent tableName, Collection<String> columns) {
+  public static SqlWriter.SqlGenerator copyBinaryFromStdin(final DbIdent tableName, final Collection<String> columns) {
 
     return w -> {
 
@@ -221,7 +222,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlWriter.SqlGenerator createTable(String schemaName, String tableName) {
+  public static SqlWriter.SqlGenerator createTable(final String schemaName, final String tableName) {
     return (w) -> {
       w.writeKeyword(CREATE, TABLE, IF, NOT, EXISTS);
       w.writeIdent(schemaName, tableName);
@@ -230,7 +231,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlWriter.SqlGenerator indexItem(String columnName, String opclass) {
+  public static SqlWriter.SqlGenerator indexItem(final String columnName, final String opclass) {
     return (w) -> {
       w.writeIdent(columnName);
       if (opclass != null)
@@ -239,7 +240,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlWriter.SqlGenerator indexItem(String columnName, String opclass, SqlDirection direction, SqlNulls nulls) {
+  public static SqlWriter.SqlGenerator indexItem(final String columnName, final String opclass, final SqlDirection direction, final SqlNulls nulls) {
     return (w) -> {
       w.writeIdent(columnName);
       if (opclass != null)
@@ -254,7 +255,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlWriter.SqlGenerator indexItem(SqlGenerator columnName, String opclass, SqlDirection direction, SqlNulls nulls) {
+  public static SqlWriter.SqlGenerator indexItem(final SqlGenerator columnName, final String opclass, final SqlDirection direction, final SqlNulls nulls) {
     return (w) -> {
       w.write(columnName);
       if (opclass != null)
@@ -269,7 +270,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlWriter.SqlGenerator indexItem(String columnName, SqlDirection direction, SqlNulls nulls) {
+  public static SqlWriter.SqlGenerator indexItem(final String columnName, final SqlDirection direction, final SqlNulls nulls) {
     return (w) -> {
       w.writeIdent(columnName);
       if (direction != null) {
@@ -284,7 +285,7 @@ public class SqlWriters {
 
   // { column_name | ( expression ) } [ COLLATE collation ] [ opclass ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ]
 
-  public static SqlWriter.SqlGenerator createUniqueIndex(String idxname, String type, DbIdent tblname, SqlGenerator... indexItems) {
+  public static SqlWriter.SqlGenerator createUniqueIndex(final String idxname, final String type, final DbIdent tblname, final SqlGenerator... indexItems) {
     return (w) -> {
 
       w.writeKeyword(CREATE);
@@ -306,7 +307,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlWriter.SqlGenerator createIndex(String idxname, String type, DbIdent tblname, SqlGenerator... indexItems) {
+  public static SqlWriter.SqlGenerator createIndex(final String idxname, final String type, final DbIdent tblname, final SqlGenerator... indexItems) {
     return (w) -> {
 
       w.writeKeyword(CREATE);
@@ -325,7 +326,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlWriter.SqlGenerator createBtreeIndex(String id, DbIdent tblname, SqlGenerator... indexItems) {
+  public static SqlWriter.SqlGenerator createBtreeIndex(final String id, final DbIdent tblname, final SqlGenerator... indexItems) {
     return (w) -> {
       w.writeKeyword(CREATE);
       w.writeKeyword(INDEX);
@@ -346,7 +347,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator now(ZoneOffset offset) {
+  public static SqlGenerator now(final ZoneOffset offset) {
     return w -> {
       w.writeKeyword(SqlKeyword.NOW);
       w.writeStartExpr();
@@ -359,11 +360,11 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator attachTable(DbIdent master, DbIdent partition, SqlGenerator... values) {
+  public static SqlGenerator attachTable(final DbIdent master, final DbIdent partition, final SqlGenerator... values) {
     return attachTable(master, partition, ImmutableList.copyOf(values));
   }
 
-  public static SqlGenerator attachTable(DbIdent master, DbIdent partition, Collection<SqlGenerator> values) {
+  public static SqlGenerator attachTable(final DbIdent master, final DbIdent partition, final Collection<SqlGenerator> values) {
 
     return w -> {
 
@@ -385,7 +386,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlGenerator detachTable(DbIdent master, DbIdent partition) {
+  public static SqlGenerator detachTable(final DbIdent master, final DbIdent partition) {
 
     return w -> {
 
@@ -401,7 +402,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlGenerator alterTablespace(DbIdent master, String tablespace) {
+  public static SqlGenerator alterTablespace(final DbIdent master, final String tablespace) {
 
     return w -> {
 
@@ -417,7 +418,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlGenerator setLogged(DbIdent master, boolean logged) {
+  public static SqlGenerator setLogged(final DbIdent master, final boolean logged) {
 
     return w -> {
 
@@ -433,52 +434,52 @@ public class SqlWriters {
 
   }
 
-  public static SqlGenerator literal(Set<String> values) {
+  public static SqlGenerator literal(final Set<String> values) {
     return w -> w.write(array(values.stream().map(SqlWriters::literal)));
   }
 
-  public static SqlGenerator literal(Duration internal) {
+  public static SqlGenerator literal(final Duration internal) {
     return cast(literal(SqlUtils.toSqlString(internal)), PgTypes.INTERVAL);
   }
 
-  public static SqlGenerator literal(Instant time) {
+  public static SqlGenerator literal(final Instant time) {
     return cast(literal(time.toString()), PgTypes.TIMESTAMPTZ);
   }
 
-  public static SqlGenerator literal(int i) {
+  public static SqlGenerator literal(final int i) {
     return w -> w.writeLiteral(i);
   }
 
-  public static SqlGenerator literal(byte[] bytea) {
+  public static SqlGenerator literal(final byte[] bytea) {
     return w -> w.writeByteArray(bytea);
   }
 
-  public static SqlGenerator literal(long i) {
+  public static SqlGenerator literal(final long i) {
     return w -> w.writeLiteral(i);
   }
 
-  public static SqlGenerator literal(double i) {
+  public static SqlGenerator literal(final double i) {
     return w -> w.writeLiteral(i);
   }
 
-  public static SqlGenerator literal(String value) {
+  public static SqlGenerator literal(final String value) {
     Objects.requireNonNull(value);
     return w -> w.writeQuotedString(value);
   }
 
-  public static SqlGenerator literal(String value, DbIdent type) {
+  public static SqlGenerator literal(final String value, final DbIdent type) {
     return cast(literal(value), type, 0);
   }
 
-  public static SqlGenerator literal(String value, DbIdent type, int dims) {
+  public static SqlGenerator literal(final String value, final DbIdent type, final int dims) {
     return cast(literal(value), type, dims);
   }
 
-  public static SqlGenerator literal(boolean value) {
+  public static SqlGenerator literal(final boolean value) {
     return w -> w.writeLiteral(value);
   }
 
-  public static SqlGenerator literal(LocalDateTime value) {
+  public static SqlGenerator literal(final LocalDateTime value) {
     return w -> {
 
       w.writeQuotedString(value.toString());
@@ -487,12 +488,12 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator[] idents(String... columns) {
+  public static SqlGenerator[] idents(final String... columns) {
 
-    SqlGenerator[] res = new SqlGenerator[columns.length];
+    final SqlGenerator[] res = new SqlGenerator[columns.length];
 
     for (int i = 0; i < columns.length; ++i) {
-      String value = columns[i];
+      final String value = columns[i];
       res[i] = w -> w.writeIdent(value);
     }
 
@@ -500,15 +501,15 @@ public class SqlWriters {
 
   }
 
-  public static SqlGenerator[] idents(Collection<String> columns) {
+  public static SqlGenerator[] idents(final Collection<String> columns) {
     return columns.stream().map(x -> ident(x)).toArray(SqlGenerator[]::new);
   }
 
-  public static SqlGenerator select(DbIdent table, SqlGenerator filter, String... columns) {
+  public static SqlGenerator select(final DbIdent table, final SqlGenerator filter, final String... columns) {
     return select(table, filter, Arrays.stream(columns).map(SqlWriters::ident).toArray(SqlGenerator[]::new));
   }
 
-  public static SqlGenerator select(DbIdent table, SqlGenerator filter, SqlGenerator... columns) {
+  public static SqlGenerator select(final DbIdent table, final SqlGenerator filter, final SqlGenerator... columns) {
     return w -> {
       w.writeKeyword(SqlKeyword.SELECT);
       w.writeList(SqlWriter.comma(), Arrays.asList(columns));
@@ -521,7 +522,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator select(DbIdent table, Optional<SqlGenerator> filter, SqlGenerator... columns) {
+  public static SqlGenerator select(final DbIdent table, final Optional<SqlGenerator> filter, final SqlGenerator... columns) {
     return w -> {
       w.writeKeyword(SqlKeyword.SELECT);
       w.writeList(SqlWriter.comma(), Arrays.asList(columns));
@@ -536,7 +537,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator selectGroupBy(DbIdent table, SqlGenerator groupBy, SqlGenerator... columns) {
+  public static SqlGenerator selectGroupBy(final DbIdent table, final SqlGenerator groupBy, final SqlGenerator... columns) {
     return w -> {
       w.writeKeyword(SqlKeyword.SELECT);
       w.writeList(SqlWriter.comma(), Arrays.asList(columns));
@@ -550,7 +551,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator alterSchemaOwner(String schemaName, String owner) {
+  public static SqlGenerator alterSchemaOwner(final String schemaName, final String owner) {
     // ALTER SCHEMA xxx OWNER TO "yyy";
     return w -> {
       w.writeKeyword(ALTER, SCHEMA);
@@ -560,7 +561,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator grantUsageOnSchema(String schemaName, String whom) {
+  public static SqlGenerator grantUsageOnSchema(final String schemaName, final String whom) {
     // GRANT SELECT ON ALL TABLES IN SCHEMA ccc TO ddd;
     return w -> {
       w.writeKeyword(GRANT);
@@ -574,7 +575,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlGenerator grantTable(SqlKeyword what, DbIdent table, String whom) {
+  public static SqlGenerator grantTable(final SqlKeyword what, final DbIdent table, final String whom) {
     return w -> {
       w.writeKeyword(GRANT);
       w.writeKeyword(what);
@@ -586,7 +587,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator grantOnAllTables(String schemaName, String whom, SqlKeyword... what) {
+  public static SqlGenerator grantOnAllTables(final String schemaName, final String whom, final SqlKeyword... what) {
     // GRANT SELECT ON ALL TABLES IN SCHEMA yyy TO xxx;
     return w -> {
       w.writeKeyword(GRANT);
@@ -599,7 +600,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlGenerator identStartsWith(String ident, String value) {
+  public static SqlGenerator identStartsWith(final String ident, final String value) {
     return w -> {
       w.writeIdent(ident);
       w.writeKeyword(SqlKeyword.LIKE);
@@ -607,7 +608,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator identLike(String ident, String value) {
+  public static SqlGenerator identLike(final String ident, final String value) {
     return w -> {
       w.writeIdent(ident);
       w.writeOperator("=");
@@ -615,7 +616,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator eq(SqlGenerator ident, String value) {
+  public static SqlGenerator eq(final SqlGenerator ident, final String value) {
     return w -> {
       w.write(ident);
       w.writeOperator("=");
@@ -623,7 +624,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator eq(SqlGenerator ident, SqlGenerator value) {
+  public static SqlGenerator eq(final SqlGenerator ident, final SqlGenerator value) {
     return w -> {
       w.write(ident);
       w.writeOperator("=");
@@ -631,7 +632,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator eq(String ident, int value) {
+  public static SqlGenerator eq(final String ident, final int value) {
     return w -> {
       w.write(SqlWriter.ident(ident));
       w.writeOperator("=");
@@ -639,7 +640,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator eq(String ident, String value) {
+  public static SqlGenerator eq(final String ident, final String value) {
     return w -> {
       w.write(SqlWriter.ident(ident));
       w.writeOperator("=");
@@ -647,7 +648,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator eq(String ident, SqlGenerator value) {
+  public static SqlGenerator eq(final String ident, final SqlGenerator value) {
     return w -> {
       w.write(SqlWriter.ident(ident));
       w.writeOperator("=");
@@ -655,21 +656,21 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator exprList(SqlGenerator... fields) {
+  public static SqlGenerator exprList(final SqlGenerator... fields) {
     return w -> {
       w.writeExprList(fields);
     };
   }
 
-  public static SqlGenerator list(SqlGenerator seperator, Collection<SqlGenerator> exprs) {
+  public static SqlGenerator list(final SqlGenerator seperator, final Collection<SqlGenerator> exprs) {
     return list(seperator, exprs.stream());
   }
 
-  public static SqlGenerator list(SqlGenerator seperator, Stream<SqlGenerator> exprs) {
+  public static SqlGenerator list(final SqlGenerator seperator, final Stream<SqlGenerator> exprs) {
     return list(seperator, exprs.toArray(SqlGenerator[]::new));
   }
 
-  public static SqlGenerator list(SqlGenerator seperator, SqlGenerator... fields) {
+  public static SqlGenerator list(final SqlGenerator seperator, final SqlGenerator... fields) {
     Arrays.stream(fields).forEach(Preconditions::checkNotNull);
     return w -> {
       for (int i = 0; i < fields.length; ++i) {
@@ -681,7 +682,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator and(SqlGenerator... exprs) {
+  public static SqlGenerator and(final SqlGenerator... exprs) {
     return w -> {
       w.writeStartExpr();
       w.write(list(AND, exprs));
@@ -689,7 +690,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator or(SqlGenerator... exprs) {
+  public static SqlGenerator or(final SqlGenerator... exprs) {
     return w -> {
       w.writeStartExpr();
       w.write(list(OR, exprs));
@@ -697,7 +698,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator and(Collection<SqlGenerator> exprs) {
+  public static SqlGenerator and(final Collection<SqlGenerator> exprs) {
     return w -> {
       w.writeStartExpr();
       w.write(list(AND, exprs));
@@ -705,7 +706,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator or(Collection<SqlGenerator> exprs) {
+  public static SqlGenerator or(final Collection<SqlGenerator> exprs) {
     return w -> {
       w.writeStartExpr();
       w.write(list(OR, exprs));
@@ -713,38 +714,38 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator max(SqlGenerator field) {
+  public static SqlGenerator max(final SqlGenerator field) {
     return w -> {
       w.writeFunction("max", field);
     };
   }
 
-  public static SqlGenerator function(String name, SqlGenerator field) {
+  public static SqlGenerator function(final String name, final SqlGenerator field) {
     return w -> {
       w.writeFunction(name, field);
     };
   }
 
-  public static SqlGenerator function(String name, SqlGenerator... fields) {
+  public static SqlGenerator function(final String name, final SqlGenerator... fields) {
     return w -> {
       w.writeFunction(name, fields);
     };
   }
 
-  public static SqlGenerator function(String name, String... strvals) {
+  public static SqlGenerator function(final String name, final String... strvals) {
     return w -> {
       w.writeFunction(name, Arrays.stream(strvals).map(SqlWriter::quotedString).toArray(SqlGenerator[]::new));
     };
   }
 
-  public static SqlGenerator dropTableIfExists(DbIdent ident) {
+  public static SqlGenerator dropTableIfExists(final DbIdent ident) {
     return w -> {
       w.writeKeyword(DROP, TABLE, IF, EXISTS);
       w.writeIdent(ident);
     };
   }
 
-  public static SqlGenerator dropTypesIfExistsCascade(DbIdent... types) {
+  public static SqlGenerator dropTypesIfExistsCascade(final DbIdent... types) {
     return w -> {
       w.writeKeyword(DROP, TYPE, IF, EXISTS);
       w.writeList(SqlWriter.comma(), types);
@@ -752,30 +753,30 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator dropViewIfExists(DbIdent ident) {
+  public static SqlGenerator dropViewIfExists(final DbIdent ident) {
     return w -> {
       w.writeKeyword(DROP, VIEW, IF, EXISTS);
       w.writeIdent(ident);
     };
   }
 
-  public static String toString(SqlGenerator gen) {
-    SqlWriter w = new SqlWriter(true);
+  public static String toString(final SqlGenerator gen) {
+    final SqlWriter w = new SqlWriter(true);
     gen.write(w);
     return w.toString();
   }
 
-  public static SqlGenerator renameTable(DbIdent currentName, DbIdent targetName) {
+  public static SqlGenerator renameTable(final DbIdent currentName, final DbIdent targetName) {
     return w -> {
       w.writeKeyword(ALTER, TABLE);
       w.writeIdent(currentName);
       w.writeKeyword(RENAME, TO);
-      ImmutableList<String> endpart = targetName.getNames();
+      final ImmutableList<String> endpart = targetName.getNames();
       w.writeIdent(endpart.get(endpart.size() - 1));
     };
   }
 
-  public static SqlGenerator vacuumAnalyze(DbIdent ident) {
+  public static SqlGenerator vacuumAnalyze(final DbIdent ident) {
     return w -> {
       w.writeKeyword(SqlKeyword.VACUUM);
       w.writeKeyword(SqlKeyword.ANALYZE);
@@ -783,14 +784,14 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator vacuum(DbIdent ident) {
+  public static SqlGenerator vacuum(final DbIdent ident) {
     return w -> {
       w.writeKeyword(SqlKeyword.VACUUM);
       w.writeIdent(ident);
     };
   }
 
-  public static SqlGenerator setLocal(String key, SqlGenerator value) {
+  public static SqlGenerator setLocal(final String key, final SqlGenerator value) {
     return w -> {
       w.writeKeyword(SqlKeyword.SET);
       w.writeKeyword(SqlKeyword.LOCAL);
@@ -800,7 +801,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator set(String key, SqlGenerator value) {
+  public static SqlGenerator set(final String key, final SqlGenerator value) {
     return w -> {
       w.writeKeyword(SqlKeyword.SET);
       w.writeIdent(key);
@@ -809,18 +810,18 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator setLocal(String key, String value) {
+  public static SqlGenerator setLocal(final String key, final String value) {
     return setLocal(key, SqlWriter.quotedString(value));
   }
 
-  public static SqlGenerator show(String key) {
+  public static SqlGenerator show(final String key) {
     return w -> {
       w.writeKeyword(SqlKeyword.SHOW);
       w.writeIdent(key);
     };
   }
 
-  public static SqlGenerator not(SqlWriter.SqlGenerator expr) {
+  public static SqlGenerator not(final SqlWriter.SqlGenerator expr) {
 
     return w -> {
       w.writeKeyword(NOT);
@@ -829,7 +830,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlGenerator inAnyArray(SqlGenerator field, SqlGenerator... items) {
+  public static SqlGenerator inAnyArray(final SqlGenerator field, final SqlGenerator... items) {
     return w -> {
       w.write(field);
       w.writeOperator("=");
@@ -843,7 +844,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator inAnyArray(SqlGenerator field, IntStream values) {
+  public static SqlGenerator inAnyArray(final SqlGenerator field, final IntStream values) {
     return w -> {
       w.write(field);
       w.writeOperator("=");
@@ -857,7 +858,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator orderBy(String columnName, SqlDirection direction) {
+  public static SqlGenerator orderBy(final String columnName, final SqlDirection direction) {
     return w -> {
       w.writeKeyword(SqlKeyword.ORDER, SqlKeyword.BY);
       w.writeIdent(columnName);
@@ -874,18 +875,18 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator orderBy(String columnName, SqlDirection direction, SqlNulls nulls) {
+  public static SqlGenerator orderBy(final String columnName, final SqlDirection direction, final SqlNulls nulls) {
     return orderBy(SqlWriter.ident(columnName), direction, nulls);
   }
 
-  public static SqlGenerator orderBy(SqlGenerator expr, SqlDirection direction, SqlNulls nulls) {
+  public static SqlGenerator orderBy(final SqlGenerator expr, final SqlDirection direction, final SqlNulls nulls) {
     return w -> {
       w.writeKeyword(SqlKeyword.ORDER, SqlKeyword.BY);
       w.write(orderByExpr(expr, direction, nulls));
     };
   }
 
-  public static SqlGenerator orderByExpr(SqlGenerator expr, SqlDirection direction, SqlNulls nulls) {
+  public static SqlGenerator orderByExpr(final SqlGenerator expr, final SqlDirection direction, final SqlNulls nulls) {
 
     return w -> {
 
@@ -913,15 +914,15 @@ public class SqlWriters {
 
   }
 
-  public static SqlGenerator array(String... items) {
+  public static SqlGenerator array(final String... items) {
     return cast(array(Arrays.stream(items).map(SqlWriters::literal).toArray(SqlGenerator[]::new)), "text", 1);
   }
 
-  public static SqlGenerator array(Stream<SqlGenerator> stream) {
+  public static SqlGenerator array(final Stream<SqlGenerator> stream) {
     return array(stream.toArray(SqlGenerator[]::new));
   }
 
-  public static SqlGenerator array(SqlGenerator... items) {
+  public static SqlGenerator array(final SqlGenerator... items) {
     return w -> {
       w.writeKeyword(SqlKeyword.ARRAY);
       w.writeOperator("[");
@@ -930,7 +931,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator cast(SqlGenerator expr, SqlType type) {
+  public static SqlGenerator cast(final SqlGenerator expr, final SqlType type) {
     return w -> {
       w.write(expr);
       w.writeOperator("::");
@@ -938,7 +939,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator cast(SqlGenerator expr, String type, int dims) {
+  public static SqlGenerator cast(final SqlGenerator expr, final String type, final int dims) {
     return w -> {
       w.write(expr);
       w.writeOperator("::");
@@ -946,7 +947,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator cast(SqlGenerator expr, DbIdent type, int dims) {
+  public static SqlGenerator cast(final SqlGenerator expr, final DbIdent type, final int dims) {
     return w -> {
       w.write(expr);
       w.writeOperator("::");
@@ -954,7 +955,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator binaryExpression(String operator, SqlGenerator left, SqlGenerator right) {
+  public static SqlGenerator binaryExpression(final String operator, final SqlGenerator left, final SqlGenerator right) {
     return w -> {
       w.write(left);
       w.writeOperator(operator);
@@ -962,11 +963,11 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator binaryExpression(String operator, SqlGenerator left, int right) {
+  public static SqlGenerator binaryExpression(final String operator, final SqlGenerator left, final int right) {
     return binaryExpression(operator, left, literal(right));
   }
 
-  public static SqlGenerator binaryExpression(String operator, SqlGenerator left, String right) {
+  public static SqlGenerator binaryExpression(final String operator, final SqlGenerator left, final String right) {
     return w -> {
       w.write(left);
       w.writeOperator(operator);
@@ -974,27 +975,27 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator binaryExpression(String operator, String fieldName, SqlGenerator right) {
+  public static SqlGenerator binaryExpression(final String operator, final String fieldName, final SqlGenerator right) {
     return binaryExpression(operator, SqlWriter.ident(fieldName), right);
   }
 
-  public static SqlGenerator lower(SqlGenerator arg) {
+  public static SqlGenerator lower(final SqlGenerator arg) {
     return function("lower", arg);
   }
 
-  public static SqlGenerator lowerIdent(String arg) {
+  public static SqlGenerator lowerIdent(final String arg) {
     return function("lower", ident(arg));
   }
 
-  public static SqlGenerator between(SqlGenerator left, String lower, String upper) {
+  public static SqlGenerator between(final SqlGenerator left, final String lower, final String upper) {
     return between(left, literal(lower), literal(upper));
   }
 
-  public static SqlGenerator between(SqlGenerator left, int lower, int upper) {
+  public static SqlGenerator between(final SqlGenerator left, final int lower, final int upper) {
     return between(left, literal(lower), literal(upper));
   }
 
-  public static SqlGenerator between(SqlGenerator left, SqlGenerator lower, SqlGenerator upper) {
+  public static SqlGenerator between(final SqlGenerator left, final SqlGenerator lower, final SqlGenerator upper) {
     return w -> {
       w.write(left);
       w.writeKeyword(SqlKeyword.BETWEEN);
@@ -1004,11 +1005,11 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator int4range(int lower, int upper) {
+  public static SqlGenerator int4range(final int lower, final int upper) {
     return function("int4range", literal(lower), literal(upper));
   }
 
-  public static SqlGenerator isNull(SqlGenerator expr) {
+  public static SqlGenerator isNull(final SqlGenerator expr) {
     return w -> {
       w.write(expr);
       w.writeKeyword(SqlKeyword.IS);
@@ -1016,7 +1017,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator isNotNull(SqlGenerator expr) {
+  public static SqlGenerator isNotNull(final SqlGenerator expr) {
     return w -> {
       w.write(expr);
       w.writeKeyword(SqlKeyword.IS);
@@ -1025,7 +1026,7 @@ public class SqlWriters {
     };
   }
 
-  public static Collector<SqlGenerator, ImmutableList.Builder<SqlGenerator>, SqlGenerator> toList(SqlKeyword joiner) {
+  public static Collector<SqlGenerator, ImmutableList.Builder<SqlGenerator>, SqlGenerator> toList(final SqlKeyword joiner) {
 
     return new Collector<SqlWriter.SqlGenerator, ImmutableList.Builder<SqlGenerator>, SqlWriter.SqlGenerator>() {
 
@@ -1060,7 +1061,7 @@ public class SqlWriters {
 
   }
 
-  public static SqlGenerator dropIndexIfExists(String indexName) {
+  public static SqlGenerator dropIndexIfExists(final String indexName) {
     return w -> {
       w.writeKeyword(DROP);
       w.writeKeyword(INDEX);
@@ -1069,7 +1070,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator createExtensionIfNotExists(String extensionName, String schema) {
+  public static SqlGenerator createExtensionIfNotExists(final String extensionName, final String schema) {
     return w -> {
       w.writeKeyword(SqlKeyword.CREATE, SqlKeyword.EXTENSION, SqlKeyword.IF, SqlKeyword.NOT, SqlKeyword.EXISTS);
       w.writeIdent(extensionName);
@@ -1078,15 +1079,15 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator ident(String... idents) {
+  public static SqlGenerator ident(final String... idents) {
     return SqlWriter.ident(idents);
   }
 
-  public static SqlGenerator substring(SqlGenerator ident, int start, int end) {
+  public static SqlGenerator substring(final SqlGenerator ident, final int start, final int end) {
     return function("substring", ident, literal(start), literal(end));
   }
 
-  public static SqlGenerator ne(String ident, int value) {
+  public static SqlGenerator ne(final String ident, final int value) {
     return w -> {
       w.writeIdent(ident);
       w.writeOperator("<>");
@@ -1094,11 +1095,11 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator multiply(SqlGenerator left, int right) {
+  public static SqlGenerator multiply(final SqlGenerator left, final int right) {
     return parenthisize(binaryExpression("*", left, right));
   }
 
-  private static SqlGenerator parenthisize(SqlGenerator expr) {
+  private static SqlGenerator parenthisize(final SqlGenerator expr) {
     return w -> {
       w.writeStartExpr();
       w.write(expr);
@@ -1106,27 +1107,27 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator divide(SqlGenerator left, SqlGenerator right) {
+  public static SqlGenerator divide(final SqlGenerator left, final SqlGenerator right) {
     return binaryExpression("/", left, right);
   }
 
-  public static SqlGenerator coalesce(SqlGenerator... exprs) {
+  public static SqlGenerator coalesce(final SqlGenerator... exprs) {
     return function("coalesce", exprs);
   }
 
-  public static SqlGenerator extractEpochFrom(SqlGenerator expr) {
-    return function("extract", (SqlWriter w) -> {
+  public static SqlGenerator extractEpochFrom(final SqlGenerator expr) {
+    return function("extract", (final SqlWriter w) -> {
       w.writeKeyword(SqlKeyword.EPOCH);
       w.writeKeyword(SqlKeyword.FROM);
       w.write(expr);
     });
   }
 
-  public static SqlGenerator coalesce(SqlGenerator val1, int val2) {
+  public static SqlGenerator coalesce(final SqlGenerator val1, final int val2) {
     return coalesce(val1, literal(val2));
   }
 
-  public static SqlGenerator as(SqlGenerator expr, String label) {
+  public static SqlGenerator as(final SqlGenerator expr, final String label) {
     return w -> {
       w.write(expr);
       w.writeKeyword(SqlKeyword.AS);
@@ -1134,14 +1135,14 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator notify(String channel) {
+  public static SqlGenerator notify(final String channel) {
     return w -> {
       w.writeKeyword(SqlKeyword.NOTIFY);
       w.writeIdent(channel);
     };
   }
 
-  public static SqlGenerator notify(String channel, String payload) {
+  public static SqlGenerator notify(final String channel, final String payload) {
     return w -> {
       w.writeKeyword(SqlKeyword.NOTIFY);
       w.writeIdent(channel);
@@ -1152,19 +1153,19 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator gte(SqlGenerator left, SqlGenerator right) {
+  public static SqlGenerator gte(final SqlGenerator left, final SqlGenerator right) {
     return binaryExpression(">= ", left, right);
   }
 
-  public static SqlGenerator lt(SqlGenerator left, SqlGenerator right) {
+  public static SqlGenerator lt(final SqlGenerator left, final SqlGenerator right) {
     return binaryExpression("< ", left, right);
   }
 
-  public static SqlGenerator lt(SqlGenerator left, long right) {
+  public static SqlGenerator lt(final SqlGenerator left, final long right) {
     return binaryExpression("< ", left, literal(right));
   }
 
-  public static SqlGenerator left(SqlGenerator ident, int i) {
+  public static SqlGenerator left(final SqlGenerator ident, final int i) {
     return function("left", ident, literal(i));
   }
 
@@ -1174,7 +1175,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator alterTableAddPrimaryKey(DbIdent tableName, SqlGenerator... items) {
+  public static SqlGenerator alterTableAddPrimaryKey(final DbIdent tableName, final SqlGenerator... items) {
     return w -> {
 
       w.writeKeyword(SqlKeyword.ALTER);
@@ -1189,7 +1190,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator selectCount(DbIdent table) {
+  public static SqlGenerator selectCount(final DbIdent table) {
     return w -> {
       w.writeKeyword(SqlKeyword.SELECT);
       w.writeKeyword(SqlKeyword.COUNT);
@@ -1201,11 +1202,11 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator selectOne(DbIdent table, SqlGenerator... fields) {
+  public static SqlGenerator selectOne(final DbIdent table, final SqlGenerator... fields) {
     return select(table, 1, fields);
   }
 
-  public static SqlGenerator select(DbIdent table, int limit, SqlGenerator... fields) {
+  public static SqlGenerator select(final DbIdent table, final int limit, final SqlGenerator... fields) {
     return w -> {
       w.writeKeyword(SqlKeyword.SELECT);
       w.write(SqlWriters.list(SqlWriter.comma(), fields));
@@ -1216,7 +1217,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator with(ImmutableMap<String, SqlGenerator> withers, SqlGenerator cmd) {
+  public static SqlGenerator with(final ImmutableMap<String, SqlGenerator> withers, final SqlGenerator cmd) {
     return w -> {
 
       w.writeKeyword(SqlKeyword.WITH);
@@ -1250,11 +1251,11 @@ public class SqlWriters {
     return _comma;
   }
 
-  private static SqlGenerator comma(boolean newline) {
+  private static SqlGenerator comma(final boolean newline) {
     return newline ? _commaAndNewLine : _comma;
   }
 
-  public static SqlGenerator subselect(QueryGenerator statement) {
+  public static SqlGenerator subselect(final QueryGenerator statement) {
     return w -> {
       w.writeStartExpr();
       w.write(statement);
@@ -1262,7 +1263,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator any(SqlGenerator arrayValue) {
+  public static SqlGenerator any(final SqlGenerator arrayValue) {
     return w -> {
       w.writeKeyword(SqlKeyword.ANY);
       w.writeStartExpr();
@@ -1280,7 +1281,8 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator update(DbIdent updateTable, ImmutableMap<String, SqlGenerator> updates, DbIdent fromTable, SqlGenerator where) {
+  public static SqlGenerator update(final DbIdent updateTable, final ImmutableMap<String, SqlGenerator> updates, final DbIdent fromTable,
+      final SqlGenerator where) {
     return w -> {
       w.writeKeyword(SqlKeyword.UPDATE);
       w.writeIdent(updateTable);
@@ -1319,21 +1321,21 @@ public class SqlWriters {
     return w -> w.writeKeyword(SqlKeyword.DEFAULT, SqlKeyword.VALUES);
   }
 
-  public static SqlGenerator values(Stream<SqlGenerator> values) {
+  public static SqlGenerator values(final Stream<SqlGenerator> values) {
     return w -> {
       w.writeKeyword(SqlKeyword.VALUES);
       w.writeList(SqlWriters.comma(true), values);
     };
   }
 
-  public static SqlGenerator values(SqlGenerator... values) {
+  public static SqlGenerator values(final SqlGenerator... values) {
     return w -> {
       w.writeKeyword(SqlKeyword.VALUES);
       w.writeList(SqlWriters.comma(true), values);
     };
   }
 
-  public static SqlGenerator onConflictDoUpdate(String... idents) {
+  public static SqlGenerator onConflictDoUpdate(final String... idents) {
     return w -> {
 
       w.writeKeyword(SqlKeyword.ON);
@@ -1349,7 +1351,7 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator excluded(String name) {
+  public static SqlGenerator excluded(final String name) {
     return w -> {
       w.writeKeyword(SqlKeyword.EXCLUDED);
       w.writeOperator(".");
@@ -1357,18 +1359,40 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator plus(SqlGenerator left, int right) {
+  public static SqlGenerator plus(final SqlGenerator left, final int right) {
     return binaryExpression("+", left, right);
   }
 
-  public static SqlGenerator plus(SqlGenerator left, SqlGenerator right) {
+  public static SqlGenerator plus(final SqlGenerator left, final SqlGenerator right) {
     return binaryExpression("+", left, right);
   }
 
-  public static SqlGenerator listen(String channel) {
+  public static SqlGenerator listen(final String channel) {
     return w -> {
       w.writeKeyword(SqlKeyword.LISTEN);
       w.writeIdent(channel);
+    };
+  }
+
+  public static SqlGenerator storageParameterEntry(final String key, final SqlGenerator value) {
+    return w -> {
+      w.writeStorageParameterKey(key);
+      w.writeOperator("=");
+      w.write(value);
+
+    };
+  }
+
+  public static SqlGenerator alterTableProperties(final DbIdent table, final ImmutableMap<String, SqlGenerator> values) {
+    return w -> {
+
+      w.writeKeyword(SqlKeyword.ALTER);
+      w.writeKeyword(SqlKeyword.TABLE);
+      w.writeIdent(table);
+      w.writeKeyword(SqlKeyword.SET);
+
+      w.writeExprList(values.entrySet().stream().map(e -> storageParameterEntry(e.getKey(), e.getValue())));
+
     };
   }
 
