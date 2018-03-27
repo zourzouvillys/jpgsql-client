@@ -29,6 +29,7 @@ apply plugin: 'eclipse'
 
 
 repositories {
+  mavenCentral()
   jcenter()
   maven { url "http://dl.bintray.com/zourzouvillys/maven" }
 }
