@@ -1123,6 +1123,10 @@ public class SqlWriters {
     });
   }
 
+  public static SqlGenerator extractEpochMillisFrom(final SqlGenerator expr) {
+    return cast(multiply(extractEpochFrom(expr), 1000), PgTypes.INT8);
+  }
+
   public static SqlGenerator coalesce(final SqlGenerator val1, final int val2) {
     return coalesce(val1, literal(val2));
   }

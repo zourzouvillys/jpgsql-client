@@ -97,7 +97,7 @@ public class SqlWriter {
     return this;
   }
 
-  public SqlWriter writeArrayLiteral(Collection<String> values) {
+  public SqlWriter writeArrayLiteral(final Collection<String> values) {
     Objects.requireNonNull(values);
     this.spacing();
 
@@ -119,7 +119,7 @@ public class SqlWriter {
 
   }
 
-  public SqlWriter writeByteArray(byte[] value) {
+  public SqlWriter writeByteArray(final byte[] value) {
     Objects.requireNonNull(value);
     this.spacing();
     Preconditions.checkArgument(!inline, "bytes can only be written when not inline");
@@ -142,7 +142,7 @@ public class SqlWriter {
   }
 
   private int addParam(final byte[] param) {
-    int idx = params.indexOf(param);
+    final int idx = params.indexOf(param);
     if (idx == -1) {
       this.params.add(param);
       return this.params.size();
@@ -151,7 +151,7 @@ public class SqlWriter {
   }
 
   private int addParam(final String param) {
-    int idx = params.indexOf(param);
+    final int idx = params.indexOf(param);
     if (idx == -1) {
       this.params.add(param);
       return this.params.size();
@@ -160,7 +160,7 @@ public class SqlWriter {
   }
 
   private int addParam(final String[] param) {
-    int idx = params.indexOf(param);
+    final int idx = params.indexOf(param);
     if (idx == -1) {
       this.params.add(param);
       return this.params.size();
@@ -168,7 +168,7 @@ public class SqlWriter {
     return idx + 1;
   }
 
-  public SqlWriter writeTypename(String type, int dims) {
+  public SqlWriter writeTypename(final String type, final int dims) {
     this.spacing();
     writeIdent(type);
     for (int i = 0; i < dims; ++i) {
@@ -178,7 +178,7 @@ public class SqlWriter {
     return this;
   }
 
-  public SqlWriter writeTypename(DbIdent type, int dims) {
+  public SqlWriter writeTypename(final DbIdent type, final int dims) {
     this.spacing();
     writeIdent(type);
     for (int i = 0; i < dims; ++i) {
@@ -320,7 +320,7 @@ public class SqlWriter {
   }
 
   public QueryParameters createParameters() {
-    DefaultParametersList p = new DefaultParametersList(this.params.size());
+    final DefaultParametersList p = new DefaultParametersList(this.params.size());
     p.setFrom(this.params.toArray());
     return p;
   }
@@ -340,7 +340,7 @@ public class SqlWriter {
     return this;
   }
 
-  public void writeNewline(boolean indent) {
+  public void writeNewline(final boolean indent) {
     this.sb.append("\n");
     if (!indent) {
       this.state = State.NONE;
@@ -410,30 +410,36 @@ public class SqlWriter {
 
     void write(SqlWriter w);
 
-    default void addTo(QueryExecutionBuilder qb) {
+    default void addTo(final QueryExecutionBuilder qb) {
       addTo(qb, false);
     }
 
     default String asString() {
-      SqlWriter w = new SqlWriter(true);
+      final SqlWriter w = new SqlWriter(true);
       w.write(this);
       return w.toString();
     }
 
-    default Publisher<QueryResult> submitTo(PostgresQueryProcessor pg) {
-      SqlWriter w = new SqlWriter(false);
+    default Publisher<QueryResult> submitTo(final PostgresQueryProcessor pg) {
+      final SqlWriter w = new SqlWriter(false);
       w.write(this);
       return w.submitTo(pg);
     }
 
-    default Flowable<ResultRow> fetchRows(PostgresQueryProcessor pg) {
-      SqlWriter w = new SqlWriter(false);
+    default Flowable<ResultRow> fetchRows(final PostgresQueryProcessor pg) {
+      final SqlWriter w = new SqlWriter(false);
       w.write(this);
       return Flowable.fromPublisher(w.submitTo(pg)).flatMap(PostgresUtils.rowMapper());
     }
 
-    default void addTo(QueryExecutionBuilder qb, boolean forceInline) {
-      SqlWriter w = new SqlWriter(forceInline);
+    default Flowable<ResultRow> fetchRowsInBatches(final int batchSize, final PostgresQueryProcessor pg) {
+      final SqlWriter w = new SqlWriter(false);
+      w.write(this);
+      return pg.fetch(batchSize, w.createTuple()).flatMap(PostgresUtils.rowMapper());
+    }
+
+    default void addTo(final QueryExecutionBuilder qb, final boolean forceInline) {
+      final SqlWriter w = new SqlWriter(forceInline);
       w.write(this);
       w.addTo(qb);
     }
@@ -442,20 +448,20 @@ public class SqlWriter {
       return asTuple(false);
     }
 
-    default Tuple asTuple(boolean forceInline) {
-      SqlWriter w = new SqlWriter(forceInline);
+    default Tuple asTuple(final boolean forceInline) {
+      final SqlWriter w = new SqlWriter(forceInline);
       w.write(this);
       return w.createTuple();
     }
 
-    default Flowable<PgResultRow> queryWith(PostgresQueryProcessor pg) {
-      Tuple t = asTuple();
+    default Flowable<PgResultRow> queryWith(final PostgresQueryProcessor pg) {
+      final Tuple t = asTuple();
       return Flowable.fromPublisher(pg.submit(t.getQuery(), t.getParams()))
           .flatMap(PostgresUtils.rowMapper());
     }
 
-    default Flowable<PgResultRow> queryWith(PostgresQueryProcessor pg, boolean forceInline) {
-      Tuple t = asTuple(forceInline);
+    default Flowable<PgResultRow> queryWith(final PostgresQueryProcessor pg, final boolean forceInline) {
+      final Tuple t = asTuple(forceInline);
       return Flowable.fromPublisher(pg.submit(t.getQuery(), t.getParams()))
           .flatMap(PostgresUtils.rowMapper());
     }
@@ -517,7 +523,7 @@ public class SqlWriter {
 
   public int writeList(final SqlGenerator seperator, final Collection<SqlGenerator> items) {
 
-    Iterator<SqlGenerator> it = items.iterator();
+    final Iterator<SqlGenerator> it = items.iterator();
 
     int i = 0;
 
@@ -552,8 +558,8 @@ public class SqlWriter {
     this.writeExprList(generators);
   }
 
-  public Publisher<QueryResult> submitTo(PostgresQueryProcessor db) {
-    QueryExecutionBuilder qb = Objects.requireNonNull(db, "missing db").executionBuilder();
+  public Publisher<QueryResult> submitTo(final PostgresQueryProcessor db) {
+    final QueryExecutionBuilder qb = Objects.requireNonNull(db, "missing db").executionBuilder();
     addTo(qb);
     return qb.execute();
   }

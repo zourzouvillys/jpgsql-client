@@ -15,11 +15,11 @@ public class DbIdent implements SqlGenerator {
   @Getter
   private ImmutableList<String> names;
 
-  public DbIdent(ImmutableList<String> vals) {
+  public DbIdent(final ImmutableList<String> vals) {
     this.names = vals;
   }
 
-  public static DbIdent of(String ident, String... strings) {
+  public static DbIdent of(final String ident, final String... strings) {
     return new DbIdent(ImmutableList.<String>builder().add(ident).add(strings).build());
   }
 
@@ -33,7 +33,7 @@ public class DbIdent implements SqlGenerator {
   }
 
   @Override
-  public void write(SqlWriter w) {
+  public void write(final SqlWriter w) {
     w.writeIdent(this);
   }
 
@@ -41,9 +41,15 @@ public class DbIdent implements SqlGenerator {
     return this.names.get(0);
   }
 
-  public DbIdent withReplacedSimpleName(UnaryOperator<String> operator) {
-    List<String> parts = new ArrayList<String>(this.names);
+  public DbIdent withReplacedSimpleName(final UnaryOperator<String> operator) {
+    final List<String> parts = new ArrayList<String>(this.names);
     parts.set(parts.size() - 1, operator.apply(parts.get(parts.size() - 1)));
+    return new DbIdent(ImmutableList.copyOf(parts));
+  }
+
+  public DbIdent withColumn(final String ident) {
+    final List<String> parts = new ArrayList<String>(this.names);
+    parts.add(ident);
     return new DbIdent(ImmutableList.copyOf(parts));
   }
 
