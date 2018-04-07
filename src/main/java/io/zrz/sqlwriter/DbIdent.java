@@ -53,4 +53,10 @@ public class DbIdent implements SqlGenerator {
     return new DbIdent(ImmutableList.copyOf(parts));
   }
 
+  public DbIdent withoutLast() {
+    final List<String> parts = new ArrayList<String>(this.names);
+    parts.remove(parts.size() - 1);
+    return new DbIdent(ImmutableList.copyOf(parts));
+  }
+
 }

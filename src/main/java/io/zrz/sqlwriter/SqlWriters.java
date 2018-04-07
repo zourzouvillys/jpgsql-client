@@ -1400,4 +1400,20 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator sum(final DbIdent field) {
+
+    return w -> {
+
+      w.writeKeyword(SqlKeyword.SELECT);
+      w.writeKeyword(SqlKeyword.SUM);
+      w.writeStartExpr();
+      w.writeIdent(field.getSimpleName());
+      w.writeEndExpr();
+      w.writeKeyword(SqlKeyword.FROM);
+      w.write(field.withoutLast());
+
+    };
+
+  }
+
 }

@@ -22,7 +22,8 @@ class PgQueryRunner implements Runnable {
   private final QueryParameters params;
   private int fetchSize;
 
-  public PgQueryRunner(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, AmbientContext ctx, int fetchSize) {
+  public PgQueryRunner(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, final AmbientContext ctx,
+      final int fetchSize) {
     this.emitter = emitter;
     this.query = query;
     this.params = params;
@@ -48,7 +49,7 @@ class PgQueryRunner implements Runnable {
 
       switch (conn.transactionState()) {
         case OPEN:
-          log.warn("open transaction after one-shot command");
+          log.debug("open transaction after one-shot command");
           conn.commit();
           break;
         case FAILED:

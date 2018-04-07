@@ -138,7 +138,8 @@ public enum SqlKeyword implements SqlGenerator {
   //
   END,
   THEN,
-  ENUM;
+  ENUM,
+  SUM;
 
   private static final Set<String> LOOKUP = Arrays.asList(values()).stream().map(x -> x.name()).collect(ImmutableSet.toImmutableSet());
 
@@ -147,7 +148,7 @@ public enum SqlKeyword implements SqlGenerator {
   }
 
   @Override
-  public void write(SqlWriter w) {
+  public void write(final SqlWriter w) {
     w.writeKeyword(this);
   }
 
