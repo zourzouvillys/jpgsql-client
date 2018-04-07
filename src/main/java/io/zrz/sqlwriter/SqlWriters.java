@@ -467,6 +467,10 @@ public class SqlWriters {
     return w -> w.writeQuotedString(value);
   }
 
+  public static SqlGenerator literal(final String value, final SqlType type) {
+    return cast(literal(value), type);
+  }
+
   public static SqlGenerator literal(final String value, final DbIdent type) {
     return cast(literal(value), type, 0);
   }
@@ -1092,6 +1096,22 @@ public class SqlWriters {
       w.writeIdent(ident);
       w.writeOperator("<>");
       w.writeLiteral(value);
+    };
+  }
+
+  public static SqlGenerator ne(final SqlGenerator left, final SqlGenerator right) {
+    return w -> {
+      w.write(left);
+      w.writeOperator("<>");
+      w.write(right);
+    };
+  }
+
+  public static SqlGenerator isTrue(final SqlGenerator expr) {
+    return w -> {
+      w.write(expr);
+      w.writeKeyword(SqlKeyword.IS);
+      w.writeKeyword(SqlKeyword.TRUE);
     };
   }
 
