@@ -10,7 +10,8 @@ public enum PgTypes implements SqlType {
   TIMESTAMP,
   TIMESTAMPTZ,
   INTERVAL,
-  JSONB
+  JSONB,
+  TSQUERY
 
   ;
 
