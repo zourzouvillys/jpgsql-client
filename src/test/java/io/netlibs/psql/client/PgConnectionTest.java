@@ -14,9 +14,10 @@ public class PgConnectionTest {
 
     InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
 
-    PgConnection conn = new PgConnectionBuilder()
-        .database("us3")
-        .username("theo")
+    final PgConnection conn = new PgConnectionBuilder()
+        .database("postgres")
+        .username("postgres")
+        .password("moo")
         .newConnection("127.0.0.1", 5432);
 
     Thread.sleep(3000);

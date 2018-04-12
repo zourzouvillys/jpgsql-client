@@ -39,7 +39,7 @@ public interface PostgresQueryProcessor {
    * @see #createQuery(String, int).
    */
 
-  default Query createQuery(String sql) {
+  default Query createQuery(final String sql) {
     return createQuery(sql, 0);
   }
 
@@ -58,7 +58,7 @@ public interface PostgresQueryProcessor {
    * @see #createQuery(List)
    */
 
-  default Query createQuery(Query... combine) {
+  default Query createQuery(final Query... combine) {
     return this.createQuery(Arrays.asList(combine));
   }
 
@@ -82,17 +82,17 @@ public interface PostgresQueryProcessor {
 
   /**
    * performs a copy.
-   * 
+   *
    * @param sql
    * @param upstream
-   * 
+   *
    * @return
    */
 
   Publisher<Long> copyTo(String sql, Publisher<ByteBuf> upstream);
 
   /**
-   * 
+   *
    * @param sql
    * @param upstream
    * @return
@@ -101,12 +101,12 @@ public interface PostgresQueryProcessor {
   Publisher<Long> copyTo(String sql, ByteSource source);
 
   /**
-   * 
+   *
    * @param query
    * @return
    */
 
-  default Publisher<QueryResult> submit(SqlGenerator query) {
+  default Publisher<QueryResult> submit(final SqlGenerator query) {
     return query.submitTo(this);
   }
 
@@ -116,11 +116,11 @@ public interface PostgresQueryProcessor {
    * @see #submit(Query, QueryParameters).
    */
 
-  default Publisher<QueryResult> submit(Query query) {
+  default Publisher<QueryResult> submit(final Query query) {
     return submit(query, null);
   }
 
-  default Publisher<QueryResult> submit(String sql) {
+  default Publisher<QueryResult> submit(final String sql) {
     return submit(createQuery(sql));
   }
 
@@ -128,7 +128,7 @@ public interface PostgresQueryProcessor {
     return QueryExecutionBuilder.with(this);
   }
 
-  default Publisher<QueryResult> submit(String sql, Object... params) {
+  default Publisher<QueryResult> submit(final String sql, final Object... params) {
     final Query query = this.createQuery(sql, params.length);
     final QueryParameters qp = query.createParameters();
     qp.setFrom(params);
@@ -137,11 +137,11 @@ public interface PostgresQueryProcessor {
 
   Flowable<QueryResult> fetch(int batchSize, Tuple tuple);
 
-  default Flowable<QueryResult> fetch(int batchSize, String sql) {
+  default Flowable<QueryResult> fetch(final int batchSize, final String sql) {
     return fetch(batchSize, Tuple.of(createQuery(sql), DefaultParametersList.emptyParameters()));
   }
 
-  default Flowable<QueryResult> fetch(int batchSize, SqlGenerator g) {
+  default Flowable<QueryResult> fetch(final int batchSize, final SqlGenerator g) {
     return fetch(batchSize, g.asTuple());
   }
 

@@ -39,6 +39,7 @@ import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
 import io.zrz.jpgsql.client.QueryResultKind;
 import io.zrz.jpgsql.client.SimpleQuery;
+import io.zrz.sqlwriter.SqlWriters;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -143,7 +144,7 @@ class PgLocalConnection implements PgRawConnection {
 
   /**
    * execute the query.
-   * 
+   *
    * @param suppressbegin2
    * @param stdin
    *
@@ -156,7 +157,7 @@ class PgLocalConnection implements PgRawConnection {
     this.execute(query, params, emitter, 0, 0);
   }
 
-  void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, int fetchSize, int flags)
+  void execute(final Query query, final QueryParameters params, final FlowableEmitter<QueryResult> emitter, final int fetchSize, int flags)
       throws SQLException {
 
     log.debug("executing {}, params {}", query, params);
@@ -185,7 +186,7 @@ class PgLocalConnection implements PgRawConnection {
           continue;
         }
         else if (val instanceof BinaryParamValue) {
-          BinaryParamValue b = (BinaryParamValue) val;
+          final BinaryParamValue b = (BinaryParamValue) val;
           pl.setBinaryParameter(i, b.toByteArray(), b.getOid());
           continue;
         }
@@ -207,7 +208,7 @@ class PgLocalConnection implements PgRawConnection {
             pl.setBinaryParameter(i, (byte[]) params.getValue(i), oid);
             break;
           case Oid.BYTEA: {
-            byte[] bytes = (byte[]) params.getValue(i);
+            final byte[] bytes = (byte[]) params.getValue(i);
             pl.setBytea(i, bytes, 0, bytes.length);
             break;
           }
@@ -229,7 +230,7 @@ class PgLocalConnection implements PgRawConnection {
               PgArray.escapeArrayElement(sb, str);
             }
             sb.append("}");
-            String strval = sb.toString();
+            final String strval = sb.toString();
             pl.setStringParameter(i, strval, oid);
             break;
           }
@@ -271,9 +272,9 @@ class PgLocalConnection implements PgRawConnection {
         flags |= QueryExecutor.QUERY_FORWARD_CURSOR;
       }
 
-      int fetchRows = fetchSize > 0 ? fetchSize : 0;
+      final int fetchRows = fetchSize > 0 ? fetchSize : 0;
 
-      PgObservableResultHandler handler = new PgObservableResultHandler(query, emitter, fetchSize);
+      final PgObservableResultHandler handler = new PgObservableResultHandler(query, emitter, fetchSize);
 
       this.exec.execute(pgquery, pl, handler, 0, fetchRows, flags);
 
@@ -285,7 +286,7 @@ class PgLocalConnection implements PgRawConnection {
             Thread.sleep(10);
             log.debug("sleeping, slow consumer");
           }
-          catch (InterruptedException e) {
+          catch (final InterruptedException e) {
             throw new RuntimeException(e);
           }
           if (emitter.isCancelled()) {
@@ -333,11 +334,11 @@ class PgLocalConnection implements PgRawConnection {
 
   }
 
-  private void copy(CopyQuery query, FlowableEmitter<QueryResult> emitter, int flags) {
+  private void copy(final CopyQuery query, final FlowableEmitter<QueryResult> emitter, final int flags) {
 
     try {
       log.debug("starting COPY {}", query.command());
-      long rows = conn.getCopyAPI().copyIn(query.command(), query.data(), 65536);
+      final long rows = conn.getCopyAPI().copyIn(query.command(), query.data(), 65536);
       log.debug("COPY complete, rows = {}", rows);
       emitter.onNext(new CommandStatus(0, "COPY", Ints.checkedCast(rows), 0));
       emitter.onComplete();
@@ -375,10 +376,10 @@ class PgLocalConnection implements PgRawConnection {
 
       final CombinedQuery send = new CombinedQuery(
           channels.stream()
-              .map(channel -> new SimpleQuery(String.format("LISTEN %s", this.escapeIdentifier(channel))))
+              .map(channel -> new SimpleQuery(SqlWriters.listen(channel).asString()))
               .collect(Collectors.toList()));
 
-      Flowable.<QueryResult>create(subscribe -> this.execute(send, null, subscribe), BackpressureStrategy.BUFFER).blockingSubscribe();
+      Flowable.<QueryResult>create(subscribe -> this.execute(send, null, subscribe, 0, SuppressBegin), BackpressureStrategy.BUFFER).blockingSubscribe();
 
       emitter.setCancellable(() -> {
         log.debug("cancelling notification");
@@ -446,17 +447,17 @@ class PgLocalConnection implements PgRawConnection {
   }
 
   /**
-   * 
+   *
    */
 
   @SneakyThrows
   @Override
-  public void setReadOnly(boolean b) {
+  public void setReadOnly(final boolean b) {
     getConnection().setReadOnly(b);
   }
 
   /**
-   * 
+   *
    */
 
   @Override
@@ -466,14 +467,14 @@ class PgLocalConnection implements PgRawConnection {
 
   /**
    * polls the connection for notifications
-   * 
+   *
    * @param i
    */
 
   @SneakyThrows
-  List<NotifyMessage> notifications(int i) {
+  List<NotifyMessage> notifications(final int i) {
 
-    PGNotification[] nd = getConnection().getNotifications(i);
+    final PGNotification[] nd = getConnection().getNotifications(i);
 
     if (nd == null) {
       return Collections.emptyList();
