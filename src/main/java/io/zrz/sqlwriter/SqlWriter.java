@@ -151,7 +151,7 @@ public class SqlWriter {
     return idx + 1;
   }
   
-  public void writeBinaryParam(BinaryParamValue param) {
+  public int writeBinaryParam(BinaryParamValue param) {
     final int idx = params.indexOf(param);
     if (idx == -1) {
       this.params.add(param);
