@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 
 import io.reactivex.Flowable;
 import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
+import io.zrz.jpgsql.client.opj.BinaryParamValue;
 import io.zrz.jpgsql.client.DefaultParametersList;
 import io.zrz.jpgsql.client.PgResultRow;
 import io.zrz.jpgsql.client.PostgresQueryProcessor;
