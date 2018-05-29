@@ -141,6 +141,7 @@ public enum SqlKeyword implements SqlGenerator {
   ENUM,
   SUM,
   ATTRIBUTE,
+  EXCEPT,
   VALUE;
 
   private static final Set<String> LOOKUP = Arrays.asList(values()).stream().map(x -> x.name()).collect(ImmutableSet.toImmutableSet());
