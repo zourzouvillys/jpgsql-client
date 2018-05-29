@@ -186,6 +186,11 @@ public class DefaultParametersList implements QueryParameters {
         this.setLong(i + 1, (long) arg);
 
       }
+      else if (arg instanceof BinaryParamValue) {
+
+        this.set(i + 1, (BinaryParamValue) arg);
+
+      }
       else {
 
         throw new IllegalArgumentException("don't support mapping of " + arg.getClass());
