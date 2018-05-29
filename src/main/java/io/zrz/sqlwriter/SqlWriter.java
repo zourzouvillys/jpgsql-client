@@ -149,6 +149,15 @@ public class SqlWriter {
     }
     return idx + 1;
   }
+  
+  public void writeBinaryParam(BinaryParamValue param) {
+    final int idx = params.indexOf(param);
+    if (idx == -1) {
+      this.params.add(param);
+      return this.params.size();
+    }
+    return idx + 1;    
+  }
 
   private int addParam(final String param) {
     final int idx = params.indexOf(param);
