@@ -34,8 +34,9 @@ public class PostgreSQLClientTlsNegotiation extends SimpleChannelInboundHandler<
   public PostgreSQLClientTlsNegotiation() {
   }
 
-  public PostgreSQLClientTlsNegotiation(SSLEngine sslEngine, HashMap<String, String> params, SimpleChannelInboundHandler<PostgreSQLPacket> handler,
-      String password) {
+  public PostgreSQLClientTlsNegotiation(final SSLEngine sslEngine, final HashMap<String, String> params,
+      final SimpleChannelInboundHandler<PostgreSQLPacket> handler,
+      final String password) {
     this.sslEngine = sslEngine;
     this.params = params;
     this.handler = handler;
@@ -43,18 +44,18 @@ public class PostgreSQLClientTlsNegotiation extends SimpleChannelInboundHandler<
   }
 
   @Override
-  protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+  protected void channelRead0(final ChannelHandlerContext ctx, final ByteBuf msg) throws Exception {
 
-    byte b = msg.readByte();
+    final byte b = msg.readByte();
 
     switch (b) {
       case 'S':
-        SslHandler ssl = new SslHandler(sslEngine);
+        final SslHandler ssl = new SslHandler(sslEngine);
         ctx.pipeline().replace(this, "tls", ssl);
 
         ssl.handshakeFuture().addListener(new GenericFutureListener<Future<? super Channel>>() {
           @Override
-          public void operationComplete(Future<? super Channel> future) throws Exception {
+          public void operationComplete(final Future<? super Channel> future) throws Exception {
             ctx.pipeline().addLast(new PostgreSQLDecoder());
             ctx.pipeline().addLast(new PostgreSQLEncoder());
             ctx.pipeline().addLast(new LoggingHandler(PgConnection.class, LogLevel.DEBUG));
@@ -71,16 +72,16 @@ public class PostgreSQLClientTlsNegotiation extends SimpleChannelInboundHandler<
     log.error("SSL rejected, continuing without ...");
 
     ctx.pipeline().remove(this);
+    ctx.pipeline().addLast(new LoggingHandler(PgConnection.class, LogLevel.DEBUG));
     ctx.pipeline().addLast(new PostgreSQLDecoder());
     ctx.pipeline().addLast(new PostgreSQLEncoder());
-    ctx.pipeline().addLast(new LoggingHandler(PgConnection.class, LogLevel.DEBUG));
     ctx.pipeline().addLast(new PostgreSQLClientNegotiation(params, password));
     ctx.pipeline().addLast(handler);
 
   }
 
-  private void initialize(ChannelHandlerContext ctx) {
-    ByteBuf buf = ctx.alloc().buffer(8);
+  private void initialize(final ChannelHandlerContext ctx) {
+    final ByteBuf buf = ctx.alloc().buffer(8);
     buf.writeInt(8);
     buf.writeInt(ProtoUtils.SSL_MAGIC);
     ctx.writeAndFlush(buf);
@@ -90,7 +91,7 @@ public class PostgreSQLClientTlsNegotiation extends SimpleChannelInboundHandler<
   }
 
   @Override
-  public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+  public void handlerAdded(final ChannelHandlerContext ctx) throws Exception {
     if (ctx.channel().isActive() && ctx.channel().isRegistered()) {
       // channelActvie() event has been fired already, which means this.channelActive() will
       // not be invoked. We have to initialize here instead.
@@ -104,13 +105,13 @@ public class PostgreSQLClientTlsNegotiation extends SimpleChannelInboundHandler<
   }
 
   @Override
-  public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+  public void handlerRemoved(final ChannelHandlerContext ctx) throws Exception {
     destroy();
     super.handlerRemoved(ctx);
   }
 
   @Override
-  public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+  public void channelRegistered(final ChannelHandlerContext ctx) throws Exception {
     // Initialize early if channel is active already.
     if (ctx.channel().isActive()) {
       initialize(ctx);
@@ -119,13 +120,13 @@ public class PostgreSQLClientTlsNegotiation extends SimpleChannelInboundHandler<
   }
 
   @Override
-  public void channelActive(ChannelHandlerContext ctx) throws Exception {
+  public void channelActive(final ChannelHandlerContext ctx) throws Exception {
     initialize(ctx);
     super.channelActive(ctx);
   }
 
   @Override
-  public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+  public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
     destroy();
     super.channelInactive(ctx);
   }

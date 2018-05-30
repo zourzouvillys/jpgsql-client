@@ -42,4 +42,16 @@ public interface PostgreSQLPacketVisitor<T> {
 
   T visitPasswordMessage(PasswordMessage passwordMessage);
 
+  T visitParse(Parse parse);
+
+  T visitFlush(Flush flush);
+
+  T visitParseComplete(ParseComplete parseComplete);
+
+  T visitBind(Bind bind);
+
+  T visitBindComplete(BindComplete bindComplete);
+
+  T visitSync(Sync sync);
+
 }

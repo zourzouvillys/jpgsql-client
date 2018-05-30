@@ -1,7 +1,6 @@
 package io.zrz.jpgsql.proto.netty;
 
-public enum MessageType
-{
+public enum MessageType {
 
   NoticeResponse((byte) 'N'),
 
@@ -27,22 +26,24 @@ public enum MessageType
 
   RowDescription((byte) 'T'),
 
+  ParseComplete((byte) '1'),
+
+  BindComplete((byte) '2'),
+
+  CloseComplete((byte) '3'),
+
   ;
 
   private byte type;
 
-  MessageType(final byte type)
-  {
+  MessageType(final byte type) {
     this.type = type;
   }
 
-  public static MessageType getType(final byte type)
-  {
+  public static MessageType getType(final byte type) {
 
-    for (final MessageType t : MessageType.values())
-    {
-      if (t.type == type)
-      {
+    for (final MessageType t : MessageType.values()) {
+      if (t.type == type) {
         return t;
       }
     }

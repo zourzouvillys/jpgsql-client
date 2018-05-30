@@ -12,6 +12,7 @@ import io.zrz.jpgsql.proto.wire.AuthenticationMD5Password;
 import io.zrz.jpgsql.proto.wire.AuthenticationOk;
 import io.zrz.jpgsql.proto.wire.AuthenticationUnknown;
 import io.zrz.jpgsql.proto.wire.BackendKeyData;
+import io.zrz.jpgsql.proto.wire.BindComplete;
 import io.zrz.jpgsql.proto.wire.CommandComplete;
 import io.zrz.jpgsql.proto.wire.CopyBothResponse;
 import io.zrz.jpgsql.proto.wire.CopyBothResponse.Format;
@@ -19,15 +20,19 @@ import io.zrz.jpgsql.proto.wire.CopyData;
 import io.zrz.jpgsql.proto.wire.CopyDone;
 import io.zrz.jpgsql.proto.wire.DataRow;
 import io.zrz.jpgsql.proto.wire.ParameterStatus;
+import io.zrz.jpgsql.proto.wire.ParseComplete;
 import io.zrz.jpgsql.proto.wire.PostgreSQLPacket;
 import io.zrz.jpgsql.proto.wire.ReadyForQuery;
 import io.zrz.jpgsql.proto.wire.RowDescription;
+import io.zrz.jpgsql.proto.wire.TransactionStatus;
 import io.zrz.jpgsql.proto.wire.UnknownMessage;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * decode PostgreSQL messages.
  */
 
+@Slf4j
 public class PostgreSQLDecoder extends ByteToMessageDecoder {
 
   @Override
@@ -57,25 +62,25 @@ public class PostgreSQLDecoder extends ByteToMessageDecoder {
 
   /**
    * Parse the specified packet.
-   * 
+   *
    * @param mtype
    * @param payload
    * @return
    */
 
-  private static final PostgreSQLPacket parse(MessageType mtype, ByteBuf payload) {
+  private static final PostgreSQLPacket parse(final MessageType mtype, final ByteBuf payload) {
 
     switch (mtype) {
 
       case AuthRequest: {
 
-        int authType = payload.readInt();
+        final int authType = payload.readInt();
 
         switch (authType) {
           case 0:
             return new AuthenticationOk();
           case 5: {
-            byte[] salt = new byte[4];
+            final byte[] salt = new byte[4];
             payload.readBytes(salt);
             return new AuthenticationMD5Password(salt);
           }
@@ -86,9 +91,13 @@ public class PostgreSQLDecoder extends ByteToMessageDecoder {
       }
 
       case BackendKeyData: {
-        int processId = payload.readInt();
-        int secret = payload.readInt();
+        final int processId = payload.readInt();
+        final int secret = payload.readInt();
         return new BackendKeyData(processId, secret);
+      }
+
+      case BindComplete: {
+        return new BindComplete();
       }
 
       case CommandComplete: {
@@ -120,13 +129,33 @@ public class PostgreSQLDecoder extends ByteToMessageDecoder {
       }
 
       case ParameterStatus: {
-        String key = ProtoUtils.parseString(payload);
-        String value = ProtoUtils.parseString(payload);
+        final String key = ProtoUtils.parseString(payload);
+        final String value = ProtoUtils.parseString(payload);
         return new ParameterStatus(key, value);
       }
 
+      case ParseComplete: {
+        return new ParseComplete();
+      }
+
       case ReadyForQuery: {
-        return new ReadyForQuery(payload.readByte());
+
+        final byte status = payload.readByte();
+
+        // Current backend transaction status indicator. Possible values are 'I' if idle (not in a transaction block);
+        // 'T' if in a transaction block; or 'E' if in a failed transaction block (queries will be rejected until block
+        // is ended).
+        switch (status) {
+          case 'I':
+            return new ReadyForQuery(TransactionStatus.Idle);
+          case 'T':
+            return new ReadyForQuery(TransactionStatus.Transaction);
+          case 'E':
+            return new ReadyForQuery(TransactionStatus.Error);
+          default:
+            throw new IllegalArgumentException("unknown transaction status '" + status + "'");
+        }
+
       }
 
       case RowDescription: {
@@ -134,6 +163,9 @@ public class PostgreSQLDecoder extends ByteToMessageDecoder {
       }
 
     }
+
+    log.warn("unknown type: {}", mtype);
+
     return new UnknownMessage(mtype);
   }
 
@@ -141,7 +173,7 @@ public class PostgreSQLDecoder extends ByteToMessageDecoder {
     return new CopyData(buffer);
   }
 
-  private static final CopyBothResponse parseCopyBothResponse(ByteBuf cbp) {
+  private static final CopyBothResponse parseCopyBothResponse(final ByteBuf cbp) {
 
     final int type = cbp.readByte();
 
@@ -164,7 +196,7 @@ public class PostgreSQLDecoder extends ByteToMessageDecoder {
 
     final int len = cbp.readShort();
 
-    List<Integer> formats = new ArrayList<>(len);
+    final List<Integer> formats = new ArrayList<>(len);
 
     for (int i = 0; i < len; ++i) {
       formats.add((int) cbp.readShort());

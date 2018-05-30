@@ -3,13 +3,11 @@ package io.zrz.jpgsql.proto.wire;
 import lombok.Value;
 
 @Value
-public class ReadyForQuery implements PostgreSQLPacket {
-
-  private final TransactionStatus status;
+public class Sync implements PostgreSQLPacket {
 
   @Override
   public <T> T apply(final PostgreSQLPacketVisitor<T> visitor) {
-    return visitor.visitReadyForQuery(this);
+    return visitor.visitSync(this);
   }
 
 }
