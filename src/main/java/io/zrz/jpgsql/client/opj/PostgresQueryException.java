@@ -17,21 +17,23 @@ public class PostgresQueryException extends RuntimeException {
     this.query = query;
   }
 
+  public Optional<ErrorResult> getErrorResult() {
+    return Optional.ofNullable(serverError);
+  }
+
   @Override
   public String getMessage() {
 
     final StringBuilder sb = new StringBuilder();
 
-    if (getCause() != null) {
+    if (getErrorResult().isPresent()) {
 
-      final Throwable cause = getCause();
+      sb.append(getErrorResult().get().toString());
 
-      if (cause instanceof ErrorResult) {
-        sb.append(cause.toString());
-      }
-      else {
-        sb.append(getCause().getMessage());
-      }
+    }
+    else if (getCause() != null) {
+
+      sb.append(getCause().getMessage());
 
     }
 
