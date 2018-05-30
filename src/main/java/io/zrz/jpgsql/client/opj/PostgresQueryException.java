@@ -13,15 +13,26 @@ public class PostgresQueryException extends RuntimeException {
   private ErrorResult serverError;
   private Query query;
 
-  PostgresQueryException(Query query) {
+  PostgresQueryException(final Query query) {
     this.query = query;
   }
 
+  @Override
   public String getMessage() {
-    StringBuilder sb = new StringBuilder();
+
+    final StringBuilder sb = new StringBuilder();
 
     if (getCause() != null) {
-      sb.append(getCause().getMessage());
+
+      final Throwable cause = getCause();
+
+      if (cause instanceof ErrorResult) {
+        sb.append(cause.toString());
+      }
+      else {
+        sb.append(getCause().getMessage());
+      }
+
     }
 
     getAssociatedQuery().ifPresent(q -> {
@@ -40,7 +51,7 @@ public class PostgresQueryException extends RuntimeException {
     return Optional.empty();
   }
 
-  public void setErrorResult(ErrorResult err) {
+  public void setErrorResult(final ErrorResult err) {
     this.serverError = err;
   }
 

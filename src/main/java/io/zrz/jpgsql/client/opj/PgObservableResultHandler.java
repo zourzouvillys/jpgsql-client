@@ -41,7 +41,7 @@ public class PgObservableResultHandler extends ResultHandlerBase {
 
   private int fetchSize;
 
-  PgObservableResultHandler(final Query query, final FlowableEmitter<QueryResult> emitter, int fetchSize) {
+  PgObservableResultHandler(final Query query, final FlowableEmitter<QueryResult> emitter, final int fetchSize) {
     this.fetchSize = fetchSize == 0 ? BATCH_SIZE : fetchSize;
     this.emitter = emitter;
     this.query = Objects.requireNonNull(query);
@@ -150,6 +150,7 @@ public class PgObservableResultHandler extends ResultHandlerBase {
   @Override
   public void handleError(final SQLException error) {
     final PSQLException err = (PSQLException) error;
+
     final ErrorResult res = new ErrorResult(
         query.statement(this.statementId),
         this.statementId,
@@ -157,6 +158,7 @@ public class PgObservableResultHandler extends ResultHandlerBase {
         err.getSQLState(),
         err.getServerErrorMessage(),
         error.getCause());
+
     log.trace("SQL error received ({}: {}", error.getClass(), res);
     this.emitter.onError(res);
     if (this.cursor != null) {

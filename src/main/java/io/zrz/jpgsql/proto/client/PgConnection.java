@@ -28,16 +28,24 @@ import io.zrz.jpgsql.proto.AbstractConnection;
 import io.zrz.jpgsql.proto.netty.handler.PostgreSQLClientNegotiation;
 import io.zrz.jpgsql.proto.netty.handler.PostgreSQLClientTlsNegotiation;
 import io.zrz.jpgsql.proto.netty.handler.PostgreSQLHandshakeCompleteEvent;
+import io.zrz.jpgsql.proto.wire.Bind;
 import io.zrz.jpgsql.proto.wire.CommandComplete;
 import io.zrz.jpgsql.proto.wire.CopyData;
+import io.zrz.jpgsql.proto.wire.Execute;
+import io.zrz.jpgsql.proto.wire.Parse;
 import io.zrz.jpgsql.proto.wire.PostgreSQLPacket;
-import io.zrz.jpgsql.proto.wire.Query;
+import io.zrz.jpgsql.proto.wire.Sync;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * A single connection.
- * 
+ * A single TCP connection to a postgresql backend.
+ *
+ * The connection handles some basic state needed for protocol synchronization, but doesn't include any logic for
+ * quering, etc.
+ *
+ * the external API takes commands from a flowable, and emits the results on a seperate flowable.
+ *
  * @author theo
  *
  */
@@ -52,7 +60,7 @@ public class PgConnection extends AbstractConnection {
   private HashMap<String, String> params = new HashMap<>();
   private String password;
 
-  PgConnection(PgConnectionBuilder b) {
+  PgConnection(final PgConnectionBuilder b) {
 
     this.group = b.group;
 
@@ -98,10 +106,14 @@ public class PgConnection extends AbstractConnection {
     // note that any packets which contain byte buffers are NOT retained after we return, so need to copy if needed.
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, PostgreSQLPacket msg) throws Exception {
+    protected void channelRead0(final ChannelHandlerContext ctx, final PostgreSQLPacket msg) throws Exception {
+
+      log.debug("got message: {}", msg);
 
       if (msg instanceof CommandComplete) {
-        this.nextStage();
+        if (state != HandlerState.Identifying) {
+          this.nextStage();
+        }
       }
       else if (msg instanceof CopyData) {
 
@@ -166,7 +178,12 @@ public class PgConnection extends AbstractConnection {
     }
 
     void sendIdentify() {
-      ctx.writeAndFlush(new Query("SELECT NOW()"));
+      ctx.write(new Parse("test", "SELECT NOW()"));
+      ctx.write(new Bind("target", "test"));
+      ctx.write(new Execute("target", 0));
+      ctx.write(new Execute("target", 0));
+      ctx.write(new Execute("target", 0));
+      ctx.writeAndFlush(new Sync());
     }
 
     private void processKeepalive(final ByteBuf ptr) {
@@ -218,7 +235,7 @@ public class PgConnection extends AbstractConnection {
     }
 
     @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+    public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
 
       if (evt instanceof PostgreSQLHandshakeCompleteEvent) {
         this.ctx = ctx;
@@ -230,44 +247,46 @@ public class PgConnection extends AbstractConnection {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(final ChannelHandlerContext ctx) throws Exception {
       this.future = ctx.executor().scheduleWithFixedDelay(this::sendKeepalive, 5, 5, TimeUnit.SECONDS);
       super.channelActive(ctx);
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-      this.future.cancel(true);
+    public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
+      if (this.future != null) {
+        this.future.cancel(true);
+      }
       super.channelInactive(ctx);
     }
 
   }
 
   @SneakyThrows
-  void connect(String host, int port) {
+  void connect(final String host, final int port) {
 
     final Bootstrap b = new Bootstrap();
 
-    TrustManagerFactory tmFactory = InsecureTrustManagerFactory.INSTANCE;
+    final TrustManagerFactory tmFactory = InsecureTrustManagerFactory.INSTANCE;
     // TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 
-    KeyStore tmpKS = null;
+    final KeyStore tmpKS = null;
     tmFactory.init(tmpKS);
-    KeyStore ks = KeyStore.getInstance("JKS");
+    final KeyStore ks = KeyStore.getInstance("JKS");
 
     ks.load(null, null);
 
     // Set up key manager factory to use our key store
-    KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     kmf.init(ks, null);
 
-    KeyManager[] km = kmf.getKeyManagers();
-    TrustManager[] tm = tmFactory.getTrustManagers();
+    final KeyManager[] km = kmf.getKeyManagers();
+    final TrustManager[] tm = tmFactory.getTrustManagers();
 
-    SSLContext sslContext = SSLContext.getInstance("TLS");
+    final SSLContext sslContext = SSLContext.getInstance("TLS");
     sslContext.init(km, tm, null);
 
-    SSLEngine sslEngine = sslContext.createSSLEngine();
+    final SSLEngine sslEngine = sslContext.createSSLEngine();
 
     sslEngine.setUseClientMode(true);
     sslEngine.setEnabledProtocols(sslEngine.getSupportedProtocols());

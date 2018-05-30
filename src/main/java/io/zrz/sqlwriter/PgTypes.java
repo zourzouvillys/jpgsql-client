@@ -11,7 +11,8 @@ public enum PgTypes implements SqlType {
   TIMESTAMPTZ,
   INTERVAL,
   JSONB,
-  TSQUERY
+  TSQUERY,
+  BIT
 
   ;
 

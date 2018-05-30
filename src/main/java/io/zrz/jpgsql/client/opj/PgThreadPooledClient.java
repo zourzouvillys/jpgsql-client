@@ -171,7 +171,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     // new connection
     Preconditions.checkState(this.ds != null);
 
-    HostSpec spec = new HostSpec(config.getHostname(), config.getPort() == 0 ? 5432 : config.getPort());
+    final HostSpec spec = new HostSpec(config.getHostname(), config.getPort() == 0 ? 5432 : config.getPort());
     final Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
 
     // ahem
@@ -200,7 +200,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     // new connection
     Preconditions.checkState(this.ds != null);
 
-    HostSpec spec = new HostSpec(config.getHostname(), config.getPort() == 0 ? 5432 : config.getPort());
+    final HostSpec spec = new HostSpec(config.getHostname(), config.getPort() == 0 ? 5432 : config.getPort());
     final Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
 
     // ahem
@@ -225,12 +225,12 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     return submit(query, params, 0);
   }
 
-  public Flowable<QueryResult> submit(final Query query, final QueryParameters params, int fetchSize) {
+  public Flowable<QueryResult> submit(final Query query, final QueryParameters params, final int fetchSize) {
 
     final AmbientContext ctx = AmbientContext.capture();
     Preconditions.checkState(!pool.isShutdown(), query.toString());
 
-    Flowable<QueryResult> res = Flowable.create(emitter -> {
+    final Flowable<QueryResult> res = Flowable.create(emitter -> {
       try {
         final PgQueryRunner runner = new PgQueryRunner(query, params, emitter, ctx, fetchSize);
         this.pool.execute(ctx.wrap(runner));
@@ -243,16 +243,20 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
     // map so we have the stacktrace from caller, not nested.
     // StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-    PostgresQueryException trace = new PostgresQueryException(query);
+    final PostgresQueryException trace = new PostgresQueryException(query);
 
     return res
         .onErrorResumeNext(err -> {
+
           // err.addSuppressed(err);
           trace.initCause(err);
+
           if (err instanceof ErrorResult) {
             trace.setErrorResult((ErrorResult) err);
           }
+
           return Flowable.error(trace);
+
         })
         // always submit responses on a trampoline thread, to avoid blocking the pool.
         .rebatchRequests(8)
@@ -261,7 +265,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   @Override
-  public Flowable<QueryResult> fetch(int fetchSize, Tuple tuple) {
+  public Flowable<QueryResult> fetch(final int fetchSize, final Tuple tuple) {
     return submit(tuple.getQuery(), tuple.getParams(), fetchSize);
   }
 
@@ -397,15 +401,15 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
   @SneakyThrows
   @Override
-  public Publisher<Long> copyTo(String sql, Publisher<ByteBuf> data) {
+  public Publisher<Long> copyTo(final String sql, final Publisher<ByteBuf> data) {
 
-    Flowable<ByteBuf> upstream = Flowable.fromPublisher(data);
+    final Flowable<ByteBuf> upstream = Flowable.fromPublisher(data);
 
     return this.requestConnection()
         .flatMapCompletable(conn -> {
 
-          CopyIn copy = conn.getCopyAPI().copyIn(sql);
-          PGCopyOutputStream out = new PGCopyOutputStream(copy, 1024 * 1024 * 8);
+          final CopyIn copy = conn.getCopyAPI().copyIn(sql);
+          final PGCopyOutputStream out = new PGCopyOutputStream(copy, 1024 * 1024 * 8);
 
           out.write(BINARY_PREAMBLE);
 
@@ -444,7 +448,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   @Override
-  public Publisher<Long> copyTo(String sql, ByteSource source) {
+  public Publisher<Long> copyTo(final String sql, final ByteSource source) {
     throw new IllegalArgumentException();
   }
 
