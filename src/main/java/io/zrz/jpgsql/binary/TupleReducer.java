@@ -13,7 +13,7 @@ public class TupleReducer {
 
   private List<Tuple> tuples = new LinkedList<>();
 
-  public TupleReducer add(Tuple val) {
+  public TupleReducer add(final Tuple val) {
 
     this.tuples.add(val);
 
@@ -21,10 +21,10 @@ public class TupleReducer {
 
   }
 
-  public Tuple build(PostgresQueryProcessor pg) {
+  public Tuple build(final PostgresQueryProcessor pg) {
 
     final Query query = pg.createQuery(
-        this.tuples.stream().map(t -> t.getQuery()).collect(Collectors.toList()));
+        this.tuples.stream().sequential().map(t -> t.getQuery()).collect(Collectors.toList()));
 
     final QueryParameters params = query.createParameters();
 

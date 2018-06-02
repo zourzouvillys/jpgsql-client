@@ -121,8 +121,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     this.ds.setDisableColumnSanitiser(true);
 
     //
-    // this.ds.setPreparedStatementCacheQueries(0);
-    // this.ds.setPreparedStatementCacheSizeMiB(0);
+    this.ds.setPreparedStatementCacheQueries(0);
+    this.ds.setPreparedStatementCacheSizeMiB(0);
     this.ds.setPrepareThreshold(-1); // force binary
     this.ds.setPreferQueryMode(PreferQueryMode.EXTENDED);
 
