@@ -15,10 +15,18 @@ public interface ResultRow {
 
   int intval(final int field, final int defaultValue);
 
+  default int intval(final String label) {
+    return intval(this.field(label).column());
+  }
+
+  default long intval(final String label, final int defaultValue) {
+    return intval(this.field(label).column(), defaultValue);
+  }
+
   String strval(final int field);
 
-  default String strval(final int field, String defaultValue) {
-    String value = strval(field);
+  default String strval(final int field, final String defaultValue) {
+    final String value = strval(field);
     if (value == null) {
       return defaultValue;
     }
@@ -28,6 +36,12 @@ public interface ResultRow {
   Optional<byte[]> bytes(final int field);
 
   long longval(final int field);
+
+  long longval(int field, long defaultValue);
+
+  default long longval(final String label, final long defaultValue) {
+    return longval(this.field(label).column(), defaultValue);
+  }
 
   boolean boolval(int field);
 
@@ -39,8 +53,12 @@ public interface ResultRow {
 
   int[] int2vector(int column);
 
-  default boolean isNull(int index) {
+  default boolean isNull(final int index) {
     return bytes(index) == null;
+  }
+
+  default boolean isNull(final String name) {
+    return bytes(field(name).column()) == null;
   }
 
   /**
@@ -49,37 +67,33 @@ public interface ResultRow {
 
   int rowId();
 
-  default String strval(String name) {
+  default String strval(final String name) {
     return strval(this.field(name).column());
   }
 
   ResultField field(String label);
 
-  default int intval(String label) {
-    return intval(this.field(label).column());
-  }
-
-  default boolean boolval(String label) {
+  default boolean boolval(final String label) {
     return boolval(field(label).column());
   }
 
-  default int[] int2vector(String label) {
+  default int[] int2vector(final String label) {
     return int2vector(field(label).column());
   }
 
-  default Optional<byte[]> bytes(String label) {
+  default Optional<byte[]> bytes(final String label) {
     return bytes(field(label).column());
   }
 
-  default byte[] bytea(String label) {
+  default byte[] bytea(final String label) {
     return bytea(field(label).column());
   }
 
-  default long longval(String label) {
+  default long longval(final String label) {
     return longval(field(label).column());
   }
 
-  default Instant instant(String label) {
+  default Instant instant(final String label) {
     return instant(field(label).column());
   }
 

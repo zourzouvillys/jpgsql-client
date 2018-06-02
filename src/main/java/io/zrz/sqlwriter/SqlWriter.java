@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions;
 
 import io.reactivex.Flowable;
 import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
-import io.zrz.jpgsql.client.opj.BinaryParamValue;
 import io.zrz.jpgsql.client.DefaultParametersList;
 import io.zrz.jpgsql.client.PgResultRow;
 import io.zrz.jpgsql.client.PostgresQueryProcessor;
@@ -29,6 +28,7 @@ import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
 import io.zrz.jpgsql.client.ResultRow;
 import io.zrz.jpgsql.client.SimpleQuery;
+import io.zrz.jpgsql.client.opj.BinaryParamValue;
 
 /**
  * helper to write safeish SQL.
@@ -150,14 +150,24 @@ public class SqlWriter {
     }
     return idx + 1;
   }
-  
-  public int writeBinaryParam(BinaryParamValue param) {
+
+  private int addParam(final BinaryParamValue param) {
     final int idx = params.indexOf(param);
     if (idx == -1) {
       this.params.add(param);
       return this.params.size();
     }
-    return idx + 1;    
+    return idx + 1;
+  }
+
+  public SqlWriter writeBinaryParam(final BinaryParamValue value) {
+    Objects.requireNonNull(value);
+    this.spacing();
+    Preconditions.checkArgument(!inline, "parameter can only be written when not inline");
+    final int pnum = this.addParam(value);
+    this.sb.append("$").append(pnum).append("");
+    this.state = State.KW;
+    return this;
   }
 
   private int addParam(final String param) {

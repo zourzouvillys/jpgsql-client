@@ -1199,6 +1199,18 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator checkConstraint(final String name, final SqlGenerator expr) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.ADD);
+      w.writeKeyword(SqlKeyword.CONSTRAINT);
+      w.writeIdent(name);
+      w.writeKeyword(SqlKeyword.CHECK);
+      w.writeStartExpr();
+      w.write(expr);
+      w.writeEndExpr();
+    };
+  }
+
   public static SqlGenerator alterTableAddPrimaryKey(final DbIdent tableName, final SqlGenerator... items) {
     return w -> {
 
@@ -1212,6 +1224,24 @@ public class SqlWriters {
       w.writeExprList(items);
 
     };
+  }
+
+  public static SqlGenerator alterTable(final DbIdent tableName, final boolean ifExists, final SqlGenerator... items) {
+    return w -> {
+
+      w.writeKeyword(SqlKeyword.ALTER);
+      w.writeKeyword(SqlKeyword.TABLE);
+      w.writeIdent(tableName);
+
+      if (ifExists) {
+        w.writeKeyword(SqlKeyword.IF);
+        w.writeKeyword(SqlKeyword.EXISTS);
+      }
+
+      w.writeList(SqlWriter.comma(), items);
+
+    };
+
   }
 
   public static SqlGenerator selectCount(final DbIdent table) {

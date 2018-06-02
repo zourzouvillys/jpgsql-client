@@ -54,8 +54,8 @@ public class PgResultRow implements ResultRow {
   }
 
   @Override
-  public byte[] bytes(final int field, byte[] defaultValue) {
-    byte[] value = this.buffer.bytes(this.row, field);
+  public byte[] bytes(final int field, final byte[] defaultValue) {
+    final byte[] value = this.buffer.bytes(this.row, field);
     if (value == null)
       return defaultValue;
     return value;
@@ -72,12 +72,17 @@ public class PgResultRow implements ResultRow {
   }
 
   @Override
-  public boolean boolval(int field) {
+  public long longval(final int field, final long defaultValue) {
+    return this.buffer.longval(this.row, field, defaultValue);
+  }
+
+  @Override
+  public boolean boolval(final int field) {
     return buffer.boolval(this.row, field);
   }
 
   @Override
-  public byte[] bytea(int i) {
+  public byte[] bytea(final int i) {
     return buffer.bytea(this.row, i);
   }
 
@@ -88,29 +93,29 @@ public class PgResultRow implements ResultRow {
         .collect(Collectors.joining(", ", "{ ", " }"));
   }
 
-  private String toString(int field) {
+  private String toString(final int field) {
 
-    byte[] bf = buffer.bytes(row, field);
+    final byte[] bf = buffer.bytes(row, field);
 
     if (bf == null || bf.length == 0)
       return "(null)";
 
     switch (this.field(field).oid()) {
       case Oid.BYTEA: {
-        byte[] data = bytea(field);
+        final byte[] data = bytea(field);
         if (data == null)
           return "(null)";
         return "(" + data.length + " bytes)";
       }
       default: {
-        byte[] data = buffer.bytes(row, field);
+        final byte[] data = buffer.bytes(row, field);
         return "(" + data.length + " bytes)";
       }
     }
   }
 
   @Override
-  public Instant instant(int field) {
+  public Instant instant(final int field) {
     return this.buffer.instant(this.row, field);
   }
 
@@ -120,11 +125,11 @@ public class PgResultRow implements ResultRow {
   }
 
   @Override
-  public int[] int2vector(int column) {
+  public int[] int2vector(final int column) {
     return buffer.int2vector(this.row, column);
   }
 
-  public Collection<String> textArray(int column) {
+  public Collection<String> textArray(final int column) {
     return buffer.textArray(row, column);
   }
 
