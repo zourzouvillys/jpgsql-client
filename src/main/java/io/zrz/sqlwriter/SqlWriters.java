@@ -718,6 +718,12 @@ public class SqlWriters {
     };
   }
 
+  public static SqlGenerator min(final SqlGenerator field) {
+    return w -> {
+      w.writeFunction("min", field);
+    };
+  }
+
   public static SqlGenerator max(final SqlGenerator field) {
     return w -> {
       w.writeFunction("max", field);
