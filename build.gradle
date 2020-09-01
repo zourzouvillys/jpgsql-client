@@ -70,7 +70,7 @@ dependencies {
     //
     	compile 'io.netty:netty-buffer:4.1.22.Final'
 	compile 'io.netty:netty-codec:4.1.22.Final'
-	compile 'io.netty:netty-handler:4.1.22.Final'
+	compile 'io.netty:netty-handler:4.1.51.Final'
 	compile 'io.netty:netty-transport:4.1.22.Final'
 
 
