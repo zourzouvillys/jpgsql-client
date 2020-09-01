@@ -11,6 +11,7 @@ import org.postgresql.core.ResultCursor;
 import org.postgresql.core.ResultHandlerBase;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLWarning;
+import org.postgresql.core.Tuple;
 
 import com.google.common.collect.ImmutableList;
 
@@ -48,7 +49,7 @@ public class PgObservableResultHandler extends ResultHandlerBase {
   }
 
   @Override
-  public void handleResultRows(final org.postgresql.core.Query fromQuery, final Field[] fields, final List<byte[][]> tuples, final ResultCursor cursor) {
+  public void handleResultRows(final org.postgresql.core.Query fromQuery, final Field[] fields, final List<Tuple> tuples, final ResultCursor cursor) {
 
     if (cursor != null) {
       this.cursor = cursor;
@@ -94,7 +95,7 @@ public class PgObservableResultHandler extends ResultHandlerBase {
   }
 
   @Override
-  public void handleCommandStatus(final String status, final int updateCount, final long insertOID) {
+  public void handleCommandStatus(final String status, final long updateCount, final long insertOID) {
     final CommandStatus msg = new CommandStatus(this.statementId, status, updateCount, insertOID);
     log.trace("[{}] {}", this.statementId, msg);
     this.statementId++;

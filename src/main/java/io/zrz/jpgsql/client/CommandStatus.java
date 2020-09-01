@@ -16,7 +16,7 @@ public class CommandStatus implements QueryResult {
 
   private String status;
 
-  private int updateCount;
+  private long updateCount;
 
   private long insertOID;
 

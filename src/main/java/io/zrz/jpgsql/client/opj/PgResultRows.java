@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.postgresql.core.Field;
 import org.postgresql.util.PGbytea;
+import org.postgresql.core.Tuple;
 
 import com.google.common.base.Splitter;
 import com.google.common.primitives.Ints;
@@ -23,11 +24,11 @@ final class PgResultRows implements RowBuffer {
 
   private final Query query;
   private final PgResultMeta fields;
-  private final List<byte[][]> tuples;
+  private final List<Tuple> tuples;
   private final boolean done;
   private final int statementId;
 
-  PgResultRows(final Query query, final int statementId, final PgResultMeta fields, final List<byte[][]> tuples, final boolean done) {
+  PgResultRows(final Query query, final int statementId, final PgResultMeta fields, final List<Tuple> tuples, final boolean done) {
     this.statementId = statementId;
     this.query = query;
     this.fields = fields;
@@ -72,7 +73,7 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public int intval(final int row, final int col) {
-    final byte[] val = this.tuples.get(row)[col];
+    final byte[] val = this.tuples.get(row).get(col);
     if (val == null) {
       throw new NullPointerException();
     }
@@ -89,7 +90,7 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public int intval(final int row, final int col, final int defaultValue) {
-    final byte[] val = this.tuples.get(row)[col];
+    final byte[] val = this.tuples.get(row).get(col);
     if (val == null) {
       return defaultValue;
     }
@@ -98,7 +99,7 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public byte[] bytes(final int row, final int col) {
-    return this.tuples.get(row)[col];
+    return this.tuples.get(row).get(col);
   }
 
   @Override
@@ -108,7 +109,7 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public String strval(final int row, final int col) {
-    final byte[] val = this.tuples.get(row)[col];
+    final byte[] val = this.tuples.get(row).get(col);
     if (val == null) {
       return null;
     }
@@ -122,7 +123,7 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public long longval(final int row, final int col) {
-    final byte[] val = this.tuples.get(row)[col];
+    final byte[] val = this.tuples.get(row).get(col);
     if (val == null) {
       throw new NullPointerException();
     }
@@ -131,7 +132,7 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public long longval(final int row, final int col, final long defaultValue) {
-    final byte[] val = this.tuples.get(row)[col];
+    final byte[] val = this.tuples.get(row).get(col);
     if (val == null) {
       return defaultValue;
     }
@@ -140,7 +141,7 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public BigDecimal decimal(final int row, final int col) {
-    final byte[] val = this.tuples.get(row)[col];
+    final byte[] val = this.tuples.get(row).get(col);
     if (val == null) {
       return null;
     }
@@ -149,7 +150,7 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public Instant instant(final int row, final int col) {
-    final byte[] val = this.tuples.get(row)[col];
+    final byte[] val = this.tuples.get(row).get(col);
     if (val == null) {
       return null;
     }
@@ -158,7 +159,7 @@ final class PgResultRows implements RowBuffer {
 
   @Override
   public boolean boolval(int row, int field) {
-    final byte[] val = this.tuples.get(row)[field];
+    final byte[] val = this.tuples.get(row).get(field);
     if (val == null) {
       throw new NullPointerException();
     }
@@ -178,7 +179,7 @@ final class PgResultRows implements RowBuffer {
 
     final int oid = field.oid();
 
-    byte[] raw = tuples.get(row)[i];
+    byte[] raw = tuples.get(row).get(i);
 
     if (field.format() == Field.TEXT_FORMAT) {
       return PGbytea.toBytes(raw);
