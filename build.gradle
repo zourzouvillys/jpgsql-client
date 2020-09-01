@@ -70,7 +70,7 @@ dependencies {
   implementation 'net.jodah:failsafe:1.0.4'
 
   testImplementation 'ch.qos.logback:logback-classic:1.2.3'
-  testImplementation 'org.slf4j:jul-to-slf4j:1.7.25'
+  testImplementation 'org.slf4j:jul-to-slf4j:1.7.30'
 
   testCompile 'junit:junit:4.12'
 
