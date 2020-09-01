@@ -1,0 +1,6 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+net.ltgt.apt-eclipse:net.ltgt.apt-eclipse.gradle.plugin:0.21=classpath
+net.ltgt.gradle:gradle-apt-plugin:0.21=classpath
+empty=

@@ -2,10 +2,12 @@ buildscript {
   repositories {
     mavenCentral()
   }
+  configurations.classpath {
+    resolutionStrategy.activateDependencyLocking()
+  }
 }
 
 plugins {
-  id "com.jfrog.bintray" version "1.7.3"
   id 'net.ltgt.apt-eclipse' version '0.21'
 }
 
@@ -24,12 +26,14 @@ repositories {
   maven { url "http://dl.bintray.com/zourzouvillys/maven" }
 }
 
+
+dependencyLocking {
+    lockMode = LockMode.STRICT
+    lockAllConfigurations()
+}
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-
-eclipse {
-  //  classpath.defaultOutputDir = new File(buildDir, "classes/main")
-}
 
 dependencies {
 
@@ -83,20 +87,5 @@ publishing {
 }
 
 
-bintray {
-
-  user = System.getenv('BINTRAY_USER')
-  key = System.getenv('BINTRAY_KEY')
-
-  publications = ['maven']
-
-  pkg {
-    repo = 'maven'
-    name = 'jpgsql'
-    userOrg = user
-    licenses = ['Apache-2.0']
-    publicDownloadNumbers = false
-    vcsUrl = 'https://github.com/zourzouvillys/jpgsql-client.git'
-  }
-
+eclipse {
 }
