@@ -21,7 +21,6 @@ plugins {
 version = 'master-SNAPSHOT'
 group = 'io.zrz'
 
-//apply plugin: 'pride'
 apply plugin: 'java-library'
 apply plugin: 'net.ltgt.apt'
 apply plugin: 'maven-publish'
@@ -34,7 +33,6 @@ repositories {
   maven { url "http://dl.bintray.com/zourzouvillys/maven" }
 }
 
-
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -46,32 +44,35 @@ eclipse {
 
 dependencies {
 
-	apt 'org.immutables:immutables:2.5.6'
-	apt 'org.projectlombok:lombok:1.16.20'
-	
-	compile 'org.projectlombok:lombok:1.16.20'
-	compileOnly group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.annotation', version: '2.0.0'
-	compileOnly 'io.zrz:visitors:0.1'
-	apt 'io.zrz:visitors:0.1'
+  implementation enforcedPlatform('io.netty:netty-bom:4.1.51.Final')
+  compile 'io.netty:netty-buffer'
+  compile 'io.netty:netty-codec'
+  compile 'io.netty:netty-handler'
+  compile 'io.netty:netty-transport'
 
-    api 'org.reactivestreams:reactive-streams:1.0.0'
-    api 'org.slf4j:slf4j-api:1.7.21'
 
-    implementation 'org.postgresql:postgresql:42.2.1.jre7'
-	implementation 'com.google.guava:guava:24.0-jre'
-	implementation 'io.reactivex.rxjava2:rxjava:2.1.10'
-	implementation 'net.jodah:failsafe:1.0.4'
 
-	testImplementation 'ch.qos.logback:logback-classic:1.2.3'
-	testImplementation 'org.slf4j:jul-to-slf4j:1.7.25'
 
-    testCompile 'junit:junit:4.12'
+  apt 'org.immutables:immutables:2.5.6'
+  apt 'org.projectlombok:lombok:1.16.20'
 
-    //
-    	compile 'io.netty:netty-buffer:4.1.22.Final'
-	compile 'io.netty:netty-codec:4.1.22.Final'
-	compile 'io.netty:netty-handler:4.1.22.Final'
-	compile 'io.netty:netty-transport:4.1.22.Final'
+  compile 'org.projectlombok:lombok:1.16.20'
+  compileOnly group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.annotation', version: '2.0.0'
+  compileOnly 'io.zrz:visitors:0.1'
+  apt 'io.zrz:visitors:0.1'
+
+  api 'org.reactivestreams:reactive-streams:1.0.0'
+  api 'org.slf4j:slf4j-api:1.7.21'
+
+  implementation 'org.postgresql:postgresql:42.2.1.jre7'
+  implementation 'com.google.guava:guava:24.0-jre'
+  implementation 'io.reactivex.rxjava2:rxjava:2.1.10'
+  implementation 'net.jodah:failsafe:1.0.4'
+
+  testImplementation 'ch.qos.logback:logback-classic:1.2.3'
+  testImplementation 'org.slf4j:jul-to-slf4j:1.7.25'
+
+  testCompile 'junit:junit:4.12'
 
 
 }
