@@ -148,7 +148,9 @@ public enum SqlKeyword implements SqlGenerator {
   ENCODING,
   LC_COLLATE,
   LC_CTYPE,
-  CONNECTION
+  CONNECTION,
+  TRUNCATE
+    
 ;
 
   private static final Set<String> LOOKUP = Arrays.asList(values()).stream().map(x -> x.name()).collect(ImmutableSet.toImmutableSet());
