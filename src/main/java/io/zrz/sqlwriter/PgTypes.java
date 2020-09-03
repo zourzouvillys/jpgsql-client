@@ -14,7 +14,7 @@ public enum PgTypes implements SqlType {
   TSQUERY,
   BIT,
   DATE,
-  TIME.
+  TIME,
 
   ;
 
