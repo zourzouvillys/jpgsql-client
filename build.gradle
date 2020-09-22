@@ -12,13 +12,15 @@ plugins {
   id "com.jfrog.bintray" version "1.8.5"
 }
 
-version = 'master'
-group = 'io.zrz'
+version = project.hasProperty('versionId') ? project.property('versionId') : 'master'
+group = 'io.zrz.jpgsql'
 
 apply plugin: 'java-library'
 apply plugin: 'net.ltgt.apt'
-apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
 
 
 repositories {
@@ -46,7 +48,7 @@ dependencies {
 
   // 
   annotationProcessor 'org.immutables:immutables:2.8.8'
-  annotationProcessor 'org.projectlombok:lombok:1.18.12'
+  // annotationProcessor 'org.projectlombok:lombok:1.18.12'
   implementation 'org.projectlombok:lombok:1.18.12'
 
   compileOnly group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.annotation', version: '2.2.600'
@@ -79,7 +81,7 @@ task sourcesJar(type: Jar) {
 publishing {
   publications {
     maven(MavenPublication) {
-    		from components.java
+    	from components.java
       	groupId 'io.zrz.jpgsql'
       	artifactId 'jpgsql-client'
       	version project.version
@@ -88,40 +90,29 @@ publishing {
 }
 
 
+
 eclipse {
 }
+
 
 // ----
 
 bintray {
-	user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-	key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_APIKEY')
+	user = project.hasProperty('bintray.user') ? project.property('bintray.user') : System.getenv('BINTRAY_USER')
+	key = project.hasProperty('bintray.key') ? project.property('bintray.key') : System.getenv('BINTRAY_APIKEY')
 	configurations = ['archives']
 	pkg {
-	repo = 'generic'
+	    repo = 'maven'
 		name = 'jpgsql'
 		userOrg = user
 	}
 }
 
-subprojects {
-  apply plugin: "maven-publish"
-  apply plugin: "java-library"
-  publishing {
-    repositories {
-      maven {
-        name = "GitHubPackages"
-        url = uri("https://maven.pkg.github.com/zourzouvillys/jpgsql")
-        credentials {
-          username = project.findProperty("gpr.actor") ?: System.getenv("GITHUB_ACTOR")
-          password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
-        }
-      }
-    }
-    publications {
-      gpr(MavenPublication) {
-        from(components.java)
-      }
+
+publishing {
+  publications {
+    gpr(MavenPublication) {
+      from(components.java)
     }
   }
 }
