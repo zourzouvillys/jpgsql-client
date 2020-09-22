@@ -9,6 +9,7 @@ buildscript {
 
 plugins {
   id 'net.ltgt.apt-eclipse' version '0.21'
+  id "com.jfrog.bintray" version "1.8.5"
 }
 
 version = 'master-SNAPSHOT'
@@ -88,4 +89,39 @@ publishing {
 
 
 eclipse {
+}
+
+// ----
+
+bintray {
+	user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+	key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_APIKEY')
+	configurations = ['archives']
+	pkg {
+	repo = 'generic'
+		name = 'jpgsql'
+		userOrg = user
+	}
+}
+
+subprojects {
+  apply plugin: "maven-publish"
+  apply plugin: "java-library"
+  publishing {
+    repositories {
+      maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/zourzouvillys/jpgsql")
+        credentials {
+          username = project.findProperty("gpr.actor") ?: System.getenv("GITHUB_ACTOR")
+          password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+        }
+      }
+    }
+    publications {
+      gpr(MavenPublication) {
+        from(components.java)
+      }
+    }
+  }
 }
