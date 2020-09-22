@@ -24,7 +24,7 @@ apply plugin: 'eclipse'
 repositories {
   mavenCentral()
   jcenter()
-  maven { url "http://dl.bintray.com/zourzouvillys/maven" }
+  maven { url "https://dl.bintray.com/zourzouvillys/maven" }
 }
 
 
@@ -39,15 +39,15 @@ targetCompatibility = 1.8
 dependencies {
 
   implementation enforcedPlatform('io.netty:netty-bom:4.1.52.Final')
-  compile 'io.netty:netty-buffer'
-  compile 'io.netty:netty-codec'
-  compile 'io.netty:netty-handler'
-  compile 'io.netty:netty-transport'
+  implementation 'io.netty:netty-buffer'
+  implementation 'io.netty:netty-codec'
+  implementation 'io.netty:netty-handler'
+  implementation 'io.netty:netty-transport'
 
   // 
   annotationProcessor 'org.immutables:immutables:2.8.8'
   annotationProcessor 'org.projectlombok:lombok:1.18.12'
-  compile 'org.projectlombok:lombok:1.18.12'
+  implementation 'org.projectlombok:lombok:1.18.12'
 
   compileOnly group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.annotation', version: '2.2.600'
   compileOnly 'io.zrz:visitors:0.1'
@@ -65,7 +65,7 @@ dependencies {
   testImplementation 'ch.qos.logback:logback-classic:1.2.3'
   testImplementation 'org.slf4j:jul-to-slf4j:1.7.30'
 
-  testCompile 'junit:junit:4.12'
+  testImplementation 'junit:junit:4.12'
 
 }
 

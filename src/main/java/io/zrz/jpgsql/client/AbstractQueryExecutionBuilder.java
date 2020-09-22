@@ -4,7 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import lombok.Value;
+import io.zrz.sqlwriter.Tuple;
 
 /**
  * helper class for generating queries.
@@ -14,12 +14,6 @@ import lombok.Value;
  */
 
 public abstract class AbstractQueryExecutionBuilder<T> {
-
-  @Value(staticConstructor = "of")
-  public static class Tuple {
-    Query query;
-    QueryParameters params;
-  }
 
   private final List<Tuple> queries = new LinkedList<>();
   protected final PostgresQueryProcessor client;
@@ -112,22 +106,22 @@ public abstract class AbstractQueryExecutionBuilder<T> {
 
   protected Tuple buildQuery() {
 
-    final Query query = this.client.createQuery(this.queries.stream().map(t -> t.query).collect(Collectors.toList()));
+    final Query query = this.client.createQuery(this.queries.stream().map(t -> t.query()).collect(Collectors.toList()));
 
     final QueryParameters params = query.createParameters();
 
     this.queries.stream()
-        .filter(t -> t.params != null)
-        .sequential()
-        .reduce(1, (result, element) -> params.append(result, element.params), (id, x) -> id);
+      .filter(t -> t.params() != null)
+      .sequential()
+      .reduce(1, (result, element) -> params.append(result, element.params()), (id, x) -> id);
 
-    return new Tuple(query, params);
+    return Tuple.of(query, params);
 
   }
 
   @Override
   public String toString() {
-    return this.queries.stream().map(t -> t.getQuery().toString()).collect(Collectors.joining(";\n"));
+    return this.queries.stream().map(t -> t.query().toString()).collect(Collectors.joining(";\n"));
   }
 
 }

@@ -1,7 +1,6 @@
 package io.zrz.sqlwriter;
 
 import io.reactivex.Flowable;
-import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
 import io.zrz.jpgsql.client.ResultRow;
 
 public class PostgresQueryBatch {

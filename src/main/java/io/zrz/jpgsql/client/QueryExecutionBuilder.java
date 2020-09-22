@@ -4,6 +4,7 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
 import io.zrz.sqlwriter.SqlWriters;
+import io.zrz.sqlwriter.Tuple;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

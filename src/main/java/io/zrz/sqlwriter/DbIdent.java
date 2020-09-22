@@ -8,12 +8,10 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableList;
 
 import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
-import lombok.Getter;
 
 public class DbIdent implements SqlGenerator {
 
-  @Getter
-  private ImmutableList<String> names;
+  private final ImmutableList<String> names;
 
   public DbIdent(final ImmutableList<String> vals) {
     this.names = vals;
@@ -21,6 +19,10 @@ public class DbIdent implements SqlGenerator {
 
   public static DbIdent of(final String ident, final String... strings) {
     return new DbIdent(ImmutableList.<String>builder().add(ident).add(strings).build());
+  }
+
+  public ImmutableList<String> getNames() {
+    return this.names;
   }
 
   @Override

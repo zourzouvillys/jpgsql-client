@@ -1,5 +1,6 @@
 package io.zrz.sqlwriter;
 
+import java.sql.SQLException;
 import java.util.Objects;
 
 import org.postgresql.core.Utils;
@@ -19,17 +20,27 @@ public class DbUtils {
    * trailing "'" .
    */
 
-  @SneakyThrows
   public static String escape(final String strval) {
-    return Utils.escapeLiteral(null, Objects.requireNonNull(strval), true).toString();
+    try {
+      return Utils.escapeLiteral(null, Objects.requireNonNull(strval), true).toString();
+    }
+    catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException (e);
+    }
   }
 
-  @SneakyThrows
   public static String ident(final String ident) {
     if (IDENT_CHARS.matchesAllOf(ident) && !SqlKeyword.isKeyword(ident)) {
       return ident;
     }
-    return Utils.escapeIdentifier(null, ident).toString();
+    try {
+      return Utils.escapeIdentifier(null, ident).toString();
+    }
+    catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException (e);
+    }
   }
 
   //
@@ -176,7 +187,7 @@ public class DbUtils {
   }
 
   public static boolean isClosedOpen(final Range<?> range) {
-    return range.hasLowerBound() && range.hasUpperBound() && range.lowerBoundType() == BoundType.CLOSED && range.upperBoundType() == BoundType.OPEN;
+    return range.hasLowerBound() && range.hasUpperBound() && (range.lowerBoundType() == BoundType.CLOSED) && (range.upperBoundType() == BoundType.OPEN);
   }
 
 }

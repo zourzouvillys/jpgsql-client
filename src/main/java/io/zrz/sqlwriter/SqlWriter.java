@@ -18,9 +18,7 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 
 import io.reactivex.Flowable;
-import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
 import io.zrz.jpgsql.client.DefaultParametersList;
-import io.zrz.jpgsql.client.PgResultRow;
 import io.zrz.jpgsql.client.PostgresQueryProcessor;
 import io.zrz.jpgsql.client.PostgresUtils;
 import io.zrz.jpgsql.client.QueryExecutionBuilder;
@@ -36,7 +34,7 @@ import io.zrz.jpgsql.client.opj.BinaryParamValue;
 
 public class SqlWriter {
 
-  private static enum State {
+  private enum State {
     NONE,
     IDENT,
     KW,
@@ -58,8 +56,8 @@ public class SqlWriter {
   }
 
   /**
-   * write a keyword out. these are NOT escaped, so only accept the SQL keyword enum to avoid accidentally using
-   * strings.
+   * write a keyword out. these are NOT escaped, so only accept the SQL keyword enum to avoid
+   * accidentally using strings.
    */
 
   public SqlWriter writeKeyword(final SqlKeyword... keywords) {
@@ -240,8 +238,8 @@ public class SqlWriter {
   }
 
   /**
-   * writes a raw expression. only use if you are 100% certain it is generated safely, as this can allow for injection
-   * if it is not.
+   * writes a raw expression. only use if you are 100% certain it is generated safely, as this can
+   * allow for injection if it is not.
    */
 
   public SqlWriter writeRawExpr(final String string) {
@@ -276,7 +274,8 @@ public class SqlWriter {
 
   public SqlWriter writeLiteral(final boolean i) {
     this.spacing();
-    sb.append(i ? "true" : "false");
+    sb.append(i ? "true"
+                : "false");
     this.state = State.IDENT;
     return this;
   }
@@ -452,12 +451,6 @@ public class SqlWriter {
       return Flowable.fromPublisher(w.submitTo(pg)).flatMap(PostgresUtils.rowMapper());
     }
 
-    default Flowable<ResultRow> fetchRowsInBatches(final int batchSize, final PostgresQueryProcessor pg) {
-      final SqlWriter w = new SqlWriter(false);
-      w.write(this);
-      return pg.fetch(batchSize, w.createTuple()).flatMap(PostgresUtils.rowMapper());
-    }
-
     default void addTo(final QueryExecutionBuilder qb, final boolean forceInline) {
       final SqlWriter w = new SqlWriter(forceInline);
       w.write(this);
@@ -472,18 +465,6 @@ public class SqlWriter {
       final SqlWriter w = new SqlWriter(forceInline);
       w.write(this);
       return w.createTuple();
-    }
-
-    default Flowable<PgResultRow> queryWith(final PostgresQueryProcessor pg) {
-      final Tuple t = asTuple();
-      return Flowable.fromPublisher(pg.submit(t.getQuery(), t.getParams()))
-          .flatMap(PostgresUtils.rowMapper());
-    }
-
-    default Flowable<PgResultRow> queryWith(final PostgresQueryProcessor pg, final boolean forceInline) {
-      final Tuple t = asTuple(forceInline);
-      return Flowable.fromPublisher(pg.submit(t.getQuery(), t.getParams()))
-          .flatMap(PostgresUtils.rowMapper());
     }
 
   }

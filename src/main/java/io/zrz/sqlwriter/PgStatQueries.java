@@ -1,7 +1,5 @@
 package io.zrz.sqlwriter;
 
-import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
-
 public class PgStatQueries {
 
   private static Tuple indexIoStats = QueryGenerator.from(DbIdent.of("pg_catalog", "pg_statio_all_indexes"))
