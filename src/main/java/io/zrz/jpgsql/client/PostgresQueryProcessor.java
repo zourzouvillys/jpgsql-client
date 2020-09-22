@@ -9,8 +9,8 @@ import com.google.common.io.ByteSource;
 
 import io.netty.buffer.ByteBuf;
 import io.reactivex.Flowable;
-import io.zrz.jpgsql.client.AbstractQueryExecutionBuilder.Tuple;
 import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
+import io.zrz.sqlwriter.Tuple;
 
 /**
  * common API shared between {@link TransactionalSession} and {@link PostgresClient}.
