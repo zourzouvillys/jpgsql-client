@@ -39,9 +39,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -112,7 +114,7 @@ public class SqlWriters {
       w.writeIdent(table);
       w.writeKeyword(SqlKeyword.WHERE);
       w.write(where);
-      if (returning != null && returning.length > 0) {
+      if ((returning != null) && (returning.length > 0)) {
         w.writeKeyword(SqlKeyword.RETURNING);
         w.writeList(SqlWriter.comma(), returning);
       }
@@ -138,7 +140,87 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator merge(final DbIdent target, final List<String> fields, final SqlGenerator values, final Map<String, SqlGenerator> mergeFields,
+  public static SqlGenerator mergeWhere(
+      final DbIdent target,
+      final List<String> fields,
+      final SqlGenerator values,
+      final List<String> conflicts,
+      final Map<String, SqlGenerator> mergeFields,
+      final SqlGenerator where,
+      final SqlGenerator... returning) {
+
+    return w -> {
+
+      w.writeKeyword(SqlKeyword.INSERT);
+      w.writeKeyword(SqlKeyword.INTO);
+
+      w.writeIdent(target);
+      w.writeExprList(fields.toArray(new String[0]));
+      w.write(values);
+
+      //
+
+      if (!mergeFields.isEmpty()) {
+
+        w.writeKeyword(SqlKeyword.ON);
+        w.writeKeyword(SqlKeyword.CONFLICT);
+
+        w.writeExprList(conflicts.stream().map(SqlWriters::ident));
+
+        // Sets.difference(ImmutableSet.copyOf(fields),
+        // mergeFields.keySet()).stream().map(SqlWriters::ident));
+
+        w.writeKeyword(SqlKeyword.DO);
+        w.writeKeyword(SqlKeyword.UPDATE);
+        w.writeKeyword(SqlKeyword.SET);
+
+        if (mergeFields.size() == 1) {
+
+          Entry<String, SqlGenerator> e = mergeFields.entrySet().iterator().next();
+
+          w.writeIdent(e.getKey());
+          w.writeOperator("=");
+          w.write(e.getValue());
+
+        }
+        else {
+
+          final List<SqlGenerator> mergeKeys = new LinkedList<>();
+          final List<SqlGenerator> mergeValues = new LinkedList<>();
+
+          mergeFields.forEach((k, v) -> {
+
+            mergeKeys.add(SqlWriters.ident(k));
+            mergeValues.add(v);
+
+          });
+
+          w.writeExprList(mergeKeys);
+          w.writeOperator("=");
+          w.writeExprList(mergeValues);
+
+        }
+
+      }
+
+      if (where != null) {
+        w.writeKeyword(SqlKeyword.WHERE);
+        w.write(where);
+      }
+
+      if (returning.length > 0) {
+        w.writeKeyword(SqlKeyword.RETURNING);
+        w.writeList(ff -> ff.writeRawExpr(", "), returning);
+      }
+
+    };
+  }
+
+  public static SqlGenerator merge(
+      final DbIdent target,
+      final List<String> fields,
+      final SqlGenerator values,
+      final Map<String, SqlGenerator> mergeFields,
       final SqlGenerator... returning) {
     return w -> {
 
@@ -146,33 +228,49 @@ public class SqlWriters {
       w.writeKeyword(SqlKeyword.INTO);
 
       w.writeIdent(target);
-
       w.writeExprList(fields.toArray(new String[0]));
-
       w.write(values);
 
-      w.writeKeyword(SqlKeyword.ON);
-      w.writeKeyword(SqlKeyword.CONFLICT);
+      //
 
-      w.writeExprList(Sets.difference(ImmutableSet.copyOf(fields), mergeFields.keySet()).stream().map(SqlWriters::ident));
+      if (!mergeFields.isEmpty()) {
 
-      w.writeKeyword(SqlKeyword.DO);
-      w.writeKeyword(SqlKeyword.UPDATE);
-      w.writeKeyword(SqlKeyword.SET);
+        w.writeKeyword(SqlKeyword.ON);
+        w.writeKeyword(SqlKeyword.CONFLICT);
 
-      final List<SqlGenerator> mergeKeys = new LinkedList<>();
-      final List<SqlGenerator> mergeValues = new LinkedList<>();
+        w.writeExprList(Sets.difference(ImmutableSet.copyOf(fields), mergeFields.keySet()).stream().map(SqlWriters::ident));
 
-      mergeFields.forEach((k, v) -> {
+        w.writeKeyword(SqlKeyword.DO);
+        w.writeKeyword(SqlKeyword.UPDATE);
+        w.writeKeyword(SqlKeyword.SET);
 
-        mergeKeys.add(ident(k));
-        mergeValues.add(v);
+        if (mergeFields.size() == 1) {
 
-      });
+          Entry<String, SqlGenerator> e = mergeFields.entrySet().iterator().next();
 
-      w.writeExprList(mergeKeys);
-      w.writeOperator("=");
-      w.writeExprList(mergeValues);
+          w.writeIdent(e.getKey());
+          w.writeOperator("=");
+          w.write(e.getValue());
+
+        }
+        else {
+          final List<SqlGenerator> mergeKeys = new LinkedList<>();
+          final List<SqlGenerator> mergeValues = new LinkedList<>();
+
+          mergeFields.forEach((k, v) -> {
+
+            mergeKeys.add(ident(k));
+            mergeValues.add(v);
+
+          });
+
+          w.writeExprList(mergeKeys);
+          w.writeOperator("=");
+          w.writeExprList(mergeValues);
+
+        }
+
+      }
 
       if (returning.length > 0) {
         w.writeKeyword(SqlKeyword.RETURNING);
@@ -246,11 +344,13 @@ public class SqlWriters {
       if (opclass != null)
         w.writeIdent(opclass);
       if (direction != null) {
-        w.writeKeyword(direction == SqlDirection.ASC ? SqlKeyword.ASC : SqlKeyword.DESC);
+        w.writeKeyword(direction == SqlDirection.ASC ? SqlKeyword.ASC
+                                                     : SqlKeyword.DESC);
       }
       if (nulls != null) {
         w.writeKeyword(SqlKeyword.NULLS);
-        w.writeKeyword(nulls == SqlNulls.FIRST ? SqlKeyword.FIRST : SqlKeyword.LAST);
+        w.writeKeyword(nulls == SqlNulls.FIRST ? SqlKeyword.FIRST
+                                               : SqlKeyword.LAST);
       }
     };
   }
@@ -261,11 +361,13 @@ public class SqlWriters {
       if (opclass != null)
         w.writeIdent(opclass);
       if (direction != null) {
-        w.writeKeyword(direction == SqlDirection.ASC ? SqlKeyword.ASC : SqlKeyword.DESC);
+        w.writeKeyword(direction == SqlDirection.ASC ? SqlKeyword.ASC
+                                                     : SqlKeyword.DESC);
       }
       if (nulls != null) {
         w.writeKeyword(SqlKeyword.NULLS);
-        w.writeKeyword(nulls == SqlNulls.FIRST ? SqlKeyword.FIRST : SqlKeyword.LAST);
+        w.writeKeyword(nulls == SqlNulls.FIRST ? SqlKeyword.FIRST
+                                               : SqlKeyword.LAST);
       }
     };
   }
@@ -274,16 +376,19 @@ public class SqlWriters {
     return (w) -> {
       w.writeIdent(columnName);
       if (direction != null) {
-        w.writeKeyword(direction == SqlDirection.ASC ? SqlKeyword.ASC : SqlKeyword.DESC);
+        w.writeKeyword(direction == SqlDirection.ASC ? SqlKeyword.ASC
+                                                     : SqlKeyword.DESC);
       }
       if (nulls != null) {
         w.writeKeyword(SqlKeyword.NULLS);
-        w.writeKeyword(nulls == SqlNulls.FIRST ? SqlKeyword.FIRST : SqlKeyword.LAST);
+        w.writeKeyword(nulls == SqlNulls.FIRST ? SqlKeyword.FIRST
+                                               : SqlKeyword.LAST);
       }
     };
   }
 
-  // { column_name | ( expression ) } [ COLLATE collation ] [ opclass ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ]
+  // { column_name | ( expression ) } [ COLLATE collation ] [ opclass ] [ ASC | DESC ] [ NULLS {
+  // FIRST | LAST } ]
 
   public static SqlWriter.SqlGenerator createUniqueIndex(final String idxname, final String type, final DbIdent tblname, final SqlGenerator... indexItems) {
     return (w) -> {
@@ -428,7 +533,8 @@ public class SqlWriters {
       w.writeIdent(master);
       w.writeKeyword(SET);
 
-      w.writeKeyword(logged ? LOGGED : UNLOGGED);
+      w.writeKeyword(logged ? LOGGED
+                            : UNLOGGED);
 
     };
 
@@ -1312,7 +1418,8 @@ public class SqlWriters {
   }
 
   private static SqlGenerator comma(final boolean newline) {
-    return newline ? _commaAndNewLine : _comma;
+    return newline ? _commaAndNewLine
+                   : _comma;
   }
 
   public static SqlGenerator subselect(final QueryGenerator statement) {
@@ -1341,7 +1448,10 @@ public class SqlWriters {
     };
   }
 
-  public static SqlGenerator update(final DbIdent updateTable, final ImmutableMap<String, SqlGenerator> updates, final DbIdent fromTable,
+  public static SqlGenerator update(
+      final DbIdent updateTable,
+      final ImmutableMap<String, SqlGenerator> updates,
+      final DbIdent fromTable,
       final SqlGenerator where) {
     return w -> {
       w.writeKeyword(SqlKeyword.UPDATE);
