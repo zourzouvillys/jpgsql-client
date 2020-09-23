@@ -1582,4 +1582,18 @@ public class SqlWriters {
 
   }
 
+  public static SqlGenerator oldField(final String fieldName) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.OLD);
+      w.writeIdent(fieldName);
+    };
+  }
+
+  public static SqlGenerator newField(final String fieldName) {
+    return w -> {
+      w.writeKeyword(SqlKeyword.NEW);
+      w.writeIdent(fieldName);
+    };
+  }
+
 }

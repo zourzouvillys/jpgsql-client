@@ -150,7 +150,20 @@ public enum SqlKeyword implements SqlGenerator {
   LC_CTYPE,
   CONNECTION,
   TRUNCATE,
-  ONLY
+  ONLY,
+  
+  OLD,
+  NEW,
+  
+  BEFORE,
+  AFTER,
+  DEFERRABLE,
+  INITIALLY,
+  IMMEDIATE,
+  EACH,
+  STATEMENT,
+  EXECUTE,
+  PROCEDURE,
     
 ;
 
