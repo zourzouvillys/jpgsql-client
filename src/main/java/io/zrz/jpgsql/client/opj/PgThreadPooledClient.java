@@ -36,9 +36,9 @@ import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 
 /**
- * the primary run thread never block on DB io. Instead, we expose a Connection-like API that only deals with prepared
- * statements. the connections are run on background threads. we leverage the caching thread pools to avoid doing much
- * ourselves.
+ * the primary run thread never block on DB io. Instead, we expose a Connection-like API that only
+ * deals with prepared statements. the connections are run on background threads. we leverage the
+ * caching thread pools to avoid doing much ourselves.
  */
 public class PgThreadPooledClient extends AbstractPostgresClient implements PostgresClient, AutoCloseable {
   @java.lang.SuppressWarnings("all")
@@ -49,7 +49,6 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   private final PGSimpleDataSource ds;
   private final Listener listener;
   private RetryPolicy retryPolicy = new RetryPolicy().withDelay(1, TimeUnit.SECONDS).withMaxRetries(10);
-
 
   /**
    */
@@ -74,16 +73,19 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     this.config = config;
     this.ds = new PGSimpleDataSource();
     this.ds.setServerName(config.getHostname());
-    if (config.getPort() != 0) this.ds.setPortNumber(config.getPort());
+    if (config.getPort() != 0)
+      this.ds.setPortNumber(config.getPort());
     this.ds.setUser(this.getUsername());
     if (config.getPassword() != null) {
-      this.ds.setPassword(config.getPassword());
+      this.ds.setPassword(config.getPassword().get());
     }
     if (config.getDbname() != null) {
       this.ds.setDatabaseName(config.getDbname());
     }
-    if (config.getApplicationName() == null) this.ds.setApplicationName("jpgsql");
-     else this.ds.setApplicationName(config.getApplicationName());
+    if (config.getApplicationName() == null)
+      this.ds.setApplicationName("jpgsql");
+    else
+      this.ds.setApplicationName(config.getApplicationName());
     this.ds.setReWriteBatchedInserts(false);
     this.ds.setAssumeMinServerVersion("9.6");
     this.ds.setSendBufferSize(config.getSendBufferSize());
@@ -97,7 +99,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     this.ds.setPreferQueryMode(PreferQueryMode.EXTENDED);
     this.ds.setBinaryTransfer(true);
     // reasonably large default fetch size
-    if (config.getDefaultRowFetchSize() > 0) this.ds.setDefaultRowFetchSize(config.getDefaultRowFetchSize());
+    if (config.getDefaultRowFetchSize() > 0)
+      this.ds.setDefaultRowFetchSize(config.getDefaultRowFetchSize());
     // this.ds.setLoggerLevel("loggerLevel");
     this.ds.setSsl(this.config.isSsl());
     if (this.config.isSsl()) {
@@ -116,7 +119,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   String getUsername() {
-    return (this.config.getUsername() == null) ? System.getProperty("user.name") : this.config.getUsername();
+    return (this.config.getUsername() == null) ? System.getProperty("user.name")
+                                               : this.config.getUsername();
   }
 
   /**
@@ -125,7 +129,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   public PgConnection createConnection() {
     // new connection
     Preconditions.checkState(this.ds != null);
-    final HostSpec spec = new HostSpec(config.getHostname(), config.getPort() == 0 ? 5432 : config.getPort());
+    final HostSpec spec =
+      new HostSpec(
+        config.getHostname(),
+        config.getPort() == 0 ? 5432
+                              : config.getPort());
     final Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
     // ahem
     info.setProperty("charSet", "UTF-8");
@@ -133,9 +141,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     info.setProperty("useUnicode", "true");
     PGProperty.SEND_BUFFER_SIZE.set(info, config.getSendBufferSize());
     if (config.getPassword() != null) {
-      info.setProperty("password", config.getPassword());
+      info.setProperty("password", config.getPassword().get());
     }
-    return Failsafe.with(retryPolicy).onFailure(err -> log.error("error opening connection: {}", err.getMessage(), err)).get(() -> new PgConnection(new HostSpec[] {spec}, this.getUsername(), this.config.getDbname(), info, ds.getUrl()));
+    return Failsafe.with(retryPolicy)
+      .onFailure(err -> log.error("error opening connection: {}", err.getMessage(), err))
+      .get(() -> new PgConnection(new HostSpec[] { spec }, this.getUsername(), this.config.getDbname(), info, ds.getUrl()));
   }
 
   /**
@@ -144,7 +154,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   public Single<PgConnection> requestConnection() {
     // new connection
     Preconditions.checkState(this.ds != null);
-    final HostSpec spec = new HostSpec(config.getHostname(), config.getPort() == 0 ? 5432 : config.getPort());
+    final HostSpec spec =
+      new HostSpec(
+        config.getHostname(),
+        config.getPort() == 0 ? 5432
+                              : config.getPort());
     final Properties info = org.postgresql.Driver.parseURL(ds.getUrl(), new Properties());
     // ahem
     info.setProperty("charSet", "UTF-8");
@@ -152,9 +166,11 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     info.setProperty("useUnicode", "true");
     PGProperty.SEND_BUFFER_SIZE.set(info, 1024 * 1024);
     if (config.getPassword() != null) {
-      info.setProperty("password", config.getPassword());
+      info.setProperty("password", config.getPassword().get());
     }
-    return Single.just(Failsafe.with(retryPolicy).onFailure(err -> log.error("error opening connection: {}", err.getMessage(), err)).get(() -> new PgConnection(new HostSpec[] {spec}, this.getUsername(), this.config.getDbname(), info, ds.getUrl())));
+    return Single.just(Failsafe.with(retryPolicy)
+      .onFailure(err -> log.error("error opening connection: {}", err.getMessage(), err))
+      .get(() -> new PgConnection(new HostSpec[] { spec }, this.getUsername(), this.config.getDbname(), info, ds.getUrl())));
   }
 
   @Override
@@ -169,7 +185,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       try {
         final PgQueryRunner runner = new PgQueryRunner(query, params, emitter, ctx, fetchSize);
         this.pool.execute(ctx.wrap(runner));
-      } catch (final Throwable ex) {
+      }
+      catch (final Throwable ex) {
         log.warn("failed to dispatch work", ex.getMessage());
         emitter.onError(ex);
       }
@@ -177,7 +194,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     // map so we have the stacktrace from caller, not nested.
     // StackTraceElement[] trace = Thread.currentThread().getStackTrace();
     final PostgresQueryException trace = new PostgresQueryException(query);
-    return 
+    return
     // err.addSuppressed(err);
     // always submit responses on a trampoline thread, to avoid blocking the pool.
     res.onErrorResumeNext(err -> {
@@ -218,7 +235,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     final PgTransactionalSession runner = new PgTransactionalSession(this);
     try {
       this.pool.execute(runner);
-    } catch (final Exception ex) {
+    }
+    catch (final Exception ex) {
       log.warn("failed to open session", ex);
       runner.failed(ex);
     }
@@ -231,7 +249,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     final PgSingleSession runner = new PgSingleSession(this);
     try {
       this.pool.execute(runner);
-    } catch (final Exception ex) {
+    }
+    catch (final Exception ex) {
       log.warn("failed to open session", ex);
       runner.failed(ex);
     }
@@ -267,10 +286,12 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
           final PgLocalConnection conn = PgConnectionThread.connection();
           try {
             conn.notifications(channels, emitter);
-          } finally {
+          }
+          finally {
             conn.close();
           }
-        } catch (final Throwable th) {
+        }
+        catch (final Throwable th) {
           emitter.onError(th);
         }
       });
@@ -288,7 +309,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     this.shutdown();
   }
 
-  public static final byte[] BINARY_PREAMBLE = new byte[] {'P', 'G', 'C', 'O', 'P', 'Y', '\n', -1, '\r', '\n', 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  public static final byte[] BINARY_PREAMBLE = new byte[] { 'P', 'G', 'C', 'O', 'P', 'Y', '\n', -1, '\r', '\n', 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
   /**
    * start a new connection and copy to it.
@@ -297,7 +318,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   public Publisher<Long> copyTo(final String sql, final Publisher<ByteBuf> data) {
     try {
       final Flowable<ByteBuf> upstream = Flowable.fromPublisher(data);
-      return 
+      return
       // .observeOn(Schedulers.newThread())
       this.requestConnection().flatMapCompletable(conn -> {
         final CopyIn copy = conn.getCopyAPI().copyIn(sql);
@@ -312,7 +333,8 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
           out.close();
         }).doAfterTerminate(conn::close);
       }).toSingleDefault(1L).toFlowable();
-    } catch (final java.lang.Throwable $ex) {
+    }
+    catch (final java.lang.Throwable $ex) {
       throw lombok.Lombok.sneakyThrow($ex);
     }
   }

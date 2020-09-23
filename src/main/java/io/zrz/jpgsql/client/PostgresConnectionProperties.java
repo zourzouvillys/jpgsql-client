@@ -2,12 +2,15 @@
 package io.zrz.jpgsql.client;
 
 import java.time.Duration;
-import lombok.Builder.Default;
+import java.util.function.Supplier;
 
 public final class PostgresConnectionProperties {
 
-  public static enum SslMode {
-    Disable, Require, VerifyCA, VerifyFull;
+  public enum SslMode {
+    Disable,
+    Require,
+    VerifyCA,
+    VerifyFull;
   }
 
   /**
@@ -29,7 +32,7 @@ public final class PostgresConnectionProperties {
   /**
    * The password to use for connecting.
    */
-  private final String password;
+  private final Supplier<String> password;
   /**
    * The minimum number of idle connections.
    */
@@ -45,23 +48,27 @@ public final class PostgresConnectionProperties {
   /**
    * maximum number of connections.
    *
-   * be aware that if the {@link org.postgresql} version of the PostgresClient is used and configured to use a thread
-   * for async emulation, then this will be equal to the number of threads created (urgh).
+   * be aware that if the {@link org.postgresql} version of the PostgresClient is used and
+   * configured to use a thread for async emulation, then this will be equal to the number of
+   * threads created (urgh).
    */
   private final int maxPoolSize;
   /**
-   * how long a pending query can wait for a connection to be available when it seems like progress has been stalled.
+   * how long a pending query can wait for a connection to be available when it seems like progress
+   * has been stalled.
    * 
    * this happens when no connections are available, and we're trying to connect.
    * 
-   * if set to zero, enqueing will be rejected and all enqueued queries will be rejected when there is no connection
-   * available, with the exception of the first startup - which uses the connectTimeout instead.
+   * if set to zero, enqueing will be rejected and all enqueued queries will be rejected when there
+   * is no connection available, with the exception of the first startup - which uses the
+   * connectTimeout instead.
    */
   private final Duration maxStalledWait;
   /**
    * The number of queries that can be queued for execution.
    *
-   * If set to zero, this will not allow more than the {@link #getMaxPoolSize()} number of pending/executing queries.
+   * If set to zero, this will not allow more than the {@link #getMaxPoolSize()} number of
+   * pending/executing queries.
    */
   private final int queueDepth;
   /**
@@ -149,7 +156,27 @@ public final class PostgresConnectionProperties {
   }
 
   @java.lang.SuppressWarnings("all")
-  PostgresConnectionProperties(final String hostname, final int port, final String dbname, final String username, final String password, final int minIdle, final Duration idleTimeout, final Duration connectTimeout, final int maxPoolSize, final Duration maxStalledWait, final int queueDepth, final boolean readOnly, final boolean ssl, final String sslMode, final Duration socketTimeout, final String applicationName, final int defaultRowFetchSize, final int sendBufferSize, final int recvBufferSize, final boolean debug) {
+  PostgresConnectionProperties(
+      final String hostname,
+      final int port,
+      final String dbname,
+      final String username,
+      final Supplier<String> password,
+      final int minIdle,
+      final Duration idleTimeout,
+      final Duration connectTimeout,
+      final int maxPoolSize,
+      final Duration maxStalledWait,
+      final int queueDepth,
+      final boolean readOnly,
+      final boolean ssl,
+      final String sslMode,
+      final Duration socketTimeout,
+      final String applicationName,
+      final int defaultRowFetchSize,
+      final int sendBufferSize,
+      final int recvBufferSize,
+      final boolean debug) {
     this.hostname = hostname;
     this.port = port;
     this.dbname = dbname;
@@ -172,7 +199,6 @@ public final class PostgresConnectionProperties {
     this.debug = debug;
   }
 
-
   @java.lang.SuppressWarnings("all")
   public static class PostgresConnectionPropertiesBuilder {
     @java.lang.SuppressWarnings("all")
@@ -184,7 +210,7 @@ public final class PostgresConnectionProperties {
     @java.lang.SuppressWarnings("all")
     private String username;
     @java.lang.SuppressWarnings("all")
-    private String password;
+    private Supplier<String> password;
     @java.lang.SuppressWarnings("all")
     private boolean minIdle$set;
     @java.lang.SuppressWarnings("all")
@@ -250,6 +276,7 @@ public final class PostgresConnectionProperties {
 
     /**
      * The hostname. Localhost by default.
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -260,6 +287,7 @@ public final class PostgresConnectionProperties {
 
     /**
      * The port to connect to. 5432 by default.
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -270,6 +298,7 @@ public final class PostgresConnectionProperties {
 
     /**
      * The database name to connect to.
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -280,6 +309,7 @@ public final class PostgresConnectionProperties {
 
     /**
      * The username to use for connecting.
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -290,16 +320,24 @@ public final class PostgresConnectionProperties {
 
     /**
      * The password to use for connecting.
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
     public PostgresConnectionProperties.PostgresConnectionPropertiesBuilder password(final String password) {
+      this.password = () -> password;
+      return this;
+    }
+
+    @java.lang.SuppressWarnings("all")
+    public PostgresConnectionProperties.PostgresConnectionPropertiesBuilder password(final Supplier<String> password) {
       this.password = password;
       return this;
     }
 
     /**
      * The minimum number of idle connections.
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -311,6 +349,7 @@ public final class PostgresConnectionProperties {
 
     /**
      * how long a connection is idle before it is closed and removed from the pool.
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -322,6 +361,7 @@ public final class PostgresConnectionProperties {
 
     /**
      * how long a connection tries to establish before timing out.
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -334,8 +374,10 @@ public final class PostgresConnectionProperties {
     /**
      * maximum number of connections.
      *
-     * be aware that if the {@link org.postgresql} version of the PostgresClient is used and configured to use a thread
-     * for async emulation, then this will be equal to the number of threads created (urgh).
+     * be aware that if the {@link org.postgresql} version of the PostgresClient is used and
+     * configured to use a thread for async emulation, then this will be equal to the number of
+     * threads created (urgh).
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -346,12 +388,15 @@ public final class PostgresConnectionProperties {
     }
 
     /**
-     * how long a pending query can wait for a connection to be available when it seems like progress has been stalled.
+     * how long a pending query can wait for a connection to be available when it seems like
+     * progress has been stalled.
      * 
      * this happens when no connections are available, and we're trying to connect.
      * 
-     * if set to zero, enqueing will be rejected and all enqueued queries will be rejected when there is no connection
-     * available, with the exception of the first startup - which uses the connectTimeout instead.
+     * if set to zero, enqueing will be rejected and all enqueued queries will be rejected when
+     * there is no connection available, with the exception of the first startup - which uses the
+     * connectTimeout instead.
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -364,7 +409,9 @@ public final class PostgresConnectionProperties {
     /**
      * The number of queries that can be queued for execution.
      *
-     * If set to zero, this will not allow more than the {@link #getMaxPoolSize()} number of pending/executing queries.
+     * If set to zero, this will not allow more than the {@link #getMaxPoolSize()} number of
+     * pending/executing queries.
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -375,6 +422,7 @@ public final class PostgresConnectionProperties {
 
     /**
      * if this connection is read only?
+     * 
      * @return {@code this}.
      */
     @java.lang.SuppressWarnings("all")
@@ -443,40 +491,114 @@ public final class PostgresConnectionProperties {
     @java.lang.SuppressWarnings("all")
     public PostgresConnectionProperties build() {
       int minIdle$value = this.minIdle$value;
-      if (!this.minIdle$set) minIdle$value = PostgresConnectionProperties.$default$minIdle();
+      if (!this.minIdle$set)
+        minIdle$value = PostgresConnectionProperties.$default$minIdle();
       Duration idleTimeout$value = this.idleTimeout$value;
-      if (!this.idleTimeout$set) idleTimeout$value = PostgresConnectionProperties.$default$idleTimeout();
+      if (!this.idleTimeout$set)
+        idleTimeout$value = PostgresConnectionProperties.$default$idleTimeout();
       Duration connectTimeout$value = this.connectTimeout$value;
-      if (!this.connectTimeout$set) connectTimeout$value = PostgresConnectionProperties.$default$connectTimeout();
+      if (!this.connectTimeout$set)
+        connectTimeout$value = PostgresConnectionProperties.$default$connectTimeout();
       int maxPoolSize$value = this.maxPoolSize$value;
-      if (!this.maxPoolSize$set) maxPoolSize$value = PostgresConnectionProperties.$default$maxPoolSize();
+      if (!this.maxPoolSize$set)
+        maxPoolSize$value = PostgresConnectionProperties.$default$maxPoolSize();
       Duration maxStalledWait$value = this.maxStalledWait$value;
-      if (!this.maxStalledWait$set) maxStalledWait$value = PostgresConnectionProperties.$default$maxStalledWait();
+      if (!this.maxStalledWait$set)
+        maxStalledWait$value = PostgresConnectionProperties.$default$maxStalledWait();
       boolean readOnly$value = this.readOnly$value;
-      if (!this.readOnly$set) readOnly$value = PostgresConnectionProperties.$default$readOnly();
+      if (!this.readOnly$set)
+        readOnly$value = PostgresConnectionProperties.$default$readOnly();
       boolean ssl$value = this.ssl$value;
-      if (!this.ssl$set) ssl$value = PostgresConnectionProperties.$default$ssl();
+      if (!this.ssl$set)
+        ssl$value = PostgresConnectionProperties.$default$ssl();
       String sslMode$value = this.sslMode$value;
-      if (!this.sslMode$set) sslMode$value = PostgresConnectionProperties.$default$sslMode();
+      if (!this.sslMode$set)
+        sslMode$value = PostgresConnectionProperties.$default$sslMode();
       Duration socketTimeout$value = this.socketTimeout$value;
-      if (!this.socketTimeout$set) socketTimeout$value = PostgresConnectionProperties.$default$socketTimeout();
+      if (!this.socketTimeout$set)
+        socketTimeout$value = PostgresConnectionProperties.$default$socketTimeout();
       String applicationName$value = this.applicationName$value;
-      if (!this.applicationName$set) applicationName$value = PostgresConnectionProperties.$default$applicationName();
+      if (!this.applicationName$set)
+        applicationName$value = PostgresConnectionProperties.$default$applicationName();
       int defaultRowFetchSize$value = this.defaultRowFetchSize$value;
-      if (!this.defaultRowFetchSize$set) defaultRowFetchSize$value = PostgresConnectionProperties.$default$defaultRowFetchSize();
+      if (!this.defaultRowFetchSize$set)
+        defaultRowFetchSize$value = PostgresConnectionProperties.$default$defaultRowFetchSize();
       int sendBufferSize$value = this.sendBufferSize$value;
-      if (!this.sendBufferSize$set) sendBufferSize$value = PostgresConnectionProperties.$default$sendBufferSize();
+      if (!this.sendBufferSize$set)
+        sendBufferSize$value = PostgresConnectionProperties.$default$sendBufferSize();
       int recvBufferSize$value = this.recvBufferSize$value;
-      if (!this.recvBufferSize$set) recvBufferSize$value = PostgresConnectionProperties.$default$recvBufferSize();
+      if (!this.recvBufferSize$set)
+        recvBufferSize$value = PostgresConnectionProperties.$default$recvBufferSize();
       boolean debug$value = this.debug$value;
-      if (!this.debug$set) debug$value = PostgresConnectionProperties.$default$debug();
-      return new PostgresConnectionProperties(this.hostname, this.port, this.dbname, this.username, this.password, minIdle$value, idleTimeout$value, connectTimeout$value, maxPoolSize$value, maxStalledWait$value, this.queueDepth, readOnly$value, ssl$value, sslMode$value, socketTimeout$value, applicationName$value, defaultRowFetchSize$value, sendBufferSize$value, recvBufferSize$value, debug$value);
+      if (!this.debug$set)
+        debug$value = PostgresConnectionProperties.$default$debug();
+      return new PostgresConnectionProperties(
+        this.hostname,
+        this.port,
+        this.dbname,
+        this.username,
+        this.password,
+        minIdle$value,
+        idleTimeout$value,
+        connectTimeout$value,
+        maxPoolSize$value,
+        maxStalledWait$value,
+        this.queueDepth,
+        readOnly$value,
+        ssl$value,
+        sslMode$value,
+        socketTimeout$value,
+        applicationName$value,
+        defaultRowFetchSize$value,
+        sendBufferSize$value,
+        recvBufferSize$value,
+        debug$value);
     }
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
     public java.lang.String toString() {
-      return "PostgresConnectionProperties.PostgresConnectionPropertiesBuilder(hostname=" + this.hostname + ", port=" + this.port + ", dbname=" + this.dbname + ", username=" + this.username + ", password=" + this.password + ", minIdle$value=" + this.minIdle$value + ", idleTimeout$value=" + this.idleTimeout$value + ", connectTimeout$value=" + this.connectTimeout$value + ", maxPoolSize$value=" + this.maxPoolSize$value + ", maxStalledWait$value=" + this.maxStalledWait$value + ", queueDepth=" + this.queueDepth + ", readOnly$value=" + this.readOnly$value + ", ssl$value=" + this.ssl$value + ", sslMode$value=" + this.sslMode$value + ", socketTimeout$value=" + this.socketTimeout$value + ", applicationName$value=" + this.applicationName$value + ", defaultRowFetchSize$value=" + this.defaultRowFetchSize$value + ", sendBufferSize$value=" + this.sendBufferSize$value + ", recvBufferSize$value=" + this.recvBufferSize$value + ", debug$value=" + this.debug$value + ")";
+      return "PostgresConnectionProperties.PostgresConnectionPropertiesBuilder(hostname="
+        + this.hostname
+        + ", port="
+        + this.port
+        + ", dbname="
+        + this.dbname
+        + ", username="
+        + this.username
+        + ", password="
+        + this.password
+        + ", minIdle$value="
+        + this.minIdle$value
+        + ", idleTimeout$value="
+        + this.idleTimeout$value
+        + ", connectTimeout$value="
+        + this.connectTimeout$value
+        + ", maxPoolSize$value="
+        + this.maxPoolSize$value
+        + ", maxStalledWait$value="
+        + this.maxStalledWait$value
+        + ", queueDepth="
+        + this.queueDepth
+        + ", readOnly$value="
+        + this.readOnly$value
+        + ", ssl$value="
+        + this.ssl$value
+        + ", sslMode$value="
+        + this.sslMode$value
+        + ", socketTimeout$value="
+        + this.socketTimeout$value
+        + ", applicationName$value="
+        + this.applicationName$value
+        + ", defaultRowFetchSize$value="
+        + this.defaultRowFetchSize$value
+        + ", sendBufferSize$value="
+        + this.sendBufferSize$value
+        + ", recvBufferSize$value="
+        + this.recvBufferSize$value
+        + ", debug$value="
+        + this.debug$value
+        + ")";
     }
   }
 
@@ -487,7 +609,26 @@ public final class PostgresConnectionProperties {
 
   @java.lang.SuppressWarnings("all")
   public PostgresConnectionProperties.PostgresConnectionPropertiesBuilder toBuilder() {
-    return new PostgresConnectionProperties.PostgresConnectionPropertiesBuilder().hostname(this.hostname).port(this.port).dbname(this.dbname).username(this.username).password(this.password).minIdle(this.minIdle).idleTimeout(this.idleTimeout).connectTimeout(this.connectTimeout).maxPoolSize(this.maxPoolSize).maxStalledWait(this.maxStalledWait).queueDepth(this.queueDepth).readOnly(this.readOnly).ssl(this.ssl).sslMode(this.sslMode).socketTimeout(this.socketTimeout).applicationName(this.applicationName).defaultRowFetchSize(this.defaultRowFetchSize).sendBufferSize(this.sendBufferSize).recvBufferSize(this.recvBufferSize).debug(this.debug);
+    return new PostgresConnectionProperties.PostgresConnectionPropertiesBuilder().hostname(this.hostname)
+      .port(this.port)
+      .dbname(this.dbname)
+      .username(this.username)
+      .password(this.password)
+      .minIdle(this.minIdle)
+      .idleTimeout(this.idleTimeout)
+      .connectTimeout(this.connectTimeout)
+      .maxPoolSize(this.maxPoolSize)
+      .maxStalledWait(this.maxStalledWait)
+      .queueDepth(this.queueDepth)
+      .readOnly(this.readOnly)
+      .ssl(this.ssl)
+      .sslMode(this.sslMode)
+      .socketTimeout(this.socketTimeout)
+      .applicationName(this.applicationName)
+      .defaultRowFetchSize(this.defaultRowFetchSize)
+      .sendBufferSize(this.sendBufferSize)
+      .recvBufferSize(this.recvBufferSize)
+      .debug(this.debug);
   }
 
   /**
@@ -526,7 +667,7 @@ public final class PostgresConnectionProperties {
    * The password to use for connecting.
    */
   @java.lang.SuppressWarnings("all")
-  public String getPassword() {
+  public Supplier<String> getPassword() {
     return this.password;
   }
 
@@ -557,8 +698,9 @@ public final class PostgresConnectionProperties {
   /**
    * maximum number of connections.
    *
-   * be aware that if the {@link org.postgresql} version of the PostgresClient is used and configured to use a thread
-   * for async emulation, then this will be equal to the number of threads created (urgh).
+   * be aware that if the {@link org.postgresql} version of the PostgresClient is used and
+   * configured to use a thread for async emulation, then this will be equal to the number of
+   * threads created (urgh).
    */
   @java.lang.SuppressWarnings("all")
   public int getMaxPoolSize() {
@@ -566,12 +708,14 @@ public final class PostgresConnectionProperties {
   }
 
   /**
-   * how long a pending query can wait for a connection to be available when it seems like progress has been stalled.
+   * how long a pending query can wait for a connection to be available when it seems like progress
+   * has been stalled.
    * 
    * this happens when no connections are available, and we're trying to connect.
    * 
-   * if set to zero, enqueing will be rejected and all enqueued queries will be rejected when there is no connection
-   * available, with the exception of the first startup - which uses the connectTimeout instead.
+   * if set to zero, enqueing will be rejected and all enqueued queries will be rejected when there
+   * is no connection available, with the exception of the first startup - which uses the
+   * connectTimeout instead.
    */
   @java.lang.SuppressWarnings("all")
   public Duration getMaxStalledWait() {
@@ -581,7 +725,8 @@ public final class PostgresConnectionProperties {
   /**
    * The number of queries that can be queued for execution.
    *
-   * If set to zero, this will not allow more than the {@link #getMaxPoolSize()} number of pending/executing queries.
+   * If set to zero, this will not allow more than the {@link #getMaxPoolSize()} number of
+   * pending/executing queries.
    */
   @java.lang.SuppressWarnings("all")
   public int getQueueDepth() {
@@ -639,49 +784,81 @@ public final class PostgresConnectionProperties {
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
   public boolean equals(final java.lang.Object o) {
-    if (o == this) return true;
-    if (!(o instanceof PostgresConnectionProperties)) return false;
+    if (o == this)
+      return true;
+    if (!(o instanceof PostgresConnectionProperties))
+      return false;
     final PostgresConnectionProperties other = (PostgresConnectionProperties) o;
     final java.lang.Object this$hostname = this.getHostname();
     final java.lang.Object other$hostname = other.getHostname();
-    if (this$hostname == null ? other$hostname != null : !this$hostname.equals(other$hostname)) return false;
-    if (this.getPort() != other.getPort()) return false;
+    if (this$hostname == null ? other$hostname != null
+                              : !this$hostname.equals(other$hostname))
+      return false;
+    if (this.getPort() != other.getPort())
+      return false;
     final java.lang.Object this$dbname = this.getDbname();
     final java.lang.Object other$dbname = other.getDbname();
-    if (this$dbname == null ? other$dbname != null : !this$dbname.equals(other$dbname)) return false;
+    if (this$dbname == null ? other$dbname != null
+                            : !this$dbname.equals(other$dbname))
+      return false;
     final java.lang.Object this$username = this.getUsername();
     final java.lang.Object other$username = other.getUsername();
-    if (this$username == null ? other$username != null : !this$username.equals(other$username)) return false;
+    if (this$username == null ? other$username != null
+                              : !this$username.equals(other$username))
+      return false;
     final java.lang.Object this$password = this.getPassword();
     final java.lang.Object other$password = other.getPassword();
-    if (this$password == null ? other$password != null : !this$password.equals(other$password)) return false;
-    if (this.getMinIdle() != other.getMinIdle()) return false;
+    if (this$password == null ? other$password != null
+                              : !this$password.equals(other$password))
+      return false;
+    if (this.getMinIdle() != other.getMinIdle())
+      return false;
     final java.lang.Object this$idleTimeout = this.getIdleTimeout();
     final java.lang.Object other$idleTimeout = other.getIdleTimeout();
-    if (this$idleTimeout == null ? other$idleTimeout != null : !this$idleTimeout.equals(other$idleTimeout)) return false;
+    if (this$idleTimeout == null ? other$idleTimeout != null
+                                 : !this$idleTimeout.equals(other$idleTimeout))
+      return false;
     final java.lang.Object this$connectTimeout = this.getConnectTimeout();
     final java.lang.Object other$connectTimeout = other.getConnectTimeout();
-    if (this$connectTimeout == null ? other$connectTimeout != null : !this$connectTimeout.equals(other$connectTimeout)) return false;
-    if (this.getMaxPoolSize() != other.getMaxPoolSize()) return false;
+    if (this$connectTimeout == null ? other$connectTimeout != null
+                                    : !this$connectTimeout.equals(other$connectTimeout))
+      return false;
+    if (this.getMaxPoolSize() != other.getMaxPoolSize())
+      return false;
     final java.lang.Object this$maxStalledWait = this.getMaxStalledWait();
     final java.lang.Object other$maxStalledWait = other.getMaxStalledWait();
-    if (this$maxStalledWait == null ? other$maxStalledWait != null : !this$maxStalledWait.equals(other$maxStalledWait)) return false;
-    if (this.getQueueDepth() != other.getQueueDepth()) return false;
-    if (this.isReadOnly() != other.isReadOnly()) return false;
-    if (this.isSsl() != other.isSsl()) return false;
+    if (this$maxStalledWait == null ? other$maxStalledWait != null
+                                    : !this$maxStalledWait.equals(other$maxStalledWait))
+      return false;
+    if (this.getQueueDepth() != other.getQueueDepth())
+      return false;
+    if (this.isReadOnly() != other.isReadOnly())
+      return false;
+    if (this.isSsl() != other.isSsl())
+      return false;
     final java.lang.Object this$sslMode = this.getSslMode();
     final java.lang.Object other$sslMode = other.getSslMode();
-    if (this$sslMode == null ? other$sslMode != null : !this$sslMode.equals(other$sslMode)) return false;
+    if (this$sslMode == null ? other$sslMode != null
+                             : !this$sslMode.equals(other$sslMode))
+      return false;
     final java.lang.Object this$socketTimeout = this.getSocketTimeout();
     final java.lang.Object other$socketTimeout = other.getSocketTimeout();
-    if (this$socketTimeout == null ? other$socketTimeout != null : !this$socketTimeout.equals(other$socketTimeout)) return false;
+    if (this$socketTimeout == null ? other$socketTimeout != null
+                                   : !this$socketTimeout.equals(other$socketTimeout))
+      return false;
     final java.lang.Object this$applicationName = this.getApplicationName();
     final java.lang.Object other$applicationName = other.getApplicationName();
-    if (this$applicationName == null ? other$applicationName != null : !this$applicationName.equals(other$applicationName)) return false;
-    if (this.getDefaultRowFetchSize() != other.getDefaultRowFetchSize()) return false;
-    if (this.getSendBufferSize() != other.getSendBufferSize()) return false;
-    if (this.getRecvBufferSize() != other.getRecvBufferSize()) return false;
-    if (this.isDebug() != other.isDebug()) return false;
+    if (this$applicationName == null ? other$applicationName != null
+                                     : !this$applicationName.equals(other$applicationName))
+      return false;
+    if (this.getDefaultRowFetchSize() != other.getDefaultRowFetchSize())
+      return false;
+    if (this.getSendBufferSize() != other.getSendBufferSize())
+      return false;
+    if (this.getRecvBufferSize() != other.getRecvBufferSize())
+      return false;
+    if (this.isDebug() != other.isDebug())
+      return false;
     return true;
   }
 
@@ -691,41 +868,120 @@ public final class PostgresConnectionProperties {
     final int PRIME = 59;
     int result = 1;
     final java.lang.Object $hostname = this.getHostname();
-    result = result * PRIME + ($hostname == null ? 43 : $hostname.hashCode());
-    result = result * PRIME + this.getPort();
+    result =
+      (result * PRIME)
+        + ($hostname == null ? 43
+                             : $hostname.hashCode());
+    result = (result * PRIME) + this.getPort();
     final java.lang.Object $dbname = this.getDbname();
-    result = result * PRIME + ($dbname == null ? 43 : $dbname.hashCode());
+    result =
+      (result * PRIME)
+        + ($dbname == null ? 43
+                           : $dbname.hashCode());
     final java.lang.Object $username = this.getUsername();
-    result = result * PRIME + ($username == null ? 43 : $username.hashCode());
+    result =
+      (result * PRIME)
+        + ($username == null ? 43
+                             : $username.hashCode());
     final java.lang.Object $password = this.getPassword();
-    result = result * PRIME + ($password == null ? 43 : $password.hashCode());
-    result = result * PRIME + this.getMinIdle();
+    result =
+      (result * PRIME)
+        + ($password == null ? 43
+                             : $password.hashCode());
+    result = (result * PRIME) + this.getMinIdle();
     final java.lang.Object $idleTimeout = this.getIdleTimeout();
-    result = result * PRIME + ($idleTimeout == null ? 43 : $idleTimeout.hashCode());
+    result =
+      (result * PRIME)
+        + ($idleTimeout == null ? 43
+                                : $idleTimeout.hashCode());
     final java.lang.Object $connectTimeout = this.getConnectTimeout();
-    result = result * PRIME + ($connectTimeout == null ? 43 : $connectTimeout.hashCode());
-    result = result * PRIME + this.getMaxPoolSize();
+    result =
+      (result * PRIME)
+        + ($connectTimeout == null ? 43
+                                   : $connectTimeout.hashCode());
+    result = (result * PRIME) + this.getMaxPoolSize();
     final java.lang.Object $maxStalledWait = this.getMaxStalledWait();
-    result = result * PRIME + ($maxStalledWait == null ? 43 : $maxStalledWait.hashCode());
-    result = result * PRIME + this.getQueueDepth();
-    result = result * PRIME + (this.isReadOnly() ? 79 : 97);
-    result = result * PRIME + (this.isSsl() ? 79 : 97);
+    result =
+      (result * PRIME)
+        + ($maxStalledWait == null ? 43
+                                   : $maxStalledWait.hashCode());
+    result = (result * PRIME) + this.getQueueDepth();
+    result =
+      (result * PRIME)
+        + (this.isReadOnly() ? 79
+                             : 97);
+    result =
+      (result * PRIME)
+        + (this.isSsl() ? 79
+                        : 97);
     final java.lang.Object $sslMode = this.getSslMode();
-    result = result * PRIME + ($sslMode == null ? 43 : $sslMode.hashCode());
+    result =
+      (result * PRIME)
+        + ($sslMode == null ? 43
+                            : $sslMode.hashCode());
     final java.lang.Object $socketTimeout = this.getSocketTimeout();
-    result = result * PRIME + ($socketTimeout == null ? 43 : $socketTimeout.hashCode());
+    result =
+      (result * PRIME)
+        + ($socketTimeout == null ? 43
+                                  : $socketTimeout.hashCode());
     final java.lang.Object $applicationName = this.getApplicationName();
-    result = result * PRIME + ($applicationName == null ? 43 : $applicationName.hashCode());
-    result = result * PRIME + this.getDefaultRowFetchSize();
-    result = result * PRIME + this.getSendBufferSize();
-    result = result * PRIME + this.getRecvBufferSize();
-    result = result * PRIME + (this.isDebug() ? 79 : 97);
+    result =
+      (result * PRIME)
+        + ($applicationName == null ? 43
+                                    : $applicationName.hashCode());
+    result = (result * PRIME) + this.getDefaultRowFetchSize();
+    result = (result * PRIME) + this.getSendBufferSize();
+    result = (result * PRIME) + this.getRecvBufferSize();
+    result =
+      (result * PRIME)
+        + (this.isDebug() ? 79
+                          : 97);
     return result;
   }
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
   public java.lang.String toString() {
-    return "PostgresConnectionProperties(hostname=" + this.getHostname() + ", port=" + this.getPort() + ", dbname=" + this.getDbname() + ", username=" + this.getUsername() + ", password=" + this.getPassword() + ", minIdle=" + this.getMinIdle() + ", idleTimeout=" + this.getIdleTimeout() + ", connectTimeout=" + this.getConnectTimeout() + ", maxPoolSize=" + this.getMaxPoolSize() + ", maxStalledWait=" + this.getMaxStalledWait() + ", queueDepth=" + this.getQueueDepth() + ", readOnly=" + this.isReadOnly() + ", ssl=" + this.isSsl() + ", sslMode=" + this.getSslMode() + ", socketTimeout=" + this.getSocketTimeout() + ", applicationName=" + this.getApplicationName() + ", defaultRowFetchSize=" + this.getDefaultRowFetchSize() + ", sendBufferSize=" + this.getSendBufferSize() + ", recvBufferSize=" + this.getRecvBufferSize() + ", debug=" + this.isDebug() + ")";
+    return "PostgresConnectionProperties(hostname="
+      + this.getHostname()
+      + ", port="
+      + this.getPort()
+      + ", dbname="
+      + this.getDbname()
+      + ", username="
+      + this.getUsername()
+      + ", password="
+      + this.getPassword()
+      + ", minIdle="
+      + this.getMinIdle()
+      + ", idleTimeout="
+      + this.getIdleTimeout()
+      + ", connectTimeout="
+      + this.getConnectTimeout()
+      + ", maxPoolSize="
+      + this.getMaxPoolSize()
+      + ", maxStalledWait="
+      + this.getMaxStalledWait()
+      + ", queueDepth="
+      + this.getQueueDepth()
+      + ", readOnly="
+      + this.isReadOnly()
+      + ", ssl="
+      + this.isSsl()
+      + ", sslMode="
+      + this.getSslMode()
+      + ", socketTimeout="
+      + this.getSocketTimeout()
+      + ", applicationName="
+      + this.getApplicationName()
+      + ", defaultRowFetchSize="
+      + this.getDefaultRowFetchSize()
+      + ", sendBufferSize="
+      + this.getSendBufferSize()
+      + ", recvBufferSize="
+      + this.getRecvBufferSize()
+      + ", debug="
+      + this.isDebug()
+      + ")";
   }
 }
