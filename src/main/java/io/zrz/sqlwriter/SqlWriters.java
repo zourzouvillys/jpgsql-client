@@ -164,7 +164,7 @@ public class SqlWriters {
 
         w.writeKeyword(SqlKeyword.ON);
         w.writeKeyword(SqlKeyword.CONFLICT);
-
+        
         w.writeExprList(conflicts.stream().map(SqlWriters::ident));
 
         // Sets.difference(ImmutableSet.copyOf(fields),
@@ -1569,7 +1569,6 @@ public class SqlWriters {
   public static SqlGenerator sum(final DbIdent field) {
 
     return w -> {
-
       w.writeKeyword(SqlKeyword.SELECT);
       w.writeKeyword(SqlKeyword.SUM);
       w.writeStartExpr();
@@ -1577,25 +1576,12 @@ public class SqlWriters {
       w.writeEndExpr();
       w.writeKeyword(SqlKeyword.FROM);
       w.write(field.withoutLast());
-
     };
 
   }
 
-  public static SqlGenerator oldField(final String fieldName) {
-    return w -> {
-      w.writeKeyword(SqlKeyword.OLD);
-      w.writeOperator(".");
-      w.writeIdent(fieldName);
-    };
-  }
-
-  public static SqlGenerator newField(final String fieldName) {
-    return w -> {
-      w.writeKeyword(SqlKeyword.NEW);
-      w.writeOperator(".");
-      w.writeIdent(fieldName);
-    };
+  public static SqlGenerator excludedField(final String fieldName) {
+    return ident("excluded", fieldName);
   }
 
 }
