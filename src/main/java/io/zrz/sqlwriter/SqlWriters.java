@@ -1585,6 +1585,7 @@ public class SqlWriters {
   public static SqlGenerator oldField(final String fieldName) {
     return w -> {
       w.writeKeyword(SqlKeyword.OLD);
+      w.writeOperator(".");
       w.writeIdent(fieldName);
     };
   }
@@ -1592,6 +1593,7 @@ public class SqlWriters {
   public static SqlGenerator newField(final String fieldName) {
     return w -> {
       w.writeKeyword(SqlKeyword.NEW);
+      w.writeOperator(".");
       w.writeIdent(fieldName);
     };
   }
