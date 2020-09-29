@@ -4,8 +4,10 @@ package io.zrz.sqlwriter;
 import static io.zrz.sqlwriter.SqlKeyword.AS;
 import static io.zrz.sqlwriter.SqlKeyword.CREATE;
 import static io.zrz.sqlwriter.SqlKeyword.TYPE;
+
 import java.util.LinkedList;
 import java.util.List;
+
 import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
 
 public class TypeBuilder implements SqlGenerator {

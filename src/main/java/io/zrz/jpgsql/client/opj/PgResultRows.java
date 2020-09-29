@@ -6,11 +6,14 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
 import org.postgresql.core.Field;
-import org.postgresql.util.PGbytea;
 import org.postgresql.core.Tuple;
+import org.postgresql.util.PGbytea;
+
 import com.google.common.base.Splitter;
 import com.google.common.primitives.Ints;
+
 import io.zrz.jpgsql.client.PgResultRow;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.ResultField;

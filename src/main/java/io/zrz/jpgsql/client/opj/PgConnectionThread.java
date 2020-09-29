@@ -4,8 +4,10 @@ package io.zrz.jpgsql.client.opj;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
+
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.util.PSQLException;
+
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 

@@ -3,7 +3,7 @@ package io.zrz.jpgsql.binary;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
+
 import io.zrz.jpgsql.client.opj.BinaryParamValue;
 
 class ArrayBinaryParam implements BinaryParamValue {

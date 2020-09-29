@@ -17,10 +17,12 @@ import static io.zrz.sqlwriter.SqlKeyword.TABLE;
 import static io.zrz.sqlwriter.SqlKeyword.TEMP;
 import static io.zrz.sqlwriter.SqlKeyword.UNLOGGED;
 import static io.zrz.sqlwriter.SqlKeyword.WITH;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
 import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
 
 public class TableBuilder implements SqlGenerator {

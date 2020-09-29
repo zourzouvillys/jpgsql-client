@@ -8,7 +8,7 @@ import org.reactivestreams.Publisher;
 import com.google.common.io.ByteSource;
 
 import io.netty.buffer.ByteBuf;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
 import io.zrz.sqlwriter.Tuple;
 

@@ -3,13 +3,15 @@ package io.zrz.jpgsql.client;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
+
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.functions.Function;
 
 public class PostgresUtils {
   @java.lang.SuppressWarnings("all")

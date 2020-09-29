@@ -19,10 +19,10 @@ import com.google.common.io.ByteSource;
 import com.google.common.primitives.Ints;
 
 import io.netty.buffer.ByteBuf;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.zrz.jpgsql.client.AbstractPostgresClient;
 import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.NotifyMessage;

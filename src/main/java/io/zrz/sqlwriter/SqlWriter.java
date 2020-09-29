@@ -17,14 +17,11 @@ import org.reactivestreams.Publisher;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 
-import io.reactivex.Flowable;
 import io.zrz.jpgsql.client.DefaultParametersList;
 import io.zrz.jpgsql.client.PostgresQueryProcessor;
-import io.zrz.jpgsql.client.PostgresUtils;
 import io.zrz.jpgsql.client.QueryExecutionBuilder;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
-import io.zrz.jpgsql.client.ResultRow;
 import io.zrz.jpgsql.client.SimpleQuery;
 import io.zrz.jpgsql.client.opj.BinaryParamValue;
 
@@ -443,12 +440,6 @@ public class SqlWriter {
       final SqlWriter w = new SqlWriter(false);
       w.write(this);
       return w.submitTo(pg);
-    }
-
-    default Flowable<ResultRow> fetchRows(final PostgresQueryProcessor pg) {
-      final SqlWriter w = new SqlWriter(false);
-      w.write(this);
-      return Flowable.fromPublisher(w.submitTo(pg)).flatMap(PostgresUtils.rowMapper());
     }
 
     default void addTo(final QueryExecutionBuilder qb, final boolean forceInline) {

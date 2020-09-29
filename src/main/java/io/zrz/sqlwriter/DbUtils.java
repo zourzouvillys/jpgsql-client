@@ -9,8 +9,6 @@ import com.google.common.base.CharMatcher;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.Range;
 
-import lombok.SneakyThrows;
-
 public class DbUtils {
 
   private static final CharMatcher IDENT_CHARS = CharMatcher.inRange('a', 'z').or(CharMatcher.is('_')).or(CharMatcher.digit());

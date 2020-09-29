@@ -14,11 +14,11 @@ import org.reactivestreams.Publisher;
 import com.google.common.io.ByteSource;
 
 import io.netty.buffer.ByteBuf;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
-import io.reactivex.schedulers.Schedulers;
-import io.reactivex.subjects.SingleSubject;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.subjects.SingleSubject;
 import io.zrz.jpgsql.client.PostgresClient;
 import io.zrz.jpgsql.client.PostgresqlUnavailableException;
 import io.zrz.jpgsql.client.Query;

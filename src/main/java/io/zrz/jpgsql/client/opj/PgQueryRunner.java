@@ -2,7 +2,8 @@
 package io.zrz.jpgsql.client.opj;
 
 import java.sql.SQLException;
-import io.reactivex.FlowableEmitter;
+
+import io.reactivex.rxjava3.core.FlowableEmitter;
 import io.zrz.jpgsql.client.PostgresqlUnavailableException;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;

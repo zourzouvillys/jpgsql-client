@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 import org.postgresql.PGNotification;
 import org.postgresql.core.NativeQuery;
 import org.postgresql.core.Oid;
@@ -19,14 +20,16 @@ import org.postgresql.core.QueryExecutor;
 import org.postgresql.core.TransactionState;
 import org.postgresql.jdbc.PgArray;
 import org.postgresql.jdbc.PgConnection;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
+
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
 import io.zrz.jpgsql.client.CombinedQuery;
 import io.zrz.jpgsql.client.CommandStatus;
 import io.zrz.jpgsql.client.CopyQuery;

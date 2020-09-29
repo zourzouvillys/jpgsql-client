@@ -6,14 +6,17 @@ import java.sql.SQLWarning;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
 import org.postgresql.core.Field;
 import org.postgresql.core.ResultCursor;
 import org.postgresql.core.ResultHandlerBase;
+import org.postgresql.core.Tuple;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLWarning;
-import org.postgresql.core.Tuple;
+
 import com.google.common.collect.ImmutableList;
-import io.reactivex.FlowableEmitter;
+
+import io.reactivex.rxjava3.core.FlowableEmitter;
 import io.zrz.jpgsql.client.CommandStatus;
 import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.Query;

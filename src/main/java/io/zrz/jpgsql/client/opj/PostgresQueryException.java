@@ -2,6 +2,7 @@
 package io.zrz.jpgsql.client.opj;
 
 import java.util.Optional;
+
 import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.SimpleQuery;

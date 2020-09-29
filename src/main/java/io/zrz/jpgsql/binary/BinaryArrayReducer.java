@@ -4,7 +4,7 @@ import java.util.function.BiConsumer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.reactivex.functions.Function;
+import io.reactivex.rxjava3.functions.Function;
 import io.zrz.jpgsql.client.DefaultParametersList;
 import io.zrz.jpgsql.client.opj.BinaryParamValue;
 

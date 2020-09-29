@@ -1,6 +1,6 @@
 package io.zrz.sqlwriter;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.zrz.jpgsql.client.ResultRow;
 
 public class PostgresQueryBatch {

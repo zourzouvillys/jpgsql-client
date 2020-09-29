@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.zrz.jpgsql.client.opj.PgResultMeta;
 import io.zrz.visitors.annotations.Visitable;
 
