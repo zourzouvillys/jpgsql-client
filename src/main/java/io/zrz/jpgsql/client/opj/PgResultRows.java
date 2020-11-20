@@ -14,6 +14,7 @@ import org.postgresql.util.PGbytea;
 import com.google.common.base.Splitter;
 import com.google.common.primitives.Ints;
 
+import io.zrz.jpgsql.InternalUtils;
 import io.zrz.jpgsql.client.PgResultRow;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.ResultField;
@@ -180,7 +181,7 @@ final class PgResultRows implements RowBuffer {
       }
       return raw;
     } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 

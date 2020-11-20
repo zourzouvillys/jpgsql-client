@@ -15,6 +15,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 
 import io.netty.buffer.ByteBuf;
+import io.zrz.jpgsql.InternalUtils;
 
 public class ByteBufBinaryWriter implements BinaryStreamWriter {
   private ByteBuf buf;
@@ -85,7 +86,16 @@ public class ByteBufBinaryWriter implements BinaryStreamWriter {
     int pos = buf.writerIndex();
     buf.writeInt(0);
     //
-    List<String> words = data.stream().filter(x -> x != null).flatMap(word -> Splitter.on(" ").splitToList(word).stream()).map(x -> x.trim()).filter(x -> x != null && !x.isEmpty()).map(x -> x.toLowerCase()).sorted().distinct().collect(Collectors.toList());
+    List<String> words =
+      data.stream()
+        .filter(x -> x != null)
+        .flatMap(word -> Splitter.on(" ").splitToList(word).stream())
+        .map(x -> x.trim())
+        .filter(x -> (x != null) && !x.isEmpty())
+        .map(x -> x.toLowerCase())
+        .sorted()
+        .distinct()
+        .collect(Collectors.toList());
     buf.writeInt(words.size());
     words.forEach(lexeme -> {
       buf.writeBytes(lexeme.getBytes(StandardCharsets.UTF_8));
@@ -109,7 +119,7 @@ public class ByteBufBinaryWriter implements BinaryStreamWriter {
 
   @Override
   public ByteBufBinaryWriter writeInt(int value) {
-    Preconditions.checkArgument(value <= 2147483647 && value >= -2147483648, value);
+    Preconditions.checkArgument((value <= 2147483647) && (value >= -2147483648), value);
     buf.writeInt(4);
     buf.writeInt(value);
     return this;
@@ -125,12 +135,14 @@ public class ByteBufBinaryWriter implements BinaryStreamWriter {
   @Override
   public ByteBufBinaryWriter writeBoolean(boolean value) {
     buf.writeInt(1);
-    buf.writeByte(value ? 1 : 0);
+    buf.writeByte(value ? 1
+                        : 0);
     return this;
   }
 
   /**
-   * write the timestamp, which is provided in *microseconds* since postgres epoch (2000-01-01 00:00:00 UTC).
+   * write the timestamp, which is provided in *microseconds* since postgres epoch (2000-01-01
+   * 00:00:00 UTC).
    */
   @Override
   public ByteBufBinaryWriter writeTimestampPgMicros(long value) {
@@ -148,8 +160,9 @@ public class ByteBufBinaryWriter implements BinaryStreamWriter {
       byte[] in = new byte[buf.remaining()];
       buf.get(in);
       return writeJsonb(in, in.length);
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -160,8 +173,8 @@ public class ByteBufBinaryWriter implements BinaryStreamWriter {
 
   public BinaryRecordWriter writeJsonb(byte[] data, int length) {
     if (length >= 6) {
-      for (int i = 0; i < length - 6; ++i) {
-        if (data[i] == '\\' && data[i + 1] == 'u' && data[i + 2] == '0' && data[i + 3] == '0' && data[i + 4] == '0' && data[i + 5] == '0') {
+      for (int i = 0; i < (length - 6); ++i) {
+        if ((data[i] == '\\') && (data[i + 1] == 'u') && (data[i + 2] == '0') && (data[i + 3] == '0') && (data[i + 4] == '0') && (data[i + 5] == '0')) {
           throw new IllegalArgumentException("\\u0000 not allowed in JSONB");
         }
       }
@@ -196,7 +209,8 @@ public class ByteBufBinaryWriter implements BinaryStreamWriter {
       buf.writeByte(0);
       buf.writeByte(4);
       buf.writeBytes(bytes);
-    } else if (bytes.length == 16) {
+    }
+    else if (bytes.length == 16) {
       buf.writeInt(bytes.length + 4);
       // family
       buf.writeByte(3); // PGSQL_AF_INET6
@@ -208,7 +222,8 @@ public class ByteBufBinaryWriter implements BinaryStreamWriter {
       buf.writeByte(16);
       // payload
       buf.writeBytes(bytes);
-    } else {
+    }
+    else {
       System.err.println("Invalid IP address, len = " + bytes.length + " (" + addr + ")");
       writeNull();
     }

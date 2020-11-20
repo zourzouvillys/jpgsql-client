@@ -4,12 +4,14 @@ package io.zrz.jpgsql.proto.client;
 import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
@@ -23,6 +25,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.util.concurrent.ScheduledFuture;
+import io.zrz.jpgsql.InternalUtils;
 import io.zrz.jpgsql.proto.AbstractConnection;
 import io.zrz.jpgsql.proto.netty.handler.PostgreSQLClientNegotiation;
 import io.zrz.jpgsql.proto.netty.handler.PostgreSQLClientTlsNegotiation;
@@ -71,7 +74,7 @@ public class PgConnection extends AbstractConnection {
   }
 
 
-  private static enum HandlerState {
+  private enum HandlerState {
     Waiting, Identifying, Creating, Starting;
   }
 
@@ -237,7 +240,7 @@ public class PgConnection extends AbstractConnection {
       // attempt to connect.
       this.connectFuture = b.connect(host, port);
     } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 }

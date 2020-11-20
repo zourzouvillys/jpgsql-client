@@ -3,6 +3,7 @@ package io.zrz.jpgsql.client;
 
 import org.postgresql.util.PSQLState;
 import org.postgresql.util.ServerErrorMessage;
+
 import io.zrz.visitors.annotations.Visitable;
 
 @Visitable.Type

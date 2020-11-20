@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.util.PSQLException;
 
+import io.zrz.jpgsql.InternalUtils;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 
@@ -40,26 +41,35 @@ public class PgConnectionThread extends Thread {
         // the loop
         this.run.run();
         log.debug("thread finished");
-      } catch (final Throwable t) {
+      }
+      catch (final Throwable t) {
         log.info("connection thread error", t);
         throw t;
-      } finally {
+      }
+      finally {
         close();
       }
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
   // TODO: make configurable at runtime
-  private static RetryPolicy RETRY_POLICY = new RetryPolicy().retryOn(PSQLException.class).withDelay(250, TimeUnit.MILLISECONDS).withBackoff(1, 5, TimeUnit.SECONDS).withJitter(0.25).withMaxDuration(30, TimeUnit.SECONDS);
+  private static RetryPolicy RETRY_POLICY =
+    new RetryPolicy().retryOn(PSQLException.class)
+      .withDelay(250, TimeUnit.MILLISECONDS)
+      .withBackoff(1, 5, TimeUnit.SECONDS)
+      .withJitter(0.25)
+      .withMaxDuration(30, TimeUnit.SECONDS);
 
   public static PgLocalConnection connection() throws SQLException {
     final PgConnectionThread thd = (PgConnectionThread) Thread.currentThread();
     if (thd.conn == null) {
       log.debug("Creating new connection thread");
       // this may throw.
-      PgConnection raw = Failsafe.with(RETRY_POLICY).onFailedAttempt(e -> log.warn("connection failed, retying {}", e.getMessage())).get(() -> thd.pool.createConnection());
+      PgConnection raw =
+        Failsafe.with(RETRY_POLICY).onFailedAttempt(e -> log.warn("connection failed, retying {}", e.getMessage())).get(() -> thd.pool.createConnection());
       thd.conn = new PgLocalConnection(thd.pool, raw);
       if (thd.pool.getListener() != null) {
         thd.pool.getListener().connectionCreated(thd.conn);

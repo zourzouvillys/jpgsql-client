@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subjects.SingleSubject;
+import io.zrz.jpgsql.InternalUtils;
 import io.zrz.jpgsql.client.CommandStatus;
 import io.zrz.jpgsql.client.NotifyMessage;
 import io.zrz.jpgsql.client.PgSession;
@@ -312,7 +313,7 @@ class PgSingleSession implements Runnable, PgSession {
         return Single.just(len);
       }));
     } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 

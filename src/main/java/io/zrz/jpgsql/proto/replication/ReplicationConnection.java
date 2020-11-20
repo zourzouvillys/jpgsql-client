@@ -3,6 +3,7 @@ package io.zrz.jpgsql.proto.replication;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;

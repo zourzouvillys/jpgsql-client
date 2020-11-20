@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Splitter;
 
+import io.zrz.jpgsql.InternalUtils;
+
 /**
  * converts a {@link UserUpdate} into it's raw table form.
  */
@@ -31,8 +33,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
     try {
       out.writeInt(-1);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -42,8 +45,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
       out.writeInt(4);
       out.writeInt(value);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -53,8 +57,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
       out.writeInt(8);
       out.writeLong(value);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -62,10 +67,12 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
   public BinaryRecordWriter writeBoolean(boolean value) {
     try {
       out.writeInt(1);
-      out.writeByte(value ? 1 : 0);
+      out.writeByte(value ? 1
+                          : 0);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -76,8 +83,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
       out.writeByte(1);
       out.write(data);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -88,8 +96,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
       out.writeInt(data.length);
       out.write(data);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -100,15 +109,26 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
       out.writeInt(bytes.length);
       out.write(bytes);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
   @Override
   public BinaryRecordWriter writeTextSearchVector(Collection<String> data) {
     try {
-      List<byte[]> words = data.stream().filter(x -> x != null).flatMap(word -> Splitter.on(" ").splitToList(word).stream()).map(x -> x.trim()).filter(x -> x != null && !x.isEmpty()).map(x -> x.toLowerCase()).sorted().distinct().map(word -> word.getBytes(StandardCharsets.UTF_8)).collect(Collectors.toList());
+      List<byte[]> words =
+        data.stream()
+          .filter(x -> x != null)
+          .flatMap(word -> Splitter.on(" ").splitToList(word).stream())
+          .map(x -> x.trim())
+          .filter(x -> (x != null) && !x.isEmpty())
+          .map(x -> x.toLowerCase())
+          .sorted()
+          .distinct()
+          .map(word -> word.getBytes(StandardCharsets.UTF_8))
+          .collect(Collectors.toList());
       out.writeInt(4 + words.stream().mapToInt(lexeme -> lexeme.length + 3).sum());
       out.writeInt(words.size());
       words.forEach(lexeme -> {
@@ -117,13 +137,15 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
           out.writeByte(0);
           // position
           out.writeShort(0);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
           throw new RuntimeException(ex);
         }
       });
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -133,8 +155,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
       out.writeInt(8);
       out.writeLong(value);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -143,8 +166,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
     try {
       out.writeShort(numfields);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -154,8 +178,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
       out.writeInt(2);
       out.writeShort(value);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -166,8 +191,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
       out.writeInt(bytes.length);
       out.write(bytes);
       return this;
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -186,8 +212,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
     try {
       out.writeInt(data.length);
       out.write(data);
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -195,8 +222,9 @@ public class BinaryOutputStreamWriter implements BinaryStreamWriter {
   public void writeOid(int oid) {
     try {
       out.writeInt(oid);
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 }

@@ -30,6 +30,7 @@ import com.google.common.primitives.Longs;
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.FlowableEmitter;
+import io.zrz.jpgsql.InternalUtils;
 import io.zrz.jpgsql.client.CombinedQuery;
 import io.zrz.jpgsql.client.CommandStatus;
 import io.zrz.jpgsql.client.CopyQuery;
@@ -139,7 +140,7 @@ class PgLocalConnection implements PgRawConnection {
     }
     final org.postgresql.core.Query pgquery = this.cache.getUnchecked(query);
     final ParameterList pl;
-    if (params != null && params.count() > 0) {
+    if ((params != null) && (params.count() > 0)) {
       pl = pgquery.createParameterList();
       for (int i = 1; i <= params.count(); ++i) {
         final int oid = params.getOid(i);
@@ -228,7 +229,7 @@ class PgLocalConnection implements PgRawConnection {
       this.exec.execute(pgquery, pl, handler, 0, fetchRows, flags);
       fetch:
       while (handler.cursor != null) {
-        while (handler.cursor != null && emitter.requested() <= 0 && !emitter.isCancelled()) {
+        while ((handler.cursor != null) && (emitter.requested() <= 0) && !emitter.isCancelled()) {
           try {
             // urgh ... fugly.
             Thread.sleep(10);
@@ -324,7 +325,7 @@ class PgLocalConnection implements PgRawConnection {
     try {
       return this.conn.escapeString(channel);
     } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -353,7 +354,7 @@ class PgLocalConnection implements PgRawConnection {
     try {
       getConnection().setReadOnly(b);
     } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -377,7 +378,7 @@ class PgLocalConnection implements PgRawConnection {
       }
       return Arrays.stream(nd).map(x -> new NotifyMessage(x)).collect(Collectors.toList());
     } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 }

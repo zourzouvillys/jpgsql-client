@@ -23,6 +23,7 @@ import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.zrz.jpgsql.InternalUtils;
 import io.zrz.jpgsql.client.AbstractPostgresClient;
 import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.NotifyMessage;
@@ -335,7 +336,7 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
       }).toSingleDefault(1L).toFlowable();
     }
     catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 

@@ -4,8 +4,11 @@ package io.zrz.jpgsql.client;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
+import io.zrz.jpgsql.InternalUtils;
 
 public abstract class AbstractPostgresClient implements PostgresClient {
   private final Cache<String, Query> cache = CacheBuilder.newBuilder().maximumSize(1000).expireAfterWrite(5, TimeUnit.MINUTES).build();
@@ -15,8 +18,9 @@ public abstract class AbstractPostgresClient implements PostgresClient {
   public Query createQuery(String sql, int paramcount) {
     try {
       return this.cache.get(sql, () -> new SimpleQuery(sql, paramcount));
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 
@@ -24,8 +28,9 @@ public abstract class AbstractPostgresClient implements PostgresClient {
   public Query createQuery(List<Query> combine) {
     try {
       return this.combineCache.get(combine, () -> new CombinedQuery(combine.stream().flatMap(q -> q.getSubqueries().stream()).collect(Collectors.toList())));
-    } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+    }
+    catch (final java.lang.Throwable $ex) {
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 }

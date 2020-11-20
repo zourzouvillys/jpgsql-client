@@ -4,6 +4,7 @@ package io.zrz.jpgsql.binary;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 
+import io.zrz.jpgsql.InternalUtils;
 import io.zrz.jpgsql.client.opj.BinaryParamValue;
 
 class ArrayBinaryParam implements BinaryParamValue {
@@ -41,7 +42,7 @@ class ArrayBinaryParam implements BinaryParamValue {
       byte[] buf = byteArrayOutput.toByteArray();
       return buf;
     } catch (final java.lang.Throwable $ex) {
-      throw lombok.Lombok.sneakyThrow($ex);
+      throw InternalUtils.sneakyThrow($ex);
     }
   }
 

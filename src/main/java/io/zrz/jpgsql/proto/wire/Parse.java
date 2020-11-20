@@ -2,6 +2,7 @@
 package io.zrz.jpgsql.proto.wire;
 
 import java.util.List;
+
 import com.google.common.collect.ImmutableList;
 
 public class Parse implements PostgreSQLPacket {

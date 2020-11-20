@@ -2,10 +2,9 @@
 package io.zrz.jpgsql.proto.wire;
 
 import java.util.List;
-import lombok.Singular;
 
 public final class ErrorResponse implements PostgreSQLPacket {
-  @Singular
+
   private final List<String> messages;
 
   @Override
@@ -26,12 +25,16 @@ public final class ErrorResponse implements PostgreSQLPacket {
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
   public boolean equals(final java.lang.Object o) {
-    if (o == this) return true;
-    if (!(o instanceof ErrorResponse)) return false;
+    if (o == this)
+      return true;
+    if (!(o instanceof ErrorResponse))
+      return false;
     final ErrorResponse other = (ErrorResponse) o;
     final java.lang.Object this$messages = this.getMessages();
     final java.lang.Object other$messages = other.getMessages();
-    if (this$messages == null ? other$messages != null : !this$messages.equals(other$messages)) return false;
+    if (this$messages == null ? other$messages != null
+                              : !this$messages.equals(other$messages))
+      return false;
     return true;
   }
 
@@ -41,7 +44,10 @@ public final class ErrorResponse implements PostgreSQLPacket {
     final int PRIME = 59;
     int result = 1;
     final java.lang.Object $messages = this.getMessages();
-    result = result * PRIME + ($messages == null ? 43 : $messages.hashCode());
+    result =
+      (result * PRIME)
+        + ($messages == null ? 43
+                             : $messages.hashCode());
     return result;
   }
 

@@ -4,9 +4,11 @@ package io.zrz.jpgsql.proto.netty.handler;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.zrz.jpgsql.proto.wire.AuthenticationMD5Password;

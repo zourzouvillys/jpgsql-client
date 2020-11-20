@@ -2,6 +2,7 @@
 package io.zrz.jpgsql.proto.netty.handler;
 
 import java.util.Map;
+
 import io.zrz.jpgsql.proto.wire.BackendKeyData;
 
 public final class PostgreSQLHandshakeCompleteEvent {
