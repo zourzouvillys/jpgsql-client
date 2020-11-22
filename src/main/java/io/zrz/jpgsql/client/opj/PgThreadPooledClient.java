@@ -4,6 +4,7 @@ package io.zrz.jpgsql.client.opj;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 
 import org.postgresql.PGProperty;
 import org.postgresql.copy.CopyIn;
@@ -29,6 +30,7 @@ import io.zrz.jpgsql.client.ErrorResult;
 import io.zrz.jpgsql.client.NotifyMessage;
 import io.zrz.jpgsql.client.PostgresClient;
 import io.zrz.jpgsql.client.PostgresConnectionProperties;
+import io.zrz.jpgsql.client.PostgresConnectionProperties.PostgresConnectionPropertiesBuilder;
 import io.zrz.jpgsql.client.Query;
 import io.zrz.jpgsql.client.QueryParameters;
 import io.zrz.jpgsql.client.QueryResult;
@@ -67,26 +69,37 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
   }
 
   PgThreadPooledClient(PostgresConnectionProperties config, final Listener listener) {
+
     if (config == null) {
       config = PostgresConnectionProperties.builder().build();
     }
+
     this.listener = listener;
     this.config = config;
     this.ds = new PGSimpleDataSource();
-    this.ds.setServerName(config.getHostname());
-    if (config.getPort() != 0)
-      this.ds.setPortNumber(config.getPort());
+
+    this.ds.setServerNames(new String[] { config.getHostname() });
+
+    if (config.getPort() != 0) {
+      this.ds.setPortNumbers(new int[] { config.getPort() });
+    }
+
     this.ds.setUser(this.getUsername());
+
     if (config.getPassword() != null) {
       this.ds.setPassword(config.getPassword().get());
     }
+
     if (config.getDbname() != null) {
       this.ds.setDatabaseName(config.getDbname());
     }
-    if (config.getApplicationName() == null)
+    if (config.getApplicationName() == null) {
       this.ds.setApplicationName("jpgsql");
-    else
+    }
+    else {
       this.ds.setApplicationName(config.getApplicationName());
+    }
+
     this.ds.setReWriteBatchedInserts(false);
     this.ds.setAssumeMinServerVersion("9.6");
     this.ds.setSendBufferSize(config.getSendBufferSize());
@@ -112,11 +125,15 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
     }
     this.ds.setConnectTimeout((Ints.checkedCast(config.getConnectTimeout().toMillis()) / 1000) + 1);
     this.ds.setTcpKeepAlive(true);
+
     if (this.config.isReadOnly()) {
       this.ds.setReadOnly(true);
     }
+
     log.debug("connparm {}", config);
+
     this.pool = new PgConnectionThreadPoolExecutor(this, config);
+
   }
 
   String getUsername() {
@@ -260,6 +277,10 @@ public class PgThreadPooledClient extends AbstractPostgresClient implements Post
 
   public static PgThreadPooledClient create(final PostgresConnectionProperties config, final Listener listener) {
     return new PgThreadPooledClient(config, listener);
+  }
+
+  public static PgThreadPooledClient create(final UnaryOperator<PostgresConnectionPropertiesBuilder> config) {
+    return create(config.apply(PostgresConnectionProperties.builder()).build(), null);
   }
 
   public static PgThreadPooledClient create(final PostgresConnectionProperties config) {

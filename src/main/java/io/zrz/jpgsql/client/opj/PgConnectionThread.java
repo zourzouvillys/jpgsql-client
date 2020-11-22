@@ -58,8 +58,8 @@ public class PgConnectionThread extends Thread {
   // TODO: make configurable at runtime
   private static RetryPolicy RETRY_POLICY =
     new RetryPolicy().retryOn(PSQLException.class)
-      .withDelay(250, TimeUnit.MILLISECONDS)
-      .withBackoff(1, 5, TimeUnit.SECONDS)
+      // .withDelay(250, TimeUnit.MILLISECONDS)
+      .withBackoff(100, 500, TimeUnit.MILLISECONDS)
       .withJitter(0.25)
       .withMaxDuration(30, TimeUnit.SECONDS);
 
