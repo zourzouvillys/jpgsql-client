@@ -47,7 +47,7 @@ dependencies {
   implementation 'io.netty:netty-transport'
 
   // 
-  annotationProcessor 'org.immutables:immutables:2.8.8'
+  annotationProcessor 'org.immutables:immutables:2.8.9-ea-1'
 
   compileOnly group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.annotation', version: '2.2.600'
   compileOnly 'io.zrz:visitors:0.1'
