@@ -7,3 +7,4 @@
 bin/
 build/
 gradlew.bat
+/.apt_generated_tests/

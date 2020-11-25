@@ -143,8 +143,99 @@ public class SqlWriters {
       final DbIdent target,
       final List<String> fields,
       final SqlGenerator values,
+      final List<String> conflicts) {
+
+    return mergeWhere(target, fields, values, conflicts, null, null);
+
+  }
+
+  public static SqlGenerator upsert(final DbIdent target, final List<String> fields, final SqlGenerator values) {
+    return mergeWhere(target, fields, values, fields, null, null);
+  }
+
+  public static SqlGenerator upsert(final DbIdent target, final Map<String, SqlGenerator> values) {
+    List<String> fields = ImmutableList.copyOf(values.keySet());
+    List<SqlGenerator> fvals = fields.stream().map(values::get).collect(ImmutableList.toImmutableList());
+    return upsert(target, fields, values(exprList(fvals)));
+  }
+
+  public static SqlGenerator upsert(final DbIdent target, List<String> conflicts, final Map<String, SqlGenerator> values) {
+    List<String> fields = ImmutableList.copyOf(values.keySet());
+    List<SqlGenerator> fvals = fields.stream().map(values::get).collect(ImmutableList.toImmutableList());
+    return upsert(target, fields, values(exprList(fvals)), conflicts, ImmutableList.of());
+  }
+
+  public static SqlGenerator upsert(
+      final DbIdent target,
+      final List<String> fields,
+      final SqlGenerator values,
       final List<String> conflicts,
-      final Map<String, SqlGenerator> mergeFields,
+      final List<SqlGenerator> mergeFields) {
+
+    if (mergeFields.isEmpty()) {
+      return mergeWhere(target, fields, values, conflicts, null, null);
+    }
+
+    return mergeWhere(target, fields, values, conflicts, commaSeperated(mergeFields), null);
+
+  }
+
+  public static SqlGenerator mergeWhere(
+      final DbIdent target,
+      final List<String> fields,
+      final SqlGenerator values,
+      final List<String> conflicts,
+      final Map<String, SqlGenerator> mergeFields) {
+
+    SqlGenerator mergeFieldWriter =
+      (mergeFields.isEmpty()) ? null
+                              : w -> {
+
+                                if (mergeFields.size() == 1) {
+
+                                  Entry<String, SqlGenerator> e = mergeFields.entrySet().iterator().next();
+
+                                  w.writeIdent(e.getKey());
+                                  w.writeOperator("=");
+                                  w.write(e.getValue());
+
+                                }
+                                else {
+
+                                  final List<SqlGenerator> mergeKeys = new LinkedList<>();
+                                  final List<SqlGenerator> mergeValues = new LinkedList<>();
+
+                                  mergeFields.forEach((k, v) -> {
+
+                                    mergeKeys.add(SqlWriters.ident(k));
+                                    mergeValues.add(v);
+
+                                  });
+
+                                  w.writeExprList(mergeKeys);
+                                  w.writeOperator("=");
+                                  w.writeExprList(mergeValues);
+
+                                }
+
+                              };
+
+    return mergeWhere(
+      target,
+      fields,
+      values,
+      conflicts,
+      mergeFieldWriter,
+      null);
+
+  }
+
+  public static SqlGenerator mergeWhere(
+      final DbIdent target,
+      final List<String> fields,
+      final SqlGenerator values,
+      final List<String> conflicts,
+      final SqlGenerator mergeFields,
       final SqlGenerator where,
       final SqlGenerator... returning) {
 
@@ -155,15 +246,16 @@ public class SqlWriters {
 
       w.writeIdent(target);
       w.writeExprList(fields.toArray(new String[0]));
+      w.writeNewline();
       w.write(values);
 
       //
 
-      if (!mergeFields.isEmpty()) {
+      if (mergeFields != null) {
 
+        w.writeNewline();
         w.writeKeyword(SqlKeyword.ON);
         w.writeKeyword(SqlKeyword.CONFLICT);
-        
         w.writeExprList(conflicts.stream().map(SqlWriters::ident));
 
         // Sets.difference(ImmutableSet.copyOf(fields),
@@ -171,35 +263,20 @@ public class SqlWriters {
 
         w.writeKeyword(SqlKeyword.DO);
         w.writeKeyword(SqlKeyword.UPDATE);
+
+        w.writeNewline();
         w.writeKeyword(SqlKeyword.SET);
 
-        if (mergeFields.size() == 1) {
+        w.write(mergeFields);
 
-          Entry<String, SqlGenerator> e = mergeFields.entrySet().iterator().next();
-
-          w.writeIdent(e.getKey());
-          w.writeOperator("=");
-          w.write(e.getValue());
-
-        }
-        else {
-
-          final List<SqlGenerator> mergeKeys = new LinkedList<>();
-          final List<SqlGenerator> mergeValues = new LinkedList<>();
-
-          mergeFields.forEach((k, v) -> {
-
-            mergeKeys.add(SqlWriters.ident(k));
-            mergeValues.add(v);
-
-          });
-
-          w.writeExprList(mergeKeys);
-          w.writeOperator("=");
-          w.writeExprList(mergeValues);
-
-        }
-
+      }
+      else if ((conflicts != null) && !conflicts.isEmpty()) {
+        w.writeNewline();
+        w.writeKeyword(SqlKeyword.ON);
+        w.writeKeyword(SqlKeyword.CONFLICT);
+        w.writeExprList(conflicts.stream().map(SqlWriters::ident));
+        w.writeKeyword(SqlKeyword.DO);
+        w.writeKeyword(SqlKeyword.NOTHING);
       }
 
       if (where != null) {
@@ -213,6 +290,7 @@ public class SqlWriters {
       }
 
     };
+
   }
 
   public static SqlGenerator merge(
@@ -768,6 +846,37 @@ public class SqlWriters {
   public static SqlGenerator exprList(final SqlGenerator... fields) {
     return w -> {
       w.writeExprList(fields);
+    };
+  }
+
+  public static SqlGenerator exprList(final List<SqlGenerator> fields) {
+    return w -> {
+      w.writeExprList(fields);
+    };
+  }
+
+  public static SqlGenerator commaSeperated(final SqlGenerator... fields) {
+    Arrays.stream(fields).forEach(Preconditions::checkNotNull);
+    return w -> {
+      for (int i = 0; i < fields.length; ++i) {
+        if (i > 0) {
+          w.write(SqlWriter.comma());
+        }
+        w.write(fields[i]);
+      }
+    };
+  }
+
+  public static SqlGenerator commaSeperated(final Collection<SqlGenerator> values) {
+    values.forEach(Preconditions::checkNotNull);
+    return w -> {
+      int counter = 0;
+      for (SqlGenerator value : values) {
+        if (counter++ > 0) {
+          w.write(SqlWriter.comma());
+        }
+        w.write(value);
+      }
     };
   }
 
@@ -1581,6 +1690,12 @@ public class SqlWriters {
 
   public static SqlGenerator excludedField(final String fieldName) {
     return ident("excluded", fieldName);
+  }
+
+  public static SqlGenerator mergeExcluded(String table, String fieldName, String op) {
+    return SqlWriters.eq(
+      SqlWriters.ident(fieldName),
+      SqlWriters.binaryExpression(op, SqlWriters.ident(table, fieldName), SqlWriters.excluded(fieldName)));
   }
 
 }

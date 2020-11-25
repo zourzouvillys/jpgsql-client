@@ -12,10 +12,10 @@ public enum PgTypes implements SqlType {
   BIT,
   NUMERIC,
   REAL,
-    
+
   DATE,
   TIME,
-  
+
   TIMESTAMP,
   TIMESTAMPTZ,
   INTERVAL,
@@ -25,22 +25,22 @@ public enum PgTypes implements SqlType {
   TSRANGE,
   TSTZRANGE,
   DATERANGE,
-  
+
   JSON,
   JSONB,
-  
+
   INET,
   CIDR,
-  
+
   UUID,
-  
+
   TSQUERY,
   TSVECTOR,
-  
+
   MONEY,
-  
+
   XML,
-  
+
   POLYGON,
   POINT,
   PATH,
@@ -48,14 +48,11 @@ public enum PgTypes implements SqlType {
   LINE,
   CIRCLE,
   BOX,
-  
 
-  
   XID,
   TID,
   REGCLASS,
   OID,
-  
 
   ;
 
