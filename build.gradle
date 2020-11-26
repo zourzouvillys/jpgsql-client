@@ -3,14 +3,14 @@ buildscript {
     mavenCentral()
   }
   configurations.classpath {
-    resolutionStrategy.activateDependencyLocking()
+    // resolutionStrategy.activateDependencyLocking()
   }
 }
 
 plugins {
   id 'net.ltgt.apt-eclipse' version '0.21'
-  id "com.jfrog.bintray" version "1.8.5"
   id 'eclipse'
+  id 'maven-publish'
 }
 
 version = project.hasProperty('versionId') ? project.property('versionId') : 'master'
@@ -22,12 +22,9 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
-
-
 repositories {
   mavenCentral()
   jcenter()
-  maven { url "https://dl.bintray.com/zourzouvillys/maven" }
 }
 
 
@@ -59,22 +56,23 @@ dependencies {
   compileOnly 'org.immutables:value-annotations:2.8.8'
 
   compileOnly group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.annotation', version: '2.2.600'
-  compileOnly 'io.zrz:visitors:0.1'
-  annotationProcessor 'io.zrz:visitors:0.1'
 
-//
+  //
   api 'org.reactivestreams:reactive-streams:1.0.3'
   api 'org.slf4j:slf4j-api:1.7.30'
 
   implementation 'org.postgresql:postgresql:42.2.18'
   implementation 'com.google.guava:guava:30.0-jre'
+  
   api 'io.reactivex.rxjava3:rxjava:3.0.7'
   
   implementation 'net.jodah:failsafe:1.1.1'
+  
+}
 
+dependencies {
   testImplementation 'ch.qos.logback:logback-classic:1.2.3'
   testImplementation 'org.slf4j:jul-to-slf4j:1.7.30'
-
   testImplementation 'junit:junit:4.12'
 
 }
@@ -140,22 +138,13 @@ def createProjectDisplayName() {
 
 // ----
 
-bintray {
-	user = project.hasProperty('bintray.user') ? project.property('bintray.user') : System.getenv('BINTRAY_USER')
-	key = project.hasProperty('bintray.key') ? project.property('bintray.key') : System.getenv('BINTRAY_APIKEY')
-	configurations = ['archives']
-	pkg {
-	    repo = 'maven'
-		name = 'jpgsql'
-		userOrg = user
-	}
-}
-
-
 publishing {
   publications {
-    gpr(MavenPublication) {
-      from(components.java)
-    }
+      mavenJava(MavenPublication) {
+          groupId = 'io.zrz.jpgsql'
+          artifactId = 'jpgsql-client'
+          version = project.version
+          from components.java
+      }
   }
 }

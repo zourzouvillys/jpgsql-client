@@ -2,9 +2,6 @@ package io.zrz.jpgsql.client;
 
 import org.postgresql.util.ServerErrorMessage;
 
-import io.zrz.visitors.annotations.Visitable;
-
-@Visitable.Type
 public final class WarningResult implements QueryResult {
 
   private final int statementId;

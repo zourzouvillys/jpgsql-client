@@ -4,9 +4,6 @@ package io.zrz.jpgsql.client;
 import org.postgresql.util.PSQLState;
 import org.postgresql.util.ServerErrorMessage;
 
-import io.zrz.visitors.annotations.Visitable;
-
-@Visitable.Type
 public final class ErrorResult extends RuntimeException implements QueryResult {
   /**
    * TODO:see {@link PSQLState}

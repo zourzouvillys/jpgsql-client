@@ -12,14 +12,12 @@ import org.reactivestreams.Subscriber;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.zrz.jpgsql.client.opj.PgResultMeta;
-import io.zrz.visitors.annotations.Visitable;
 
-@Visitable.Type
 public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
 
   /**
-   * the statement number in this query that this result is for. For each statement provided, the statement number
-   * increments by one, regardless of it being a SELECT or command.
+   * the statement number in this query that this result is for. For each statement provided, the
+   * statement number increments by one, regardless of it being a SELECT or command.
    */
 
   @Override
@@ -34,8 +32,8 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
   /**
    * if there might be more {@link RowBuffer} instances to follow.
    *
-   * there is guarantee that there are more. listen for the end using the CommandStatus message, or the stream being
-   * marked as completed.
+   * there is guarantee that there are more. listen for the end using the CommandStatus message, or
+   * the stream being marked as completed.
    *
    */
 
@@ -94,8 +92,8 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
    *
    * may be null.
    *
-   * also, note that a field may be returned in text or binary form, and performign the same query multiple times ay
-   * result in different format.
+   * also, note that a field may be returned in text or binary form, and performign the same query
+   * multiple times ay result in different format.
    *
    */
 
@@ -133,15 +131,15 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
   @Override
   default void subscribe(final Subscriber<? super ResultRow> s) {
     Flowable.fromIterable(IntStream.range(0, count())
-        .mapToObj(this::row)
-        .collect(Collectors.toList()))
-        .subscribe(s);
+      .mapToObj(this::row)
+      .collect(Collectors.toList()))
+      .subscribe(s);
   }
 
   default void forEach(Consumer<? super ResultRow> fe) {
     IntStream.range(0, count())
-        .mapToObj(this::row)
-        .forEach(fe);
+      .mapToObj(this::row)
+      .forEach(fe);
   }
 
   ResultRow row(int offset);
