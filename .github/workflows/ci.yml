@@ -17,3 +17,6 @@ jobs:
       run: ./gradlew --warning-mode all -PversionId="$(git rev-parse --short HEAD)" assemble
     - name: Publish to BinTray
       run: ./gradlew --warning-mode all -PversionId="$(git rev-parse --short HEAD)" bintrayUpload
+      env:
+        BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+        BINTRAY_APIKEY: ${{ secrets.BINTRAY_APIKEY }}
