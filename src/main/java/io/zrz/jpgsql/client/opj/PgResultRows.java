@@ -65,7 +65,10 @@ final class PgResultRows implements RowBuffer {
   public String toString() {
     final StringBuilder sb = new StringBuilder();
     sb.append("rowbuffer { count:").append(this.count()).append(" ");
-    sb.append("more:").append(this.maybeMore() ? "maybe" : "no").append(" ");
+    sb.append("more:")
+      .append(this.maybeMore() ? "maybe"
+                               : "no")
+      .append(" ");
     sb.append("fields: ").append(this.fields);
     sb.append(" }");
     return sb.toString();
@@ -79,7 +82,8 @@ final class PgResultRows implements RowBuffer {
     }
     try {
       return Ints.checkedCast(PgResultDecoder.toLong(this.fields.field(col), val));
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       System.err.println(this.fields.field(col));
       System.err.println(this.row(row));
       System.err.println(this);
@@ -139,6 +143,15 @@ final class PgResultRows implements RowBuffer {
   }
 
   @Override
+  public double doubleval(int row, int col) {
+    final byte[] val = this.tuples.get(row).get(col);
+    if (val == null) {
+      return Double.NaN;
+    }
+    return PgResultDecoder.toDouble(this.fields.field(col), val);
+  }
+
+  @Override
   public BigDecimal decimal(final int row, final int col) {
     final byte[] val = this.tuples.get(row).get(col);
     if (val == null) {
@@ -180,7 +193,8 @@ final class PgResultRows implements RowBuffer {
         return PGbytea.toBytes(raw);
       }
       return raw;
-    } catch (final java.lang.Throwable $ex) {
+    }
+    catch (final java.lang.Throwable $ex) {
       throw InternalUtils.sneakyThrow($ex);
     }
   }
@@ -194,8 +208,8 @@ final class PgResultRows implements RowBuffer {
   public int[] int2vector(int row, int column) {
     PgResultField field = this.fields.field(column);
     switch (field.format()) {
-    case Field.TEXT_FORMAT: 
-      return Splitter.on(' ').splitToList(strval(row, column)).stream().mapToInt(x -> Integer.parseInt(x)).toArray();
+      case Field.TEXT_FORMAT:
+        return Splitter.on(' ').splitToList(strval(row, column)).stream().mapToInt(x -> Integer.parseInt(x)).toArray();
     }
     throw new IllegalArgumentException();
   }
@@ -207,8 +221,7 @@ final class PgResultRows implements RowBuffer {
     }
     PgResultField field = this.fields.field(column);
     switch (field.format()) {
-    case Field.TEXT_FORMAT: 
-      {
+      case Field.TEXT_FORMAT: {
         String value = strval(row, column);
         value = value.substring(1, value.length() - 1);
         return Splitter.on(",").splitToList(value);
@@ -216,4 +229,5 @@ final class PgResultRows implements RowBuffer {
     }
     throw new IllegalArgumentException();
   }
+
 }

@@ -1157,9 +1157,12 @@ public class SqlWriters {
 
   public static SqlGenerator cast(final SqlGenerator expr, final SqlType type) {
     return w -> {
+      w.writeIdent("cast");
+      w.writeStartExpr();
       w.write(expr);
-      w.writeOperator("::");
+      w.write(SqlKeyword.AS);
       w.writeTypename(type.ident(), 0);
+      w.writeEndExpr();
     };
   }
 
@@ -1696,6 +1699,20 @@ public class SqlWriters {
     return SqlWriters.eq(
       SqlWriters.ident(fieldName),
       SqlWriters.binaryExpression(op, SqlWriters.ident(table, fieldName), SqlWriters.excluded(fieldName)));
+  }
+
+  public static SqlGenerator cast(final SqlGenerator expr, final SqlType type, final SqlGenerator params) {
+    return w -> {
+      w.writeIdent("cast");
+      w.writeStartExpr();
+      w.write(expr);
+      w.write(SqlKeyword.AS);
+      w.write(type.ident());
+      w.writeStartExpr();
+      w.write(params);
+      w.writeEndExpr();
+      w.writeEndExpr();
+    };
   }
 
 }

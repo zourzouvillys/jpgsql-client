@@ -67,6 +67,10 @@ public class PgResultRow implements ResultRow {
   }
 
   @Override
+  public double doubleval(final int field) {
+    return this.buffer.doubleval(this.row, field);
+  }
+  @Override
   public long longval(final int field) {
     return this.buffer.longval(this.row, field);
   }
@@ -97,7 +101,7 @@ public class PgResultRow implements ResultRow {
 
     final byte[] bf = buffer.bytes(row, field);
 
-    if (bf == null || bf.length == 0)
+    if ((bf == null) || (bf.length == 0))
       return "(null)";
 
     switch (this.field(field).oid()) {

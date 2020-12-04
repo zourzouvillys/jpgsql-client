@@ -22,6 +22,9 @@ public interface ResultRow {
   default long intval(final String label, final int defaultValue) {
     return intval(this.field(label).column(), defaultValue);
   }
+  
+  double doubleval(final int field);
+
 
   String strval(final int field);
 

@@ -1,5 +1,7 @@
 package io.zrz.sqlwriter;
 
+import io.zrz.sqlwriter.SqlWriter.SqlGenerator;
+
 public enum PgTypes implements SqlType {
 
   TEXT,
@@ -59,6 +61,10 @@ public enum PgTypes implements SqlType {
   @Override
   public DbIdent ident() {
     return DbIdent.of(name().toLowerCase());
+  }
+
+  public SqlGenerator cast(SqlGenerator expr) {
+    return SqlWriters.cast(expr, this);
   }
 
 }

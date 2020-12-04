@@ -125,8 +125,6 @@ class PgSingleSession implements Runnable, PgSession {
     }
   }
 
-  private static final Duration LOOP_WAIT = Duration.ofSeconds(1);
-  private static final Duration MAX_IDLE = Duration.ofSeconds(5);
   private final SingleSubject<SessionTxnState> txnstate = SingleSubject.create();
   private final LinkedTransferQueue<Work> workqueue = new LinkedTransferQueue<>();
   // if we are accepting work still

@@ -156,4 +156,6 @@ public interface RowBuffer extends QueryResult, Publisher<ResultRow> {
 
   Collection<String> textArray(int row, int column);
 
+  double doubleval(int row, int field);
+
 }
