@@ -164,6 +164,10 @@ public enum SqlKeyword implements SqlGenerator {
   STATEMENT,
   EXECUTE,
   PROCEDURE,
+  
+  CASE,
+  WHEN,
+  ELSE,
     
 ;
 
