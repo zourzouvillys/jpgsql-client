@@ -57,11 +57,11 @@ public interface ResultRow {
   int[] int2vector(int column);
 
   default boolean isNull(final int index) {
-    return bytes(index) == null;
+    return bytes(index, null) == null;
   }
 
   default boolean isNull(final String name) {
-    return bytes(field(name).column()) == null;
+    return bytes(field(name).column(), null) == null;
   }
 
   /**
