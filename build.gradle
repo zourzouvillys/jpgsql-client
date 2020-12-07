@@ -66,7 +66,7 @@ dependencies {
   
   api 'io.reactivex.rxjava3:rxjava:3.0.7'
   
-  implementation 'net.jodah:failsafe:1.1.1'
+  implementation 'net.jodah:failsafe:2.4.0'
   
 }
 
@@ -147,4 +147,16 @@ publishing {
           from components.java
       }
   }
+  
+  
+    repositories {
+   maven {
+      url 'https://theo-test-460206009704.d.codeartifact.us-west-2.amazonaws.com/maven/theo-test/'
+      credentials {
+        username "aws"
+        password "/usr/local/bin/fcli sudo --account 460206009704 --role AWSAdministratorAccess aws codeartifact get-authorization-token --domain theo-test --domain-owner 460206009704 --query authorizationToken --output text".execute().text
+      }
+    }
+    }  
+  
 }

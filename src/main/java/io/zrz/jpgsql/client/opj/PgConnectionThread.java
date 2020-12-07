@@ -3,7 +3,8 @@ package io.zrz.jpgsql.client.opj;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 import org.postgresql.jdbc.PgConnection;
 import org.postgresql.util.PSQLException;
@@ -55,26 +56,35 @@ public class PgConnectionThread extends Thread {
     }
   }
 
-  // TODO: make configurable at runtime
-  private static RetryPolicy RETRY_POLICY =
-    new RetryPolicy().retryOn(PSQLException.class)
-      // .withDelay(250, TimeUnit.MILLISECONDS)
-      .withBackoff(100, 500, TimeUnit.MILLISECONDS)
+  private static final RetryPolicy<PgConnection> retryPolicy =
+    new RetryPolicy<PgConnection>()
+      .handle(PSQLException.class)
+      .withBackoff(100, 500, ChronoUnit.MILLIS)
       .withJitter(0.25)
-      .withMaxDuration(30, TimeUnit.SECONDS);
+      .withMaxDuration(Duration.ofSeconds(30));
 
   public static PgLocalConnection connection() throws SQLException {
+
     final PgConnectionThread thd = (PgConnectionThread) Thread.currentThread();
+
     if (thd.conn == null) {
+
       log.debug("Creating new connection thread");
+
       // this may throw.
       PgConnection raw =
-        Failsafe.with(RETRY_POLICY).onFailedAttempt(e -> log.warn("connection failed, retying {}", e.getMessage())).get(() -> thd.pool.createConnection());
+        Failsafe.with(retryPolicy)
+          .onFailure(e -> log.warn("connection failed, retying {}", e.getFailure().getMessage()))
+          .get(() -> thd.pool.createConnection());
+
       thd.conn = new PgLocalConnection(thd.pool, raw);
+
       if (thd.pool.getListener() != null) {
         thd.pool.getListener().connectionCreated(thd.conn);
       }
+
     }
+
     return thd.conn;
   }
 
