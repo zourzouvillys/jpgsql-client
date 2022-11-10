@@ -45,7 +45,7 @@ targetCompatibility = 1.8
 
 dependencies {
 
-  implementation enforcedPlatform('io.netty:netty-bom:4.1.54.Final')
+  implementation enforcedPlatform('io.netty:netty-bom:4.1.85.Final')
   implementation 'io.netty:netty-buffer'
   implementation 'io.netty:netty-codec'
   implementation 'io.netty:netty-handler'
